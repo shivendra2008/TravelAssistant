@@ -1,0 +1,519 @@
+/* Variables inherited from homepage */
+:root {
+    --primary-color: #f7b949; /* Orange/Yellow */
+    --secondary-color: #07a2a2; /* Teal/Green */
+    --text-color-dark: #000000; 
+    --text-color-light: #fff;
+    --background-light: #f8f8f8;
+    --header-height: 54px; /* Based on your top-bar padding */
+    --nav-height: 50px; /* Based on your nav-tabs padding */
+}
+
+/* --- GLOBAL LAYOUT FIXES (CRITICAL FOR HEIGHT) --- */
+html, body, .container {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+}
+
+.container {
+    width: 100%;
+    max-width: 450px; 
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    background-color: var(--background-light);
+}
+
+/* --- Fixed Header --- */
+.search-header {
+    background-color: var(--primary-color);
+    width: 100%;
+    flex-shrink: 0; 
+    z-index: 1000; /* Ensure header is always on top */
+    position: sticky; /* Make it sticky so content scrolls under it */
+    top: 0;
+}
+
+.top-bar {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: var(--text-color-light); 
+    color: var(--text-color-dark);
+}
+
+.top-bar i {
+    font-size: 24px;
+    margin-right: 20px;
+    cursor: pointer;
+}
+
+.top-bar h1 {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+/* --- Navigation Tabs --- */
+.nav-tabs {
+    display: flex;
+    overflow-x: scroll; 
+    padding: 10px 0;
+    background-color: var(--primary-color);
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.nav-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.nav-btn {
+    flex-shrink: 0; 
+    background: transparent;
+    border: none;
+    padding: 5px 15px;
+    margin: 0 5px;
+    color: var(--text-color-dark);
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.7; 
+    transition: all 0.2s ease;
+}
+
+.nav-btn i {
+    font-size: 20px;
+    margin-bottom: 5px;
+}
+
+.nav-btn.active {
+    font-weight: bold; 
+    opacity: 1; 
+    border-bottom: 3px solid var(--text-color-dark); 
+}
+
+/* --- Content Viewer (CRITICAL HEIGHT SECTION) --- */
+.content-viewer {
+    flex-grow: 1; 
+    width: 100%;
+    overflow-y: hidden; 
+}
+
+#tabContent {
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+
+.tab-view {
+    width: 100%;
+    /* Crucial: Ensure the tab-view takes the full remaining height */
+    height: 100%; 
+    overflow-y: auto; 
+    padding-bottom: 20px; 
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* --- Shared Form Control & Button Styling --- */
+.search-action-btn {
+    flex: 1 1 100%; 
+    background-color: var(--secondary-color);
+    color: var(--text-color-light);
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 5px;
+}
+
+.search-action-btn:hover {
+    background-color: #058888;
+}
+
+/* --- 1. INFO TAB STYLING --- */
+
+.info-content-wrapper {
+    padding: 20px 0; 
+}
+
+.info-content-card {
+    background-color: var(--text-color-light); 
+    padding: 25px;
+    margin: 0 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08); 
+}
+
+.info-content-card h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: var(--secondary-color); 
+    border-bottom: 1px solid var(--background-light); 
+    padding-bottom: 10px;
+}
+
+.info-content-card p {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #444; 
+    margin-bottom: 15px;
+    text-align: justify;
+}
+
+/* --- 2. WEATHER TAB STYLING --- */
+
+.weather-card {
+    background-color: var(--secondary-color); 
+    color: var(--text-color-dark); 
+    padding: 30px 20px;
+    margin: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+.weather-card h2 { font-size: 28px; margin-bottom: 20px; }
+.current-temp { display: flex; justify-content: center; align-items: center; margin-bottom: 5px; }
+.weather-icon { font-size: 48px; margin-right: 15px; color: var(--text-color-dark); }
+#currentTemp { font-size: 64px; font-weight: 700; }
+#weatherDesc { font-size: 18px; font-weight: 500; margin-bottom: 20px; text-transform: capitalize; }
+.high-low-bar { display: flex; justify-content: space-around; padding: 10px 0; font-size: 16px; font-weight: 600; }
+.weather-card hr { border: 0; height: 1px; background: rgba(0, 0, 0, 0.1); margin: 20px 0; }
+.details-grid { display: flex; justify-content: space-around; text-align: center; gap: 10px; }
+.details-grid div { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.details-grid i { font-size: 24px; margin-bottom: 5px; }
+.details-grid p { font-size: 12px; color: rgba(0, 0, 0, 0.6); margin: 0; }
+.details-grid span { font-size: 16px; font-weight: 700; margin-top: 5px; }
+
+
+/* --- WEATHER FORECAST/ENVIRONMENT SECTION FIXES --- */
+
+.forecast-section, .environment-section {
+    padding: 20px;
+    background-color: var(--text-color-light); 
+    border-radius: 15px;
+    margin: 0 20px 20px 20px; 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+.forecast-section h3, .environment-section h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: var(--text-color-dark);
+}
+
+/* FIX: Ensure forecast items align in a row */
+.forecast-list {
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+}
+
+.forecast-day {
+    flex-grow: 1; 
+    text-align: center; 
+    padding: 10px 5px; 
+    border-radius: 10px; 
+    background-color: var(--background-light); 
+    border: 1px solid #eee;
+}
+
+.forecast-day span { 
+    display: block; 
+    font-size: 14px; 
+    font-weight: 600; 
+    margin-bottom: 5px; 
+    color: var(--text-color-dark); 
+}
+.forecast-day i { 
+    font-size: 24px; 
+    color: var(--secondary-color); 
+    margin-bottom: 5px; 
+}
+.forecast-temp { font-size: 12px; margin: 0; color: var(--text-color-dark); }
+.environment-section .details-grid div { background-color: var(--background-light); border-radius: 10px; padding: 10px; }
+.environment-section .details-grid i { color: var(--primary-color); }
+.environment-section .details-grid span { font-size: 14px; }
+
+
+/* --- 3. HOTEL TAB STYLING --- */
+
+.hotel-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 20px;
+    background-color: var(--text-color-light); 
+    border-bottom: 1px solid #ddd;
+    /* Removed position: sticky to fix height conflicts if controls are hidden */
+    top: 0;
+    z-index: 5;
+}
+
+.hotel-controls input[type="date"],
+.hotel-controls select {
+    /* Dates take 50%, the three selects take 33% */
+    flex: 1 1 calc(33.33% - 7px); 
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.hotel-controls input[type="date"] {
+    flex: 1 1 calc(50% - 5px); 
+}
+
+/* Ensure the button stays full width */
+.hotel-controls .search-action-btn {
+    flex: 1 1 100%;
+}
+
+
+/* --- 4. FLIGHT TAB STYLING --- */
+
+.flight-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 20px;
+    background-color: var(--text-color-light);
+    border-bottom: 1px solid #ddd;
+}
+
+.flight-route-inputs {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background-color: var(--background-light); 
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.flight-route-inputs input[type="text"] {
+    flex-grow: 1;
+    border: none;
+    padding: 8px 10px;
+    font-size: 14px;
+    background: transparent;
+}
+
+.swap-icon-container {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.swap-icon {
+    color: var(--text-color-dark);
+    font-size: 14px;
+}
+
+.flight-date-inputs {
+    display: flex;
+    gap: 10px;
+}
+
+.flight-date-inputs input[type="date"] {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.flight-pax-input select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+
+/* --- IFRAME STYLES (CRITICAL FOR FULL-SCREEN VIEW) --- */
+
+/* Ensure the parent containers can manage height for the iframe */
+#hotelResultsContainer, 
+#flightResultsContainer {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0 0px 0px 0px; /* Use padding for left/right/bottom spacing */
+    width: 100%;
+    overflow: hidden;
+}
+
+
+.external-search-iframe {
+    width: 100%;
+    height: calc(100vh - 60px); /* subtract yellow bar height */
+    border: none;
+    background-color: var(--text-color-light);
+    border-radius: 12px;
+    display: block;
+}
+/* ==================================================== */
+/* PROFESSIONAL FLIGHT VIEW UI STYLES                   */
+/* ==================================================== */
+
+.flight-controls {
+    /* Elevated card look for professionalism */
+    padding: 20px;
+    margin: 15px;
+    background-color: #ffffff; 
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1); /* Stronger, modern shadow */
+}
+
+/* --- Route Input Styling (Origin <-> Destination) --- */
+
+.flight-route-inputs {
+    /* Clean horizontal layout */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0; /* Subtle separator */
+}
+
+.flight-route-inputs input {
+    flex-grow: 1;
+    padding: 14px 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    transition: border-color 0.3s;
+}
+
+.flight-route-inputs input:focus {
+    border-color: #007bff; /* Primary color focus */
+    outline: none;
+}
+
+.swap-icon-container {
+    padding: 8px;
+    cursor: pointer;
+    color: #007bff;
+    background-color: #e6f0ff; /* Light blue background for icon */
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, transform 0.2s;
+    flex-shrink: 0;
+}
+
+.swap-icon-container:hover {
+    background-color: #cce0ff;
+    transform: rotate(180deg);
+}
+
+/* --- Date and Pax Grid Styling --- */
+
+.date-pax-inputs {
+    display: grid;
+    /* Two-column layout for label and input */
+    grid-template-columns: 1fr 1fr; 
+    gap: 15px 12px; /* Increased vertical gap for breathing room */
+    margin-bottom: 30px;
+    align-items: center;
+}
+
+/* Professional Label Styling */
+.date-pax-inputs label {
+    font-size: 15px;
+    color: #555; 
+    font-weight: 600; 
+    text-align: right; 
+    padding-right: 5px;
+}
+
+/* Consistent Input/Select Styling */
+.date-pax-inputs input[type="date"],
+.date-pax-inputs select {
+    padding: 10px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+    height: 42px; /* Taller inputs look more modern */
+    box-sizing: border-box; 
+    width: 100%;
+    transition: border-color 0.3s;
+    background-color: #fff;
+}
+
+.date-pax-inputs input[type="date"]:focus,
+.date-pax-inputs select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.5);
+    outline: none;
+}
+
+/* Dropdown Customization (making it look non-native/professional) */
+.date-pax-inputs select {
+    appearance: none; 
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    /* Use a simple arrow image for a modern look */
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-down"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center; 
+    background-size: 14px;
+    cursor: pointer;
+}
+
+/* Search Button Styling */
+.search-button.full-width-btn {
+    width: 100%;
+    padding: 15px;
+    background-color: #007bff; /* Primary action color */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+}
+
+.search-button.full-width-btn:hover {
+    background-color: #0056b3;
+    transform: translateY(-1px);
+}

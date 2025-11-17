@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-text">
+                <h1>Welcome,</h1>
+                <h2>Shivendra Sontakke</h2>
+            </div>
+            <div class="profile-icon">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            
+            <p class="search-prompt">Search for your favourite place</p>
+            <div class="search-bar">
+                <input type="text" id="cityInput" placeholder="Search here">
+                <button class="search-button" id="searchBtn">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <section class="quick-links">
+                <h3>Quick links</h3>
+                <div class="links-grid">
+                    <div class="link-item">
+                        <div class="link-icon"><i class="fas fa-sun"></i></div>
+                        <span>Weather</span>
+                    </div>
+                    <div class="link-item">
+                        <div class="link-icon"><i class="fas fa-plane"></i></div>
+                        <span>Flights</span>
+                    </div>
+                    <div class="link-item">
+                        <div class="link-icon"><i class="fas fa-train"></i></div>
+                        <span>Trains</span>
+                    </div>
+                    <div class="link-item">
+                        <div class="link-icon"><i class="fas fa-bus"></i></div>
+                        <span>Bus</span>
+                    </div>
+                    <div class="link-item">
+                        <div class="link-icon"><i class="fas fa-hotel"></i></div>
+                        <span>Hotel</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="also-check">
+                <h3>Also check</h3>
+                <div class="check-list">
+                    <button class="check-item travel">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>Travel Checklist</span>
+                    </button>
+                    <button class="check-item category">
+                        <i class="fas fa-th-large"></i>
+                        <span>Category Wise Destinations</span>
+                    </button>
+                    <button class="check-item explore">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Explore More</span>
+                    </button>
+                    <button class="check-item settings">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script>
+        document.getElementById('searchBtn').addEventListener('click', function() {
+            const city = document.getElementById('cityInput').value;
+            
+            if (city.trim() !== "") {
+                // Redirects to search.html, passing the city name as a URL parameter
+                window.location.href = `search.html?city=${encodeURIComponent(city.trim())}`;
+            } else {
+                alert("Please enter a city name to search.");
+            }
+        });
+
+        // Allows 'Enter' key to also trigger the search
+        document.getElementById('cityInput').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                document.getElementById('searchBtn').click();
+            }
+        });
+    </script>
+</body>
+</html>
