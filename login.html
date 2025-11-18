@@ -6,6 +6,7 @@
     <title>Login / Sign Up</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body {
@@ -127,25 +128,25 @@
         }
     </style>
 </head>
+
 <body>
     <div id="loadingOverlay" class="loading-overlay">
         Connecting to service...
     </div>
 
     <div class="container hidden" id="authContainer">
-        
         <div class="card">
             <h2 id="formTitle" class="text-3xl font-bold text-center mb-6 text-gray-800">Login</h2>
-            
+
             <input type="text" id="emailInput" class="input-field" placeholder="Email">
             <input type="password" id="passwordInput" class="input-field" placeholder="Password">
-            
+
             <div id="forgotPasswordContainer" class="text-right mb-4">
                 <button id="forgotPasswordBtn" class="text-sm text-blue-600 hover:text-blue-800 transition duration-150">Forgot Password?</button>
             </div>
 
             <input type="text" id="nameInput" class="input-field hidden" placeholder="Full Name (for Sign Up)">
-            
+
             <button id="authButton" class="action-button mb-4">Login</button>
 
             <div class="divider">OR</div>
@@ -166,10 +167,10 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getAuth, 
-            signInWithEmailAndPassword, 
-            createUserWithEmailAndPassword, 
+        import {
+            getAuth,
+            signInWithEmailAndPassword,
+            createUserWithEmailAndPassword,
             onAuthStateChanged,
             setPersistence,
             browserLocalPersistence,
@@ -179,14 +180,14 @@
             getRedirectResult
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        import { 
-            getFirestore, 
-            doc, 
+        import {
+            getFirestore,
+            doc,
             setDoc,
             getDoc
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const hardcodedAppId = 'travelassistant-1baed';
+        const hardcodedAppId = "travelassistant-1baed";
         const hardcodedFirebaseConfig = {
             apiKey: "AIzaSyDtkaHB2ER0RAOpsbW-Eg65wSe7G4Uwrkw",
             authDomain: "travelassistant-1baed.firebaseapp.com",
@@ -195,11 +196,12 @@
             messagingSenderId: "67570490262",
             appId: "1:67570490262:web:7164a2d838b5517a325bb7"
         };
-        
-        const appId = typeof __app_id !== 'undefined' ? __app_id : hardcodedAppId;
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : hardcodedFirebaseConfig;
+
+        const appId = typeof __app_id !== "undefined" ? __app_id : hardcodedAppId;
+        const firebaseConfig =
+            typeof __firebase_config !== "undefined"
+                ? JSON.parse(__firebase_config)
+                : hardcodedFirebaseConfig;
 
         const googleProvider = new GoogleAuthProvider();
 
@@ -212,191 +214,143 @@
         let isSignUp = false;
         let isProcessing = false;
 
-        const authContainer = document.getElementById('authContainer');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const formTitle = document.getElementById('formTitle');
-        const emailInput = document.getElementById('emailInput');
-        const passwordInput = document.getElementById('passwordInput');
-        const nameInput = document.getElementById('nameInput');
-        const authButton = document.getElementById('authButton');
-        const googleAuthButton = document.getElementById('googleAuthButton');
-        const toggleFormBtn = document.getElementById('toggleFormBtn');
-        const toggleText = document.getElementById('toggleText');
-        const messageBox = document.getElementById('messageBox');
-        const forgotPasswordContainer = document.getElementById('forgotPasswordContainer');
-        const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+        const loadingOverlay = document.getElementById("loadingOverlay");
+        const authContainer = document.getElementById("authContainer");
+        const emailInput = document.getElementById("emailInput");
+        const passwordInput = document.getElementById("passwordInput");
+        const nameInput = document.getElementById("nameInput");
+        const authButton = document.getElementById("authButton");
+        const googleAuthButton = document.getElementById("googleAuthButton");
+        const toggleFormBtn = document.getElementById("toggleFormBtn");
+        const toggleText = document.getElementById("toggleText");
+        const messageBox = document.getElementById("messageBox");
+        const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
 
-        function displayMessage(message, type) {
-            messageBox.textContent = message;
+        function displayMessage(msg, type) {
+            messageBox.textContent = msg;
             messageBox.className = `message-box ${type}`;
-            messageBox.classList.remove('hidden');
+            messageBox.classList.remove("hidden");
+        }
+
+        function showLoginForm() {
+            loadingOverlay.classList.add("hidden");
+            authContainer.classList.remove("hidden");
         }
 
         function toggleMode() {
             isSignUp = !isSignUp;
-            formTitle.textContent = isSignUp ? 'Sign Up' : 'Login';
-            authButton.textContent = isSignUp ? 'Sign Up' : 'Login';
-            toggleText.textContent = isSignUp ? 'Already have an account?' : "Don't have an account?";
-            toggleFormBtn.textContent = isSignUp ? 'Login' : 'Sign Up';
-            nameInput.classList.toggle('hidden', !isSignUp);
-            forgotPasswordContainer.classList.toggle('hidden', isSignUp);
-            messageBox.classList.add('hidden');
+            document.getElementById("formTitle").textContent = isSignUp ? "Sign Up" : "Login";
+            authButton.textContent = isSignUp ? "Sign Up" : "Login";
+            toggleText.textContent = isSignUp ? "Already have an account?" : "Don't have an account?";
+            toggleFormBtn.textContent = isSignUp ? "Login" : "Sign Up";
+            nameInput.classList.toggle("hidden", !isSignUp);
         }
 
-        function navigateToHome() {
-            window.location.href = 'index.html'; 
-        }
+        async function saveUserToFirestore(user, name) {
+            const ref = doc(db, "artifacts", appId, "users", user.uid, "profile", "data");
 
-        function showLoginForm() {
-            loadingOverlay.classList.add('hidden');
-            authContainer.classList.remove('hidden');
-        }
-
-        async function saveUserToFirestore(user, fullName) {
-            const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
-
-            const dataToSave = {
-                uid: user.uid,
-                email: user.email,
-                name: fullName || user.displayName || 'User',
-                photoURL: user.photoURL || null,
-                createdAt: new Date().toISOString()
-            };
-
-            await setDoc(userDocRef, dataToSave, { merge: true });
+            await setDoc(
+                ref,
+                {
+                    uid: user.uid,
+                    email: user.email,
+                    name: name || user.displayName || "User",
+                    photoURL: user.photoURL || null,
+                    createdAt: new Date().toISOString()
+                },
+                { merge: true }
+            );
         }
 
         async function handleAuth(event) {
             event.preventDefault();
             if (isProcessing) return;
+            isProcessing = true;
 
             const email = emailInput.value.trim();
             const password = passwordInput.value;
             const fullName = nameInput.value.trim();
 
             if (!email || !password || (isSignUp && !fullName)) {
-                displayMessage('Please fill in all fields.', 'error');
+                displayMessage("Please fill all fields.", "error");
+                isProcessing = false;
                 return;
             }
-
-            isProcessing = true;
-            authButton.textContent = isSignUp ? 'Signing Up...' : 'Logging In...';
-            messageBox.classList.add('hidden');
 
             try {
                 if (isSignUp) {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     await saveUserToFirestore(userCredential.user, fullName);
-                    displayMessage('Account created successfully!', 'success');
-                    setTimeout(navigateToHome, 800);
-
+                    displayMessage("Account created!", "success");
+                    setTimeout(() => (window.location.href = "index.html"), 700);
                 } else {
                     const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    const ref = doc(db, "artifacts", appId, "users", userCredential.user.uid, "profile", "data");
+                    const snap = await getDoc(ref);
 
-                    const existingDocRef = doc(db, 'artifacts', appId, 'users', userCredential.user.uid, 'profile', 'data');
-                    const existingSnap = await getDoc(existingDocRef);
+                    let name = snap.exists() ? snap.data().name : userCredential.user.displayName || "User";
 
-                    let nameToSave = null;
-
-                    if (existingSnap.exists()) {
-                        nameToSave = existingSnap.data().name;
-                    } else {
-                        nameToSave = userCredential.user.displayName || "User";
-                    }
-
-                    await saveUserToFirestore(userCredential.user, nameToSave);
-
-                    displayMessage('Login successful!', 'success');
-                    setTimeout(navigateToHome, 800);
+                    await saveUserToFirestore(userCredential.user, name);
+                    displayMessage("Login successful!", "success");
+                    setTimeout(() => (window.location.href = "index.html"), 700);
                 }
-
-            } catch (error) {
-                console.error("Authentication Error:", error);
-                let errorMessage = 'An error occurred. Please try again.';
-                
-                if (error.code) {
-                    switch(error.code) {
-                        case 'auth/user-not-found':
-                        case 'auth/wrong-password':
-                            errorMessage = 'Invalid email or password.';
-                            break;
-                        case 'auth/email-already-in-use':
-                            errorMessage = 'This email is already registered. Try logging in.';
-                            break;
-                        case 'auth/weak-password':
-                            errorMessage = 'Password should be at least 6 characters.';
-                            break;
-                        default:
-                            errorMessage = `Error: ${error.code.replace('auth/', '')}`;
-                    }
-                }
-                displayMessage(errorMessage, 'error');
-
-            } finally {
-                isProcessing = false;
-                authButton.textContent = isSignUp ? 'Sign Up' : 'Login';
+            } catch (err) {
+                displayMessage("Error: " + err.code, "error");
             }
+
+            isProcessing = false;
         }
 
-        // ⭐ FIXED: GOOGLE LOGIN VIA REDIRECT (WORKS IN KODULAR)
         async function handleGoogleSignIn() {
             try {
                 await signInWithRedirect(auth, googleProvider);
-            } catch (error) {
-                console.error("Google Sign-In Error:", error);
+            } catch (err) {
                 displayMessage("Google Sign-In failed.", "error");
             }
         }
 
-        // ⭐ Handle redirect result (after login completes)
+        // ⭐ FINAL FIXED LOGIC (NO MORE FREEZE)
         onAuthStateChanged(auth, async (user) => {
             if (user && !user.isAnonymous) {
-                await saveUserToFirestore(
-                    user,
-                    user.displayName || "User"
-                );
-                navigateToHome();
+                await saveUserToFirestore(user, user.displayName || "User");
+                window.location.href = "index.html";
                 return;
             }
 
             try {
                 const result = await getRedirectResult(auth);
+
                 if (result && result.user) {
                     const gUser = result.user;
-
-                    await saveUserToFirestore(
-                        gUser,
-                        gUser.displayName || "User"
-                    );
-
-                    navigateToHome();
-                } else {
-                    showLoginForm();
+                    await saveUserToFirestore(gUser, gUser.displayName || "User");
+                    window.location.href = "index.html";
+                    return;
                 }
-            } catch (error) {
-                console.error("Google Redirect Error:", error);
-                showLoginForm();
+            } catch (e) {
+                console.error("Redirect error:", e);
             }
+
+            // ⭐ ALWAYS show form no matter what
+            showLoginForm();
         });
 
-        authButton.addEventListener('click', handleAuth);
-        googleAuthButton.addEventListener('click', handleGoogleSignIn);
-        toggleFormBtn.addEventListener('click', toggleMode);
+        authButton.addEventListener("click", handleAuth);
+        googleAuthButton.addEventListener("click", handleGoogleSignIn);
+        toggleFormBtn.addEventListener("click", toggleMode);
 
-        forgotPasswordBtn.addEventListener('click', async () => {
+        forgotPasswordBtn.addEventListener("click", async () => {
             const email = emailInput.value.trim();
             if (!email) {
-                displayMessage("Enter your email first.", "error");
+                displayMessage("Enter your email.", "error");
                 return;
             }
             try {
                 await sendPasswordResetEmail(auth, email);
-                displayMessage("Reset link sent to your email.", "success");
+                displayMessage("Password reset link sent.", "success");
             } catch {
-                displayMessage("Unable to send email.", "error");
+                displayMessage("Error sending reset link.", "error");
             }
         });
-
     </script>
 </body>
 </html>
