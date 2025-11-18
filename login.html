@@ -16,10 +16,10 @@
         .container {
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
+            flex-direction: column; /* Stack card vertically */
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 20px; /* Add padding for mobile view */
         }
         .card {
             background-color: white;
@@ -39,7 +39,7 @@
             transition: border-color 0.3s;
         }
         .input-field:focus {
-            border-color: #2563eb;
+            border-color: #2563eb; /* Blue focus ring */
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
             outline: none;
         }
@@ -49,7 +49,7 @@
             width: 100%;
             font-weight: 600;
             color: white;
-            background-color: #f7b949;
+            background-color: #f7b949; /* Primary app color */
             transition: background-color 0.3s, transform 0.1s;
         }
         .action-button:hover {
@@ -64,9 +64,9 @@
             border-radius: 0.75rem;
             width: 100%;
             font-weight: 600;
-            color: #4b5563;
+            color: #4b5563; /* Gray text */
             background-color: white;
-            border: 1px solid #d1d5db;
+            border: 1px solid #d1d5db; /* Light gray border */
             transition: background-color 0.3s, transform 0.1s;
         }
         .google-button:hover {
@@ -110,10 +110,31 @@
             background-color: #d1fae5;
             color: #059669;
         }
+
+        /* New overlay to prevent interaction before auth check is done */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #f7b949;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div id="loadingOverlay" class="loading-overlay">
+        Connecting to service...
+    </div>
+
+    <div class="container hidden" id="authContainer">
         
         <div class="card">
             <h2 id="formTitle" class="text-3xl font-bold text-center mb-6 text-gray-800">Login</h2>
@@ -121,12 +142,14 @@
             <input type="text" id="emailInput" class="input-field" placeholder="Email">
             <input type="password" id="passwordInput" class="input-field" placeholder="Password">
             
+            <!-- Full Name Input (Only visible for Sign Up) -->
             <input type="text" id="nameInput" class="input-field hidden" placeholder="Full Name (for Sign Up)">
             
             <button id="authButton" class="action-button mb-4">Login</button>
 
             <div class="divider">OR</div>
 
+            <!-- Google Sign-In Button -->
             <button id="googleAuthButton" class="google-button">
                 <i class="fab fa-google google-icon"></i>
                 Continue with Google
@@ -142,6 +165,7 @@
         </div>
     </div>
 
+    <!-- Firebase SDK Imports -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { 
@@ -168,9 +192,7 @@
 
         // --- FIREBASE INITIALIZATION AND GLOBAL VARS ---
 
-        // Your specific Firebase Project ID (Used as a fallback for __app_id)
         const hardcodedAppId = 'travelassistant-1baed';
-        // Your specific Firebase Configuration (Used as a fallback for __firebase_config)
         const hardcodedFirebaseConfig = {
             apiKey: "AIzaSyDtkaHB2ER0RAOpsbW-Eg65wSe7G4Uwrkw",
             authDomain: "travelassistant-1baed.firebaseapp.com",
@@ -190,7 +212,7 @@
         const googleProvider = new GoogleAuthProvider();
 
         if (!firebaseConfig) {
-            displayMessage("Firebase config missing. Cannot initialize app.", 'error');
+            document.getElementById('loadingOverlay').textContent = "Error: Firebase configuration missing.";
             throw new Error("Firebase config missing.");
         }
 
@@ -201,11 +223,12 @@
         let isSignUp = false;
         let isProcessing = false;
 
-        // Set persistence to local to keep the user logged in
         setPersistence(auth, browserLocalPersistence);
 
 
         // --- DOM ELEMENTS ---
+        const authContainer = document.getElementById('authContainer');
+        const loadingOverlay = document.getElementById('loadingOverlay');
         const formTitle = document.getElementById('formTitle');
         const emailInput = document.getElementById('emailInput');
         const passwordInput = document.getElementById('passwordInput');
@@ -233,13 +256,24 @@
             toggleFormBtn.textContent = isSignUp ? 'Login' : 'Sign Up';
             nameInput.classList.toggle('hidden', !isSignUp);
             
-            // Clear any previous messages
             messageBox.classList.add('hidden');
         }
         
         function navigateToHome() {
             window.location.href = 'index.html'; 
         }
+
+        function showLoginForm() {
+            loadingOverlay.classList.add('hidden');
+            authContainer.classList.remove('hidden');
+        }
+        
+        function showLoading() {
+            loadingOverlay.classList.remove('hidden');
+            authContainer.classList.add('hidden');
+            loadingOverlay.textContent = "Connecting to service...";
+        }
+
 
         // --- FIREBASE LOGIC ---
 
@@ -249,11 +283,10 @@
             const dataToSave = {
                 uid: user.uid,
                 email: user.email,
-                name: fullName,
+                name: fullName || user.displayName || 'User', // Use display name for Google login if fullName is null
                 createdAt: new Date().toISOString()
             };
 
-            // Use setDoc to create or overwrite the user profile
             await setDoc(userDocRef, dataToSave, { merge: true }); 
         }
 
@@ -263,16 +296,17 @@
             isProcessing = true;
             googleAuthButton.textContent = 'Connecting...';
             messageBox.classList.add('hidden');
+            showLoading();
 
             try {
                 const result = await signInWithPopup(auth, googleProvider);
                 const user = result.user;
                 
-                // Save user profile data (name, email) from Google to Firestore
-                await saveUserToFirestore(user, user.displayName || 'User'); 
+                // CRITICAL: Await the Firestore save to prevent "Access Denied" race condition
+                await saveUserToFirestore(user, user.displayName); 
 
-                displayMessage('Signed in with Google!', 'success');
-                setTimeout(navigateToHome, 1000); 
+                loadingOverlay.textContent = "Sign in successful. Redirecting...";
+                setTimeout(navigateToHome, 500); // Slight delay after save
 
             } catch (error) {
                 console.error("Google Auth Error:", error);
@@ -283,6 +317,8 @@
                 } else if (error.code) {
                     errorMessage = `Error: ${error.code.replace('auth/', '')}`;
                 }
+                
+                showLoginForm(); // Show the form again
                 displayMessage(errorMessage, 'error');
 
             } finally {
@@ -322,7 +358,6 @@
                     displayMessage('Login successful!', 'success');
                 }
                 
-                // A short delay before navigating away
                 setTimeout(navigateToHome, 1000); 
 
             } catch (error) {
@@ -353,12 +388,13 @@
             }
         }
         
-        // --- INITIAL AUTH CHECK AND CUSTOM TOKEN SIGN-IN ---
+        // --- INITIAL AUTH CHECK ---
         
         onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // User is signed in, navigate to home (index.html)
-                console.log("User already signed in. Redirecting...");
+            // This is the first and primary check
+            if (user && !user.isAnonymous) {
+                // User is signed in (either persisted or just logged in via Google/Email)
+                console.log("User signed in. Redirecting...");
                 navigateToHome();
             } else if (initialAuthToken) {
                 // If a token is provided by the environment, use it to sign in
@@ -366,18 +402,15 @@
                     console.log("Signed in with custom token. Redirecting...");
                     navigateToHome();
                 }).catch(error => {
-                    console.error("Error signing in with custom token:", error);
-                    // Continue to show login screen if custom token fails
+                    console.warn("Custom token sign-in failed, showing login form:", error);
+                    showLoginForm();
                 });
             } else {
-                // If no user and no token, sign in anonymously (required by security rules)
-                signInAnonymously(auth).then(() => {
-                    console.log("Signed in anonymously. Showing login form.");
-                    // After anonymous sign-in, the form is shown for a real login/signup
-                }).catch(error => {
-                    console.error("Error signing in anonymously:", error);
-                    displayMessage("Could not connect to authentication service.", 'error');
-                });
+                // No current user and no token provided: Show the login form.
+                // We SKIP signInAnonymously here to prevent unnecessary console messages/errors 
+                // since the user can successfully log in with Google/Email anyway.
+                console.log("No user found. Showing login form.");
+                showLoginForm();
             }
         });
         
