@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lottie Web Player for JSON animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.10.2/lottie.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7b949; /* Primary app color background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 20px;
+        }
+        .intro-container {
+            max-width: 400px;
+            padding: 30px;
+            animation: fadeIn 1.5s ease-out;
+        }
+        /* Style for the Lottie container */
+        #lottie-container {
+            width: 250px; /* Adjust size as needed */
+            height: 250px; /* Adjust size as needed */
+            margin: 0 auto 20px;
+        }
+        h1 {
+            /* Increased font size to 3rem and ensured font-weight is 900 (Extra Bold) */
+            font-size: 10px; 
+            font-weight: bolder; 
+            color: #333;
+            margin-bottom: 10px;
+            line-height: 1.1; /* Improved readability for large text */
+        }
+        p {
+            font-size: 1.1rem;
+            color: #000000;
+            margin-bottom: 40px;
+            font-weight: 500;
+        }
+        .action-button {
+            padding: 15px 30px;
+            border-radius: 10px; /* Pill shape */
+            width: 100%;
+            font-weight: 700;
+            color: black;
+            background-color: #07a2a2; /* A nice blue for the CTA */
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        .action-button:hover {
+            background-color: #1e40af;
+            transform: translateY(-2px);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="intro-container">
+        <!-- Container for the Lottie Animation -->
+        <div id="lottie-container"></div>
+        <br>
+        
+        <h1 style="font-size: xx-large; font-weight: bolder;">Welcome to <br> Travel Assistant</h1>
+        <br>
+        <p>Plan every detail of your journey with our all-in-one travel assistant. Ready to explore?</p>
+        <br><br>
+        <button class="action-button" onclick="window.location.href='login.html'">
+            Get Started
+        </button>
+    </div>
+
+    <script>
+        window.onload = function() {
+            // Initialize Lottie player
+            lottie.loadAnimation({
+                container: document.getElementById('lottie-container'), // The DOM element to render the animation
+                renderer: 'svg', // Use 'svg' for best quality and performance
+                loop: true,
+                autoplay: true,
+                // IMPORTANT: Replace 'travel_animation.json' with the actual file path or URL for your JSON animation file.
+                path: 'travel_animation.json'
+            });
+        };
+    </script>
+</body>
+</html>
