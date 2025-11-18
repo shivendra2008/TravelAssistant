@@ -29,30 +29,30 @@
 
         <main class="main-content">
             <section class="quick-links">
-                <h3>Quick links</h3>
-                <div class="links-grid">
-                    <div class="link-item">
-                        <div class="link-icon"><i class="fas fa-sun"></i></div>
-                        <span>Weather</span>
-                    </div>
-                    <div class="link-item">
-                        <div class="link-icon"><i class="fas fa-plane"></i></div>
-                        <span>Flights</span>
-                    </div>
-                    <div class="link-item">
-                        <div class="link-icon"><i class="fas fa-train"></i></div>
-                        <span>Trains</span>
-                    </div>
-                    <div class="link-item">
-                        <div class="link-icon"><i class="fas fa-bus"></i></div>
-                        <span>Bus</span>
-                    </div>
-                    <div class="link-item">
-                        <div class="link-icon"><i class="fas fa-hotel"></i></div>
-                        <span>Hotel</span>
-                    </div>
-                </div>
-            </section>
+    <h3>Quick links</h3>
+    <div class="links-grid">
+        <div class="link-item" data-file="weather.html">
+            <div class="link-icon"><i class="fas fa-sun"></i></div>
+            <span>Weather</span>
+        </div>
+        <div class="link-item" data-file="flights.html">
+            <div class="link-icon"><i class="fas fa-plane"></i></div>
+            <span>Flights</span>
+        </div>
+        <div class="link-item" data-file="trains.html">
+            <div class="link-icon"><i class="fas fa-train"></i></div>
+            <span>Trains</span>
+        </div>
+        <div class="link-item" data-file="bus.html">
+            <div class="link-icon"><i class="fas fa-bus"></i></div>
+            <span>Bus</span>
+        </div>
+        <div class="link-item" data-file="hotels.html">
+            <div class="link-icon"><i class="fas fa-hotel"></i></div>
+            <span>Hotel</span>
+        </div>
+    </div>
+</section>
 
             <section class="also-check">
                 <h3>Also check</h3>
@@ -88,6 +88,17 @@
             } else {
                 alert("Please enter a city name to search.");
             }
+        });
+        document.querySelectorAll('.links-grid .link-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // Read the data-file attribute which holds the new page name
+                const targetFile = this.getAttribute('data-file');
+
+                if (targetFile) {
+                    // Redirects directly to the separate HTML file
+                    window.location.href = targetFile;
+                }
+            });
         });
 
         // Allows 'Enter' key to also trigger the search

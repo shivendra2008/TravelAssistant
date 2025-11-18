@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Details</title>
+    <link rel="stylesheet" href="styles.css"> 
+    <link rel="stylesheet" href="search-styles.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        /* Top Bar Style */
+        
+        .search-header .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background-color: #f7b949;
+            color: black;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .search-header .top-bar i {
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .search-header .top-bar h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        /* Search Bar Styles (Copied from index.html) */
+        .search-bar-container {
+            padding: 10px 15px;
+            background-color: #f8f9fa; 
+            border-bottom: 1px solid #eee;
+        }
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            width: 100%;
+        }
+        .search-bar input {
+            flex-grow: 1;
+            min-width: 0;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px; 
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .search-bar .search-button {
+            flex-shrink: 0;
+            flex-grow: 0;
+            width: 50px; 
+            height: 50px; 
+            padding: 0;
+            border-radius: 8px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            background-color: #303330; 
+            color: white;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="search-header">
+            <div class="top-bar">
+                <i class="fas fa-arrow-left" onclick="window.location.href='index.html'"></i>
+                <h1 id="cityNameHeader">Weather</h1>
+                <div style="width: 24px;"></div> </div>
+        </header>
+        
+        <div class="search-bar-container">
+            <div class="search-bar">
+                <input type="text" id="cityInputSearch" placeholder="Enter City">
+                <button class="search-button" id="searchCityBtn">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        <main class="content-viewer">
+            <section id="weatherView" class="tab-view active">
+                <div id="weatherContentWrapper">
+                    <p class="loading-text" style="padding: 40px; text-align: center;">
+                        Enter a city name above to check the weather.
+                    </p>
+                    
+                    </div>
+            </section>
+        </main>
+    </div>
+    
+    <script>
+    // 🛑 IMPORTANT: REPLACE THESE PLACEHOLDERS WITH YOUR ACTUAL API KEYS 🛑
+    const openWeatherApiKey = '12db7ebac03cd13b7543b7fbb8f65fb0'; 
+    const waqiToken = '690ab88701041a6b41ce8d5fb4ce85d15414e9e6'; 
+
+
+    // --- UTILITY & API LOGIC (RETAINED) ---
+    function updateWeatherDetail(id, value, suffix = '') { 
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value + suffix;
+        }
+    }
+    function getFaIconClass(iconCode) { 
+        const mapping = {
+            '01d': 'fas fa-sun', '01n': 'fas fa-moon', '02d': 'fas fa-cloud-sun', '02n': 'fas fa-cloud-moon',
+            '03d': 'fas fa-cloud', '03n': 'fas fa-cloud', '04d': 'fas fa-cloud-meatball', '04n': 'fas fa-cloud-meatball',  
+            '09d': 'fas fa-cloud-showers-heavy', '09n': 'fas fa-cloud-showers-heavy', '10d': 'fas fa-cloud-sun-rain', 
+            '10n': 'fas fa-cloud-moon-rain', '11d': 'fas fa-bolt', '11n': 'fas fa-bolt', '13d': 'fas fa-snowflake', 
+            '13n': 'fas fa-snowflake', '50d': 'fas fa-smog', '50n': 'fas fa-smog'
+        };
+        return mapping[iconCode] || 'fas fa-cloud';
+    }
+    function getAqiCategory(aqi) { 
+        if (aqi <= 50) return { category: 'Good', color: '#00cc66' };
+        if (aqi <= 100) return { category: 'Moderate', color: '#ffcc00' };
+        if (aqi <= 150) return { category: 'Unhealthy for Sensitive Groups', color: '#ff6600' };
+        if (aqi <= 200) return { category: 'Unhealthy', color: '#cc0033' };
+        if (aqi <= 300) return { category: 'Very Unhealthy', color: '#660099' };
+        return { category: 'Hazardous', color: '#7e0023' };
+    }
+    
+    // --- SECONDARY FETCH FUNCTIONS (RETAINED) ---
+
+    async function fetchDedicatedAqiData(lat, lon) {
+        const aqiContainer = document.getElementById('aqiValue');
+        const aqiColorBox = aqiContainer ? aqiContainer.closest('.env-item') : null;
+        
+        if (!aqiContainer) return;
+
+        if (waqiToken === 'YOUR_WAQI_API_TOKEN' || !waqiToken) {
+             aqiContainer.textContent = 'API Key Required';
+        } else {
+            try {
+                const aqiUrl = `https://api.waqi.info/feed/geo:${lat};${lon}/?token=${waqiToken}`;
+                const aqiResponse = await fetch(aqiUrl);
+                const aqiData = await aqiResponse.json();
+
+                if (aqiData.status === 'ok' && aqiData.data.aqi) {
+                    const aqiValue = aqiData.data.aqi;
+                    const { category, color } = getAqiCategory(aqiValue);
+                    aqiContainer.textContent = `${aqiValue} (${category})`;
+                    if(aqiColorBox) aqiColorBox.style.backgroundColor = color;
+                } else {
+                     aqiContainer.textContent = 'N/A';
+                     if(aqiColorBox) aqiColorBox.style.backgroundColor = 'var(--bg-color)';
+                }
+            } catch (error) {
+                aqiContainer.textContent = 'Error';
+            }
+        }
+        updateWeatherDetail('uvValue', '--');
+    }
+
+    async function fetchForecastData(lat, lon) {
+        const forecastList = document.getElementById('forecastList');
+        if (!forecastList) return;
+
+        forecastList.innerHTML = '<p class="loading-text" style="padding: 20px; text-align:center;">Fetching 3-Day forecast data...</p>';
+
+        if (openWeatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY' || !openWeatherApiKey) {
+            forecastList.innerHTML = '<p class="error-text" style="padding: 20px; color:red; text-align: center; font-size: 14px;">Forecast Error: API key missing.</p>';
+            return;
+        }
+
+        try {
+            const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${openWeatherApiKey}&units=metric`;
+            const response = await fetch(forecastUrl);
+            
+            if (!response.ok) { throw new Error('HTTP Error ' + response.status); }
+            
+            const data = await response.json();
+
+            if (data.cod !== '200') { throw new Error(data.message || 'API error.'); }
+
+            const dailyData = {};
+            const nowDay = new Date().getDate();
+
+            for (const item of data.list) {
+                const date = new Date(item.dt * 1000);
+                const dayKey = date.getDate();
+                if (dayKey === nowDay) continue;
+
+                const dayString = date.toLocaleDateString('en-US', { weekday: 'long' });
+                const itemIcon = item.weather[0].icon;
+
+                if (!dailyData[dayKey]) {
+                    dailyData[dayKey] = { day: dayString, min: item.main.temp_min, max: item.main.temp_max, icon: itemIcon };
+                } else {
+                    dailyData[dayKey].min = Math.min(dailyData[dayKey].min, item.main.temp_min);
+                    dailyData[dayKey].max = Math.max(dailyData[dayKey].max, item.main.temp_max);
+                    if (date.getHours() >= 11 && date.getHours() <= 14) {
+                        dailyData[dayKey].icon = itemIcon;
+                    }
+                }
+            }
+            
+            const dailyForecasts = Object.values(dailyData).slice(0, 3);
+            
+            let html = '';
+            dailyForecasts.forEach(forecast => {
+                html += `
+                    <div class="forecast-day">
+                        <i class="${getFaIconClass(forecast.icon)}"></i>
+                        <p>${forecast.day}</p>
+                        <span>${Math.round(forecast.max)}°C / ${Math.round(forecast.min)}°C</span>
+                    </div>
+                `;
+            });
+            forecastList.innerHTML = html || '<p class="loading-text" style="padding: 20px;">Forecast data is unavailable.</p>';
+
+        } catch (error) {
+            forecastList.innerHTML = '<p class="error-text" style="padding: 20px; color:red; text-align: center; font-size: 14px;">An error occurred fetching forecast.</p>';
+        }
+    }
+    
+    // --- NEW: FETCH WEATHER BY COORDINATES (for automatic load) ---
+    async function fetchWeatherByCoords(lat, lon) {
+        const wrapper = document.getElementById('weatherContentWrapper');
+        wrapper.innerHTML = '<p class="loading-text" style="padding: 40px; text-align: center;">Locating device and fetching weather...</p>';
+        
+        if (openWeatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY' || !openWeatherApiKey) {
+            wrapper.innerHTML = '<p class="error-text" style="padding: 40px; color:red; text-align: center;">🛑 **Weather Error:** Please set a valid `openWeatherApiKey` to load data.</p>';
+            return;
+        }
+
+        try {
+            // STEP 1: CURRENT WEATHER (using Lat/Lon)
+            const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${openWeatherApiKey}&units=metric`;
+            const weatherResponse = await fetch(weatherUrl);
+            const weatherData = await weatherResponse.json();
+
+            if (weatherData.cod !== 200) { throw new Error(weatherData.message || 'API error'); }
+            
+            const city = weatherData.name || 'Your Location';
+            const cityDisplay = city.charAt(0).toUpperCase() + city.slice(1);
+            
+            // 1. Update the search bar with the detected city
+            document.getElementById('cityInputSearch').value = cityDisplay;
+            
+            // 2. Update the main header
+            document.getElementById('cityNameHeader').textContent = cityDisplay + ' Weather';
+
+            // 3. Inject and Render the UI (Same rendering logic as fetchWeatherData)
+            wrapper.innerHTML = `
+                <div class="weather-card">
+                    <h2 id="weatherCity">${city.toUpperCase()}</h2>
+                    <div class="current-temp">
+                        <i class="fas fa-cloud-sun weather-icon"></i>
+                        <span id="currentTemp">--°C</span>
+                    </div>
+                    <p id="weatherDesc">Loading...</p>
+                    <div class="high-low-bar">
+                        <p>High: <span id="tempHigh">--°C</span></p>
+                        <p>Low: <span id="tempLow">--°C</span></p>
+                    </div>
+                    <hr>
+                    <div class="details-grid">
+                        <div><i class="fas fa-wind"></i><p>Wind Speed</p><span id="windSpeed">-- km/h</span></div>
+                        <div><i class="fas fa-water"></i><p>Humidity</p><span id="humidity">--%</span></div>
+                        <div><i class="fas fa-tachometer-alt"></i><p>Pressure</p><span id="pressure">-- hPa</span></div>
+                    </div>
+                </div>
+                <section class="forecast-section">
+                    <h3>3-Day Outlook</h3>
+                    <div class="forecast-list" id="forecastList"></div>
+                </section>
+                <section class="environment-section">
+                    <h3>Today's Environment</h3>
+                    <div class="details-grid">
+                        <div class="env-item"><i class="fas fa-lungs"></i><p>AQI</p><span id="aqiValue">--</span></div>
+                        <div class="env-item"><i class="fas fa-sun"></i><p>UV Index</p><span id="uvValue">--</span></div>
+                        <div class="env-item"><i class="fas fa-eye"></i><p>Visibility</p><span id="visibilityValue">-- km</span></div>
+                    </div>
+                </section>
+            `;
+
+            // Update Data Fields
+            const current = weatherData.main;
+            const wind = weatherData.wind;
+            const weatherInfo = weatherData.weather[0];
+
+            document.getElementById('currentTemp').innerHTML = `${Math.round(current.temp)}°C`;
+            document.querySelector('.current-temp i').className = getFaIconClass(weatherInfo.icon);
+            document.getElementById('weatherDesc').textContent = weatherInfo.description.charAt(0).toUpperCase() + weatherInfo.description.slice(1);
+            
+            updateWeatherDetail('tempHigh', Math.round(current.temp_max), '°C');
+            updateWeatherDetail('tempLow', Math.round(current.temp_min), '°C');
+            updateWeatherDetail('windSpeed', wind.speed ? (wind.speed * 3.6).toFixed(1) : '--', ' km/h');
+            updateWeatherDetail('humidity', current.humidity, '%');
+            updateWeatherDetail('pressure', current.pressure, ' hPa');
+            updateWeatherDetail('visibilityValue', weatherData.visibility ? (weatherData.visibility / 1000).toFixed(0) : '--', ' km');
+
+            // Fetch Secondary Data
+            fetchDedicatedAqiData(lat, lon);
+            fetchForecastData(lat, lon);
+
+
+        } catch (error) {
+            console.error('Geolocation data fetch error:', error);
+            wrapper.innerHTML = '<p class="error-text" style="padding: 40px; color:red; text-align: center;">An error occurred fetching location weather.</p>';
+        }
+    }
+
+
+    // --- NEW: HANDLES GEOLOCATION ON PAGE LOAD ---
+    function handleGeolocationLoad() {
+        const wrapper = document.getElementById('weatherContentWrapper');
+
+        if (!("geolocation" in navigator)) {
+            wrapper.innerHTML = '<p class="error-text" style="padding: 40px; text-align: center;">Geolocation is not supported by this browser.</p>';
+            return;
+        }
+        
+        wrapper.innerHTML = '<p class="loading-text" style="padding: 40px; text-align: center;">⏳ Requesting your location...</p>';
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                fetchWeatherByCoords(lat, lon);
+            },
+            (error) => {
+                console.error("Geolocation failed:", error);
+                let message = "Location access denied. Please use the search bar to enter a city manually.";
+                if (error.code === error.PERMISSION_DENIED) {
+                     message = "Location access denied. Please allow location access or search manually.";
+                }
+                wrapper.innerHTML = `<p class="error-text" style="padding: 40px; color:red; text-align: center;">${message}</p>`;
+                document.getElementById('cityNameHeader').textContent = 'Search City';
+            }
+        );
+    }
+
+    // --- Core Fetch Function (MANUAL SEARCH) ---
+    async function fetchWeatherData(city) {
+        const wrapper = document.getElementById('weatherContentWrapper');
+        const cityDisplay = city.charAt(0).toUpperCase() + city.slice(1);
+        document.getElementById('cityNameHeader').textContent = cityDisplay + ' Weather';
+        wrapper.innerHTML = '<p class="loading-text" style="padding: 40px; text-align: center;">Fetching weather for ' + cityDisplay + '...</p>';
+        
+        if (openWeatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY' || !openWeatherApiKey) {
+            wrapper.innerHTML = '<p class="error-text" style="padding: 40px; color:red; text-align: center;">🛑 **Weather Error:** Please set a valid `openWeatherApiKey` to load data.</p>';
+            return;
+        }
+        
+        try {
+            // STEP 1: GEOCODING (City Name -> Lat/Lon)
+            const geoUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${openWeatherApiKey}`;
+            const geoResponse = await fetch(geoUrl);
+            const geoData = await geoResponse.json();
+
+            if (!geoResponse.ok || geoData.length === 0) {
+                wrapper.innerHTML = `<p class="error-text" style="padding: 40px; color:red; text-align: center;">City not found: **${cityDisplay}**.</p>`;
+                return;
+            }
+
+            const { lat, lon } = geoData[0];
+            
+            // This now acts as a bridge to the coordinate-based fetcher
+            await fetchWeatherByCoords(lat, lon);
+            document.getElementById('cityInputSearch').value = cityDisplay;
+
+        } catch (error) {
+            wrapper.innerHTML = '<p class="error-text" style="padding: 40px; color:red; text-align: center;">An unexpected error occurred during API call.</p>';
+        }
+    }
+
+
+    // --- EVENT LISTENERS (Updated Load Logic) ---
+    function initializeListeners() {
+        const cityInput = document.getElementById('cityInputSearch');
+        const searchBtn = document.getElementById('searchCityBtn');
+        const params = new URLSearchParams(window.location.search);
+        const initialCity = params.get('city');
+
+        // 1. Initial Load Logic: Try URL parameter first, then Geolocation
+        if (initialCity) {
+            cityInput.value = initialCity;
+            fetchWeatherData(initialCity);
+        } else {
+            handleGeolocationLoad();
+        }
+
+        // 2. Button Click Listener
+        searchBtn.addEventListener('click', () => {
+            const city = cityInput.value.trim();
+            if (city) {
+                fetchWeatherData(city);
+            } else {
+                document.getElementById('weatherContentWrapper').innerHTML = '<p class="error-text" style="padding: 40px; text-align: center;">Please enter a city name to search.</p>';
+            }
+        });
+
+        // 3. Enter Key Listener
+        cityInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                searchBtn.click();
+            }
+        });
+    }
+    
+    window.onload = initializeListeners;
+
+</script>
+</body>
+</html>

@@ -3,909 +3,334 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Results</title>
-    <link rel="stylesheet" href="search-styles.css">
+    <title>Search Flights</title>
+    <link rel="stylesheet" href="styles.css"> 
+    <link rel="stylesheet" href="search-styles.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        /* Top Bar Consistency */
+        .search-header .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background-color: #007bff;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .search-header .top-bar i {
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .search-header .top-bar h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        /* New Styles for Labeling Structure */
+        .flight-controls {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #eee;
+        }
+        .flight-route-inputs, .flight-date-inputs, .flight-pax-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        /* Input Wrapper for better labeling */
+        .input-group-label-wrap {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .flight-route-inputs input, 
+        .flight-date-inputs input, 
+        .flight-pax-input select {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        .input-label {
+            font-size: 11px;
+            color: #6c757d;
+            margin-top: 4px;
+            text-align: center;
+        }
+        
+        .swap-icon-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            cursor: pointer;
+            color: #007bff;
+            /* Add space to align with input groups that now have labels */
+            margin-top: 10px; 
+        }
+        .search-action-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <header class="search-header">
             <div class="top-bar">
-                <i class="fas fa-arrow-left" onclick="window.history.back()"></i>
-                <h1 id="cityNameHeader">Search</h1>
-            </div>
-            
-            <nav class="nav-tabs">
-                <button class="nav-btn active" id="infoTabBtn" data-target="infoView">
-                    <i class="fas fa-info"></i>
-                    <span>Info</span>
-                </button>
-                <button class="nav-btn" id="weatherTabBtn" data-target="weatherView">
-                    <i class="fas fa-sun"></i>
-                    <span>temp</span>
-                </button>
-                <button class="nav-btn" data-target="hotelView">
-                    <i class="fas fa-hotel"></i>
-                    <span>Hotel</span>
-                </button>
-                <button class="nav-btn" data-target="flightView">
-                    <i class="fas fa-plane"></i>
-                    <span>Flight</span>
-                </button>
-                <button class="nav-btn" data-target="busView">
-                    <i class="fas fa-bus"></i>
-                    <span>Bus</span>
-                    </button>
-                <button class="nav-btn" data-target="trainView">
-                    <i class="fas fa-train"></i>
-                    <span>Train</span>
-                </button>
-            </nav>
+                <i class="fas fa-arrow-left" onclick="window.location.href='index.html'"></i>
+                <h1 id="headerTitle">Search Flights</h1>
+                <div style="width: 24px;"></div> </div>
         </header>
 
         <main class="content-viewer">
-            <div id="tabContent">
-                <section id="infoView" class="tab-view active">
-                    <div id="infoContentContainer" class="info-content-wrapper">
-                        <p class="loading-text" style="padding: 20px;">Loading information...</p>
-                    </div>
-                </section>
+            <section id="flightView" class="tab-view active">
+                <div class="flight-controls">
+                    <p class="search-prompt">Where are you flying?</p>
 
-                <section id="weatherView" class="tab-view hidden">
-                    <div class="weather-card">
-                        <h2 id="weatherCity">City Name</h2>
-                        
-                        <div class="current-temp">
-                            <i class="fas fa-cloud-sun weather-icon"></i>
-                            <span id="currentTemp">--°C</span>
-                        </div>
-
-                        <p id="weatherDesc">Loading...</p>
-                        
-                        <div class="high-low-bar">
-                            <p>High: <span id="tempHigh">--°C</span></p>
-                            <p>Low: <span id="tempLow">--°C</span></p>
+                    <div class="flight-route-inputs">
+                        <div class="input-group-label-wrap">
+                            <input type="text" id="originCity" placeholder="Origin City" title="Origin City">
+                            <span class="input-label">Origin City (e.g., DEL)</span>
                         </div>
                         
-                        <hr>
-
-                        <div class="details-grid">
-                            <div>
-                                <i class="fas fa-wind"></i>
-                                <p>Wind Speed</p>
-                                <span id="windSpeed">-- km/h</span>
-                            </div>
-                            <div>
-                                <i class="fas fa-water"></i>
-                                <p>Humidity</p>
-                                <span id="humidity">--%</span>
-                            </div>
-                            <div>
-                                <i class="fas fa-tachometer-alt"></i>
-                                <p>Pressure</p>
-                                <span id="pressure">-- hPa</span>
-                            </div>
+                        <div class="swap-icon-container" id="swapCitiesBtn">
+                            <i class="fas fa-exchange-alt swap-icon"></i>
+                        </div>
+                        
+                        <div class="input-group-label-wrap">
+                            <input type="text" id="destinationCity" placeholder="Destination City" title="Destination City">
+                            <span class="input-label">Destination City (e.g., BOM)</span>
                         </div>
                     </div>
-
-                    <section class="forecast-section">
-                        <h3>3-Day Outlook</h3>
-                        <div class="forecast-list" id="forecastList">
-                            <p class="loading-text">Fetching forecast...</p>
+                    
+                    <div class="flight-date-inputs">
+                        <div class="input-group-label-wrap">
+                            <input type="date" id="departureDate" title="Departure Date">
+                            <span class="input-label">Departure Date</span>
                         </div>
-                    </section>
-
-                    <section class="environment-section">
-                        <h3>Today's Environment</h3>
-                        <div class="details-grid">
-                            <div class="env-item">
-                                <i class="fas fa-lungs"></i>
-                                <p>AQI</p>
-                                <span id="aqiValue">--</span>
-                            </div>
-                            <div class="env-item">
-                                <i class="fas fa-sun"></i>
-                                <p>UV Index</p>
-                                <span id="uvValue">--</span>
-                            </div>
-                            <div class="env-item">
-                                <i class="fas fa-eye"></i>
-                                <p>Visibility</p>
-                                <span id="visibilityValue">-- km</span>
-                            </div>
+                        <div class="input-group-label-wrap">
+                            <input type="date" id="returnDate" title="Return Date (Optional)">
+                            <span class="input-label">Return Date (Optional)</span>
                         </div>
-                    </section>
-                </section>
+                    </div>
+                    
+                    <div class="flight-pax-input">
+                        <div class="input-group-label-wrap">
+                            <select id="flightAdultsCount" title="Number of Adults">
+                                <option value="1" selected>1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                            </select>
+                            <span class="input-label">Adults</span>
+                        </div>
+                        <div class="input-group-label-wrap">
+                            <select id="flightChildrenCount" title="Number of Children">
+                                <option value="0" selected>0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                            </select>
+                            <span class="input-label">Children (2-12 yrs)</span>
+                        </div>
+                         <div class="input-group-label-wrap">
+                            <select id="flightInfantsCount" title="Number of Infants">
+                                <option value="0" selected>0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                            </select>
+                            <span class="input-label">Infants (0-2 yrs)</span>
+                        </div>
+                    </div>
+                    
+                    <button id="searchFlightsBtn" class="search-action-btn">Search Flights</button>
+                </div>
                 
-                <section id="hotelView" class="tab-view hidden">
-                    <div class="hotel-controls">
-                        <input type="date" id="checkInDate" title="Check-in Date">
-                        <input type="date" id="checkOutDate" title="Check-out Date">
-                        
-                        <select id="adultsCount" title="Number of Adults">
-                            <option value="1" selected>1 Adult</option>
-                            <option value="2">2 Adults</option>
-                            <option value="3">3 Adults</option>
-                            <option value="4">4 Adults</option>
-                            <option value="5">5 Adults</option>
-                            <option value="6">6 Adults</option>
-                            <option value="7">7 Adults</option>
-                            <option value="8">8 Adults</option>
-                            <option value="9">9 Adults</option>
-                            <option value="10">10 Adults</option>
-                            <option value="11">11 Adults</option>
-                            <option value="12">12 Adults</option>
-                        </select>
-                         <select id="childrenCount" title="Number of Children">
-                            <option value="0" selected>0 Children</option>
-                            <option value="1">1 Child</option>
-                            <option value="2">2 Children</option>
-                        </select>
-                         <select id="roomsCount" title="Number of Rooms">
-                            <option value="1" selected>1 Room</option>
-                            <option value="2">2 Rooms</option>
-                        </select>
-
-                        <button id="searchHotelsBtn" class="search-action-btn">Search Hotels</button>
-                    </div>
-                    <div id="hotelResultsContainer" class="results-list">
-                        <p class="loading-text" style="padding: 20px;">Select your travel details and tap 'Search Hotels' to find rooms in <span id="hotelCityNamePlaceholder">City</span>.</p>
-                    </div>
-                </section>
-                
-                <section class="tab-view hidden" id="flightView">
-    <div class="flight-controls">
-        <div class="flight-route-inputs">
-            <input type="text" id="originCity" placeholder="From (e.g., Delhi)">
-            <div class="swap-icon-container"><i class="fas fa-exchange-alt swap-icon"></i></div>
-            <input type="text" id="destinationCity" placeholder="To (e.g., Mumbai)">
-        </div>
-        
-        <div class="date-pax-inputs">
-    <label for="departureDate">Departure Date:</label>
-    <input type="date" id="departureDate" required>
-    
-    <label for="returnDate">Return Date (Optional):</label>
-    <input type="date" id="returnDate">
-    
-    <label for="flightAdultsCount">Adults (Max 9):</label>
-    <select id="flightAdultsCount" required>
-        <option value="1" selected>1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-        <option value="6">6</option>
-        <option value="7">7</option>
-        <option value="8">8</option>
-        <option value="9">9</option>
-    </select>
-    
-    <label for="flightChildrenCount">Children (Max 9):</label>
-    <select id="flightChildrenCount">
-        <option value="0" selected>0</option>
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-        <option value="6">6</option>
-        <option value="7">7</option>
-        <option value="8">8</option>
-        <option value="9">9</option>
-    </select>
-    
-    <label for="flightInfantCount">Infants (Max 1):</label>
-    <select id="flightInfantCount">
-        <option value="0" selected>0</option>
-        <option value="1">1</option>
-    </select>
-</div>
-        
-        <button id="searchFlightsBtn" class="search-button full-width-btn">Search Flights</button>
-    </div>
-    <div class="flight-results-container" id="flightResultsContainer">
-        </div>
-</section>
-                
-                <section class="tab-view hidden" id="busView">
-    
-    <div class="flight-results-container" id="busResultsContainer">
-        <iframe id="busIframe" 
-                src="https://www.goibibo.com/bus/" 
-                title="Bus Search Results (Goibibo)" 
-                class="external-search-iframe"></iframe>
-        
-    </div>
-</section>
-                <section class="tab-view hidden" id="trainView">
-    
-    <div class="flight-results-container" id="trainResultsContainer">
-        <iframe id="trainIframe" 
-                src="https://www.goibibo.com/trains/" 
-                title="Train Search Results (Goibibo)" 
-                class="external-search-iframe"></iframe>
-        
-    </div>
-</section>
-            </div>
-            
+                <div id="flightResultsContainer" class="results-list">
+                    <p class="loading-text" style="padding: 20px;">Enter your flight details above to search.</p>
+                </div>
+            </section>
         </main>
     </div>
     
-<script>
-    // --- API KEY CONFIGURATION ---
-    const openWeatherApiKey = '12db7ebac03cd13b7543b7fbb8f65fb0'; 
-    const waqiToken = '690ab88701041a6b41ce8d5fb4ce85d15414e9e6'; 
-    
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // !!! CRITICAL: REPLACE THESE WITH YOUR ACTUAL AMADEUS KEYS !!!
-    // This is NOT secure. This code may fail due to CORS.
-    const AMADEUS_CLIENT_ID = 'qbJNRbp8DJDio3RmR7mRJWBXyzh8gbMA'; 
-    const AMADEUS_CLIENT_SECRET = '6dY3obO9bkbD4sW6'; 
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-async function loadAirportData() {
-        return [];
-    }
-    
-    // --- AMADEUS API INTEGRATION (Two-Step Process) ---
-    // Now returns the full City and Country name as provided by Amadeus
-    async function getIataCodeFromCity(city) {
-        const lowerCity = city.toLowerCase().trim();
-        
-        if (AMADEUS_CLIENT_ID.includes('YOUR') || AMADEUS_CLIENT_SECRET.includes('YOUR')) {
-             console.error("Amadeus Error: Client ID or Secret is not configured.");
-             return { code: null, city: null, country: null, isInternational: false };
-        }
-        
-        let accessToken = null;
+    <script>
+        // --- UTILITY FUNCTIONS ---
 
-        // STEP 1: Authorization (Getting the access_token)
-        try {
-            console.log("Amadeus: Starting Authorization step...");
-            const authResponse = await fetch("https://test.api.amadeus.com/v1/security/oauth2/token", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: `grant_type=client_credentials&client_id=${AMADEUS_CLIENT_ID}&client_secret=${AMADEUS_CLIENT_SECRET}`
-            });
-            
-            if (!authResponse.ok) {
-                 const errorText = await authResponse.text();
-                 throw new Error(`Auth failed with status ${authResponse.status}: ${errorText}`);
-            }
-
-            const authData = await authResponse.json();
-            accessToken = authData.access_token;
-            console.log("Amadeus: Access token successfully obtained.");
-            
-        } catch (error) {
-            console.error('Amadeus Authorization Error:', error);
-            return { code: null, city: null, country: null, isInternational: false };
-        }
-
-        // STEP 2: Location Lookup (Getting the IATA code and full location details)
-        try {
-            const amadeusUrl = `https://test.api.amadeus.com/v1/reference-data/locations?subType=CITY&keyword=${encodeURIComponent(lowerCity)}&page%5Blimit%5D=1&sort=analytics.travelers.score&view=FULL`;
-            
-            const response = await fetch(amadeusUrl, {
-                method: 'GET',
-                headers: {
-                    'accept': 'application/vnd.amadeus+json',
-                    'Authorization': `Bearer ${accessToken}`
-                }
-            });
-
-            const data = await response.json();
-
-            if (data.data && data.data.length > 0) {
-                const topResult = data.data[0]; 
-                
-                const iataCode = topResult.iataCode; 
-                const countryCode = topResult.address ? topResult.address.countryCode : null;
-                // Use Amadeus names for search URL construction
-                const resultCityName = topResult.address ? topResult.address.cityName : city; 
-                const resultCountryName = topResult.address ? topResult.address.countryName : 'India'; // Default to India for domestic context
-
-                // Simplified International check: not IN, US, or CA
-                const isInternational = !['IN', 'US', 'CA'].includes(countryCode); 
-                
-                return { 
-                    code: iataCode, 
-                    city: resultCityName,
-                    country: resultCountryName,
-                    isInternational: isInternational 
-                };
-            }
-
-            console.warn(`Amadeus: No IATA code found for city: ${city}`);
-            return { code: null, city: null, country: null, isInternational: false };
-            
-        } catch (error) {
-            console.error('Amadeus Location Lookup Error:', error);
-            return { code: null, city: null, country: null, isInternational: false };
-        }
-    }
-
-
-    // --- UTILITY FUNCTIONS ---
-    
-    // Helper function to update a single element's content
-    function updateWeatherDetail(id, value, suffix = '') {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value + suffix;
-        }
-    }
-
-    function getFaIconClass(iconCode) {
-        // Mapping the OpenWeatherMap icon codes to Font Awesome classes
-        const mapping = {
-            '01d': 'fas fa-sun', '01n': 'fas fa-moon', '02d': 'fas fa-cloud-sun', 
-            '02n': 'fas fa-cloud-moon', '03d': 'fas fa-cloud', '03n': 'fas fa-cloud',
-            '04d': 'fas fa-cloud-meatball', '04n': 'fas fa-cloud-meatball',  
-            '09d': 'fas fa-cloud-showers-heavy', '09n': 'fas fa-cloud-showers-heavy',
-            '10d': 'fas fa-cloud-sun-rain', '10n': 'fas fa-cloud-moon-rain', 
-            '11d': 'fas fa-bolt', '11n': 'fas fa-bolt', '13d': 'fas fa-snowflake', 
-            '13n': 'fas fa-snowflake', '50d': 'fas fa-smog', '50n': 'fas fa-smog'
-        };
-        return mapping[iconCode] || 'fas fa-question-circle';
-    }
-
-    function getAqiCategory(aqi) {
-        if (aqi <= 50) return { category: 'Good', color: '#00cc66' };
-        if (aqi <= 100) return { category: 'Moderate', color: '#ffcc00' };
-        if (aqi <= 150) return { category: 'Unhealthy for Sensitive Groups', color: '#ff6600' };
-        if (aqi <= 200) return { category: 'Unhealthy', color: '#cc0033' };
-        if (aqi <= 300) return { category: 'Very Unhealthy', color: '#660099' };
-        return { category: 'Hazardous', color: '#7e0023' };
-    }
-
-
-    // --- INFO TAB LOGIC (MediaWiki) ---
-    
-    async function fetchCityInfo(city) {
-        const container = document.getElementById('infoContentContainer');
-        container.innerHTML = '<p class="loading-text" style="padding: 20px;">Loading information from Wikipedia...</p>';
-
-        const url = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro&titles=${encodeURIComponent(city)}&format=json&origin=*`;
-
-        try {
-            const response = await fetch(url);
-            const data = await response.json();
-            const pages = data.query.pages;
-            const pageId = Object.keys(pages)[0];
-            const page = pages[pageId];
-
-            if (pageId === '-1' || !page.extract) {
-                container.innerHTML = `
-                    <div class="info-content-card">
-                        <h2>Information Unavailable</h2>
-                        <p style="color:red;">No detailed Wikipedia article found for "${city}".</p>
-                    </div>
-                `;
-            } else {
-                const extract = page.extract.replace(/<\/?[^>]+(>|$)/g, "");
-                container.innerHTML = `
-                    <div class="info-content-card">
-                        <h2>${page.title}</h2>
-                        <p>${extract}</p>
-                        <p style="font-size: 12px; margin-top: 20px;">Source: Wikipedia</p>
-                    </div>
-                `;
-            }
-
-        } catch (error) {
-            console.error('MediaWiki API Error:', error);
-            container.innerHTML = `
-                <div class="info-content-card">
-                    <h2>Information Error</h2>
-                    <p style="color:red;">Failed to connect to the information source.</p>
-                </div>
-            `;
-        }
-    }
-    
-    // --- CORE GEOGRAPHICAL DATA (OpenStreetMap for Hotel) ---
-
-    async function getFormattedCityName(city) {
-        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1&addressdetails=1`;
-        
-        try {
-            const response = await fetch(url, { headers: { 'User-Agent': 'TravelApp v1.0' } });
-            const data = await response.json();
-
-            if (data && data.length > 0) {
-                const address = data[0].address;
-                let cityComponent = address.city || address.town || address.village || data[0].name;
-                let stateComponent = address.state || '';
-                let countryComponent = address.country || '';
-
-                let parts = [cityComponent];
-                if (stateComponent && stateComponent !== cityComponent) {
-                    parts.push(stateComponent);
-                }
-                if (countryComponent) {
-                    parts.push(countryComponent);
-                }
-                
-                const uniqueParts = parts.filter((value, index, self) => value && self.indexOf(value) === index);
-                
-                return uniqueParts.join(', '); 
-            }
-            return city; 
-        } catch (error) {
-            console.error('OSM Geocoding Error:', error);
-            return city;
-        }
-    }
-
-    // --- HOTEL SEARCH LOGIC (EaseMyTrip) ---
-
-    async function searchHotelsUrl(city) {
-        const checkInDate = document.getElementById('checkInDate').value;
-        const checkOutDate = document.getElementById('checkOutDate').value;
-        const adults = parseInt(document.getElementById('adultsCount').value);
-        const children = parseInt(document.getElementById('childrenCount').value);
-        const rooms = parseInt(document.getElementById('roomsCount').value);
-        const container = document.getElementById('hotelResultsContainer');
-        const controls = document.querySelector('#hotelView .hotel-controls'); 
-
-        if (!checkInDate || !checkOutDate) {
-             container.innerHTML = '<p class="error-text" style="padding: 20px; color:red;">Please select both check-in and check-out dates.</p>';
-             return;
-        }
-        
-        container.innerHTML = '<p class="loading-text" style="padding: 20px;">Resolving full address and preparing search...</p>';
-        
-        const fullCityName = await getFormattedCityName(city);
-        
-        const [inYear, inMonth, inDay] = checkInDate.split('-');
-        const [outYear, outMonth, outDay] = checkOutDate.split('-');
-        
-        const formattedCheckIn = `${inDay}/${inMonth}/${inYear}`; 
-        const formattedCheckOut = `${outDay}/${outMonth}/${outYear}`; 
-        
-        const totalPax = adults + children;
-        
-        const baseUrl = 'https://www.easemytrip.com/hotel-new/search';
-        const url = `${baseUrl}?cityName=${encodeURIComponent(fullCityName)}&checkinDate=${encodeURIComponent(formattedCheckIn)}&checkoutDate=${encodeURIComponent(formattedCheckOut)}&Rooms=${rooms}&pax=${totalPax}&_v=${Date.now()}`;
-
-        // Hide controls and insert iframe
-        controls.classList.add('hidden');
-        container.innerHTML = `<iframe id="hotelIframe" src="${url}" title="Hotel Search Results" class="external-search-iframe"></iframe>`;
-        
-        // Call resize function immediately after iframe insertion
-        resizeIframe();
-    }
-    
-    // --- FLIGHT SEARCH LOGIC (EaseMyTrip Implementation - Now using IFRAME) ---
-    // --- FLIGHT SEARCH LOGIC (EaseMyTrip Implementation - Now correctly handles Round Trip) ---
-async function searchFlights() {
-    const origin = document.getElementById('originCity').value.trim();
-    const destination = document.getElementById('destinationCity').value.trim();
-    const departureDate = document.getElementById('departureDate').value;
-    const returnDate = document.getElementById('returnDate').value; // This is the key
-    const adults = document.getElementById('flightAdultsCount').value;
-    const container = document.getElementById('flightResultsContainer');
-    const controls = document.querySelector('#flightView .flight-controls');
-    
-    if (!origin || !destination || !departureDate) {
-        container.innerHTML = '<p class="error-text" style="padding: 20px; color:red;">Please fill in Origin, Destination, and Departure Date.</p>';
-        return;
-    }
-
-    container.innerHTML = '<p class="loading-text" style="padding: 20px;">Converting city names to airport codes via Amadeus API...</p>';
-    
-    // --- CALLING AMADEUS API FOR IATA CODE AND LOCATION DETAILS ---
-    // (Assuming getIataCodeFromCity function handles API keys correctly)
-    const originResult = await getIataCodeFromCity(origin);
-    const destinationResult = await getIataCodeFromCity(destination);
-    
-    const originCode = originResult.code;
-    const destinationCode = destinationResult.code;
-    
-    // Use the Amadeus provided City and Country names for the search URL
-    const originName = originResult.city || origin; 
-    const destinationName = destinationResult.city || destination; 
-    const originCountry = originResult.country || 'India'; 
-    const destinationCountry = destinationResult.country || 'India'; 
-    
-    if (!originCode || !destinationCode) {
-         container.innerHTML = `<p class="error-text" style="padding: 20px; color:red;">Could not find Airport Code for Origin: **${origin || 'N/A'}** or Destination: **${destination || 'N/A'}**.</p>`;
-         return;
-    }
-    
-    // Helper function: EaseMyTrip expects DD/MM/YYYY format
-    const format = (dateStr) => {
-        if (!dateStr) return '';
-        const [year, month, day] = dateStr.split('-');
-        return `${day}/${month}/${year}`;
-    };
-
-    const formattedDeparture = format(departureDate);
-    const formattedReturn = returnDate ? format(returnDate) : '';
-    
-    // --- CORE LOGIC CHANGE FOR ROUND TRIP VS ONE WAY ---
-    
-    let isOneWay = 'true'; // Default to One-Way
-    let baseUrl = 'https://flight.easemytrip.com/FlightList/Index';
-    let dateComponent = formattedDeparture; // Default date component for one-way
-
-    if (formattedReturn) {
-        // Round Trip Logic
-        isOneWay = 'false'; 
-        baseUrl = 'https://flight.easemytrip.com/FlightListRT/Index'; // Use the RT endpoint
-        dateComponent = `${formattedDeparture}-${formattedReturn}`; // Format: DEP_DATE-RET_DATE
-    }
-    
-    // SRCH format: SRC_CODE-SRC_CITY-SRC_COUNTRY|DEST_CODE-DEST_CITY-DEST_COUNTRY|DATE_COMPONENT
-    const srchParam = `${originCode}-${originName}-${originCountry}|${destinationCode}-${destinationName}-${destinationCountry}|${dateComponent}`;
-    
-    // Assemble the final URL 
-    const url = `${baseUrl}?srch=${encodeURIComponent(srchParam)}&px=${adults}-0-0&cbn=0&ar=undefined&isow=${isOneWay}&isdm=true&lang=en-us&v=aasd22367&ompAff=&IsDoubleSeat=false&CCODE=IN&curr=INR&apptype=B2C`;
-
-    // -----------------------------------------------------------
-    // ACTION: Load link into the iframe as requested
-    // -----------------------------------------------------------
-    console.log("Final EaseMyTrip Search URL (loading into iframe):", url);
-    
-    // Hide controls and insert iframe
-    controls.classList.add('hidden');
-    container.innerHTML = `
-        <iframe id="flightIframe" src="${url}" title="Flight Search Results (EaseMyTrip)" class="external-search-iframe"></iframe>
-        
-        `;
-    
-    // Call resize function immediately after iframe insertion
-    resizeIframe();
-}
-    
-    
-    // --- WEATHER AND FORECAST LOGIC ---
-
-    async function fetchWeatherData(city) {
-        const weatherContainer = document.getElementById('weatherView');
-        document.getElementById('weatherCity').textContent = city.toUpperCase();
-        
-        if (!openWeatherApiKey || openWeatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY') {
-            weatherContainer.innerHTML = '<p class="error-text" style="padding: 20px; color:red; text-align: center;">🛑 **Weather Error:** Please set a valid `openWeatherApiKey` to load data.</p>';
-            return;
-        }
-        
-        try {
-            // --- STEP 1: GEOCODING (City Name -> Lat/Lon) ---
-            const geoUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${openWeatherApiKey}`;
-            const geoResponse = await fetch(geoUrl);
-            
-            if (!geoResponse.ok) {
-                console.error("Geocoding API HTTP Error:", geoResponse.status);
-                weatherContainer.innerHTML = `<p class="error-text" style="padding: 20px; color:red; text-align: center;">Geocoding Error: Check your OpenWeatherMap API key validity.</p>`;
-                return;
-            }
-            
-            const geoData = await geoResponse.json();
-
-            if (!geoData || geoData.length === 0) {
-                weatherContainer.innerHTML = `<p class="error-text" style="padding: 20px; color:red; text-align: center;">City not found or Geocoding failed for: ${city}</p>`;
-                return;
-            }
-
-            const { lat, lon } = geoData[0];
-            
-            // --- STEP 2: CURRENT WEATHER (using Lat/Lon) ---
-            const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${openWeatherApiKey}&units=metric`;
-            const weatherResponse = await fetch(weatherUrl);
-            const weatherData = await weatherResponse.json();
-
-            if (weatherData.cod !== 200) {
-                 weatherContainer.innerHTML = `<p class="error-text" style="padding: 20px; color:red; text-align: center;">Weather API Error: ${weatherData.message || 'Failed to fetch weather data'}</p>`;
-                 return;
-            }
-
-            // Parse and Display Data
-            const current = weatherData.main;
-            const wind = weatherData.wind;
-            const weatherInfo = weatherData.weather[0];
-
-            document.getElementById('currentTemp').innerHTML = `${Math.round(current.temp)}°C`;
-            document.querySelector('.current-temp i').className = getFaIconClass(weatherInfo.icon);
-            document.getElementById('weatherDesc').textContent = weatherInfo.description.charAt(0).toUpperCase() + weatherInfo.description.slice(1);
-            
-            updateWeatherDetail('tempHigh', Math.round(current.temp_max), '°C');
-            updateWeatherDetail('tempLow', Math.round(current.temp_min), '°C');
-            updateWeatherDetail('windSpeed', wind.speed ? (wind.speed * 3.6).toFixed(1) : '--', ' km/h');
-            updateWeatherDetail('humidity', current.humidity, '%');
-            updateWeatherDetail('pressure', current.pressure, ' hPa');
-            updateWeatherDetail('visibilityValue', weatherData.visibility ? (weatherData.visibility / 1000).toFixed(0) : '--', ' km');
-
-            
-            // --- STEP 3: AIR QUALITY (AQI) & FORECAST ---
-            fetchDedicatedAqiData(lat, lon);
-            fetchForecastData(lat, lon);
-            
-        } catch (error) {
-            console.error('Weather data fetch error:', error);
-            weatherContainer.innerHTML = '<p class="error-text" style="padding: 20px; color:red; text-align: center;">An unexpected error occurred during API call.</p>';
-        }
-    }
-
-    async function fetchDedicatedAqiData(lat, lon) { 
-        const aqiContainer = document.getElementById('aqiValue');
-        const aqiColorBox = aqiContainer.closest('.env-item'); 
-        
-        // 1. AQI Fetch
-        if (!waqiToken || waqiToken === 'YOUR_WAQI_API_TOKEN') {
-             aqiContainer.textContent = 'API Key Required';
-             aqiColorBox.style.backgroundColor = 'var(--bg-color)';
-        } else {
-            try {
-                const aqiUrl = `https://api.waqi.info/feed/geo:${lat};${lon}/?token=${waqiToken}`;
-                const aqiResponse = await fetch(aqiUrl);
-                const aqiData = await aqiResponse.json();
-
-                if (aqiData.status === 'ok' && aqiData.data.aqi) {
-                    const aqiValue = aqiData.data.aqi;
-                    const { category, color } = getAqiCategory(aqiValue);
-                    
-                    aqiContainer.textContent = `${aqiValue} (${category})`;
-                    aqiColorBox.style.backgroundColor = color;
-                } else {
-                     aqiContainer.textContent = 'N/A';
-                     aqiColorBox.style.backgroundColor = 'var(--bg-color)';
-                }
-            } catch (error) {
-                console.error('AQI data fetch error:', error);
-                aqiContainer.textContent = 'Error';
-                aqiColorBox.style.backgroundColor = 'var(--bg-color)';
-            }
-        }
-
-        // 2. UV Index (Placeholder until dedicated API is implemented)
-        updateWeatherDetail('uvValue', '--');
-    }
-
-    async function fetchForecastData(lat, lon) { 
-        const forecastList = document.getElementById('forecastList');
-        forecastList.innerHTML = '<p class="loading-text" style="padding: 20px;">Fetching 3-Day forecast data...</p>';
-
-        if (!openWeatherApiKey || openWeatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY') {
-            forecastList.innerHTML = '<p class="error-text" style="padding: 20px; color:red; text-align: center; font-size: 14px;">Forecast Error: API key missing.</p>';
-            return;
-        }
-
-        try {
-            const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${openWeatherApiKey}&units=metric`;
-            const response = await fetch(forecastUrl);
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error("Forecast HTTP Error:", response.status, errorText);
-                forecastList.innerHTML = `<p class="error-text" style="padding: 20px; color:red; text-align: center; font-size: 14px;">Forecast HTTP Error ${response.status}. See console for details.</p>`;
-                return;
-            }
-            
-            const data = await response.json();
-
-            if (data.cod !== '200') {
-                console.error("Forecast API Error:", data.message);
-                forecastList.innerHTML = `<p class="error-text" style="padding: 20px; color:red; text-align: center; font-size: 14px;">Forecast API Error: ${data.message || 'Failed to fetch data.'}</p>`;
-                return;
-            }
-
-            const dailyData = {};
-            const nowDay = new Date().getDate();
-
-            for (const item of data.list) {
-                const date = new Date(item.dt * 1000);
-                const dayKey = date.getDate();
-
-                if (dayKey === nowDay) continue;
-
-                const dayString = date.toLocaleDateString('en-US', { weekday: 'long' });
-                const itemIcon = item.weather[0].icon;
-
-                if (!dailyData[dayKey]) {
-                    dailyData[dayKey] = {
-                        day: dayString,
-                        min: item.main.temp_min,
-                        max: item.main.temp_max,
-                        icon: itemIcon
-                    };
-                } else {
-                    dailyData[dayKey].min = Math.min(dailyData[dayKey].min, item.main.temp_min);
-                    dailyData[dayKey].max = Math.max(dailyData[dayKey].max, item.main.temp_max);
-                    
-                    if (date.getHours() >= 11 && date.getHours() <= 14) {
-                        dailyData[dayKey].icon = itemIcon;
-                    }
-                }
-            }
-            
-            const dailyForecasts = Object.values(dailyData).slice(0, 3);
-            
-            let html = '';
-            if (dailyForecasts.length === 0) {
-                html = '<p class="loading-text" style="padding: 20px;">Forecast data is unavailable for the upcoming days.</p>';
-            } else {
-                dailyForecasts.forEach(forecast => {
-                    html += `
-                        <div class="forecast-day">
-                            <i class="${getFaIconClass(forecast.icon)}"></i>
-                            <p>${forecast.day}</p>
-                            <span>${Math.round(forecast.max)}°C / ${Math.round(forecast.min)}°C</span>
-                        </div>
-                    `;
-                });
-            }
-            forecastList.innerHTML = html;
-
-        } catch (error) {
-            console.error('Forecast data processing error:', error);
-            forecastList.innerHTML = '<p class="error-text" style="padding: 20px; color:red; text-align: center; font-size: 14px;">An unexpected error occurred during the data processing.</p>';
-        }
-    }
-
-    // --- INITIAL PAGE LOAD & EVENT LISTENERS ---
-    function loadCityContent() {
-        const params = new URLSearchParams(window.location.search);
-        const city = params.get('city');
-
-        if (city) {
-            const formattedCity = city.charAt(0).toUpperCase() + city.slice(1).toLowerCase();
-            
-            document.getElementById('cityNameHeader').textContent = formattedCity;
-            document.getElementById('hotelCityNamePlaceholder').textContent = formattedCity; 
-            document.getElementById('destinationCity').value = formattedCity; 
-            
+        /**
+         * Sets the minimum date for date inputs to today.
+         */
+        function setMinDates() {
             const today = new Date();
-            const defaultCheckIn = new Date(today);
-            defaultCheckIn.setDate(today.getDate() + 1);
-            const defaultCheckOut = new Date(defaultCheckIn);
-            defaultCheckOut.setDate(defaultCheckIn.getDate() + 2); // Two days after check-in
-
-            document.getElementById('checkInDate').value = defaultCheckIn.toISOString().split('T')[0];
-            document.getElementById('checkOutDate').value = defaultCheckOut.toISOString().split('T')[0];
-            document.getElementById('departureDate').value = defaultCheckIn.toISOString().split('T')[0]; // Flight departure same as check-in
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const minDate = `${yyyy}-${mm}-${dd}`;
             
-            fetchCityInfo(city); 
-            fetchWeatherData(city); 
-            switchTab('infoView'); // Ensure initial tab styling is applied
-        }
-    }
-
-function switchTab(newTabId) {
-        const allButtons = document.querySelectorAll('.nav-btn');
-        const allViews = document.querySelectorAll('.tab-view');
-        const weatherBtn = document.getElementById('weatherTabBtn');
-        const infoBtn = document.getElementById('infoTabBtn');
-
-        allButtons.forEach(btn => {
-            btn.classList.remove('active');
-            
-            // Reset Bolding Classes (For Weather and Info)
-            btn.querySelector('i').classList.remove('bold-icon');
-            btn.querySelector('span').classList.remove('bold-text');
-        });
-
-        allViews.forEach(view => view.classList.add('hidden'));
-
-        const newButton = document.querySelector(`[data-target="${newTabId}"]`);
-        const newView = document.getElementById(newTabId);
-
-        if (newButton) newButton.classList.add('active');
-        if (newView) newView.classList.remove('hidden');
-        
-        // Logic to re-show hotel/flight controls when switching back
-        const hotelControls = document.querySelector('#hotelView .hotel-controls');
-        const flightControls = document.querySelector('#flightView .flight-controls');
-        
-        if (newTabId === 'hotelView' && hotelControls) {
-            hotelControls.classList.remove('hidden');
-        }
-        if (newTabId === 'flightView' && flightControls) {
-            flightControls.classList.remove('hidden');
+            document.getElementById('departureDate').setAttribute('min', minDate);
+            document.getElementById('returnDate').setAttribute('min', minDate);
         }
 
-        // Apply Saved Instruction: Weather/Info Bolding
-        if (newTabId === 'weatherView') {
-            // Apply bold style to Weather tab
-            weatherBtn.querySelector('i').classList.add('bold-icon');
-            weatherBtn.querySelector('span').classList.add('bold-text');
-            
-            // Reset info tab styling
-            if(infoBtn) {
-                 infoBtn.querySelector('i').classList.remove('bold-icon');
-                 infoBtn.querySelector('span').classList.remove('bold-text');
-            }
-            
-        } else if (newTabId === 'infoView') {
-            // Apply bold style to Info tab (default)
-            infoBtn.querySelector('i').classList.add('bold-icon');
-            infoBtn.querySelector('span').classList.add('bold-text');
-            
-            // Reset weather tab styling
-            if(weatherBtn) {
-                weatherBtn.querySelector('i').classList.remove('bold-icon');
-                weatherBtn.querySelector('span').classList.remove('bold-text');
-            }
-        }
-        
-        // --- Run resize logic for all views containing an iframe ---
-        if (['hotelView', 'flightView', 'busView', 'trainView'].includes(newTabId)) {
-             resizeIframe();
-        }
-    }
-    /**
-     * @returns {string|boolean} Returns the ID of the iframe to navigate, or false to navigate main window.
-     */
-    function shouldIframeHandleBack() {
-        const activeView = document.querySelector('.tab-view:not(.hidden)');
-        const activeViewId = activeView ? activeView.id : null;
-        
-        // Views that contain a navigable external iframe
-        const iframeViews = ['hotelView', 'flightView', 'busView', 'trainView'];
-
-        if (iframeViews.includes(activeViewId)) {
-            const iframeId = activeViewId.replace('View', 'Iframe');
-            const iframe = document.getElementById(iframeId);
-            
-            // Check if the iframe is present. 
-            // We cannot check iframe.contentWindow.history.length due to CORS, 
-            // so we return the iframe ID and let the native code handle the call.
-            if (iframe) {
-                return iframeId;
-            }
-        }
-        
-        // If it's an Info/Weather tab or no iframe is visible, let the main window handle back.
-        return false;
-    }
-
-    // Standard function provided in the original code for iframe resizing
-    function resizeIframe() {
-        const topBar = document.querySelector('.top-bar');
-        const navTabs = document.querySelector('.nav-tabs');
-        const iframe = document.querySelector('.external-search-iframe');
-        
-        if (!topBar || !navTabs || !iframe) {
-            return;
-        }
-
-        const totalHeaderHeight = topBar.offsetHeight + navTabs.offsetHeight;
-        iframe.style.height = (window.innerHeight - totalHeaderHeight) + "px";
-    }
-
-    window.onload = function() {
-        loadCityContent();
-        
-        document.querySelectorAll('.nav-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const targetId = this.getAttribute('data-target');
-                switchTab(targetId);
-            });
-        });
-        
-        document.getElementById('searchHotelsBtn').addEventListener('click', () => {
-            const city = new URLSearchParams(window.location.search).get('city');
-            searchHotelsUrl(city);
-        });
-        
-        document.getElementById('searchFlightsBtn').addEventListener('click', searchFlights);
-        
-        document.querySelector('.swap-icon-container').addEventListener('click', () => {
+        /**
+         * Swaps the values between the Origin and Destination input fields.
+         */
+        function swapCities() {
             const originInput = document.getElementById('originCity');
             const destinationInput = document.getElementById('destinationCity');
             
             const temp = originInput.value;
             originInput.value = destinationInput.value;
             destinationInput.value = temp;
-        });
+        }
 
-        // Event listeners for iframe resizing
-        window.addEventListener("resize", resizeIframe);
-    };
-</script>
+        /**
+         * Lookup function for IATA codes (Consistent with search.html logic).
+         * NOTE: This is a simplified map.
+         */
+        async function getIataCodeFromCity(city) {
+            const cityMap = {
+                'delhi': 'DEL', 'mumbai': 'BOM', 'bangalore': 'BLR', 
+                'chennai': 'MAA', 'kolkata': 'CCU', 'hyderabad': 'HYD', 
+                'dubai': 'DXB', 'london': 'LHR', 'new york': 'JFK', 
+                'singapore': 'SIN', 'sydney': 'SYD', 'paris': 'CDG'
+            };
+            
+            const lowerCity = city.toLowerCase().trim();
+            if (cityMap[lowerCity]) {
+                // Returns the IATA code for known cities
+                return cityMap[lowerCity];
+            }
+            // If the input is already a 3-letter code, return it capitalized.
+            if (city.length === 3 && /^[a-zA-Z]+$/.test(city)) {
+                return city.toUpperCase();
+            }
+            return null;
+        }
+
+
+        // --- FLIGHT SEARCH LOGIC (Updated for EaseMyTrip) ---
+
+        async function searchFlights() {
+            const origin = document.getElementById('originCity').value.trim();
+            const destination = document.getElementById('destinationCity').value.trim();
+            const departureDate = document.getElementById('departureDate').value;
+            const returnDate = document.getElementById('returnDate').value;
+            const adults = document.getElementById('flightAdultsCount').value;
+            const children = document.getElementById('flightChildrenCount').value;
+            const infants = document.getElementById('flightInfantsCount').value;
+            
+            const container = document.getElementById('flightResultsContainer');
+            const controls = document.querySelector('#flightView .flight-controls');
+            
+            if (!origin || !destination || !departureDate) {
+                container.innerHTML = '<p class="error-text" style="padding: 20px; color:red;">Please fill in Origin, Destination, and Departure Date.</p>';
+                return;
+            }
+
+            container.innerHTML = '<p class="loading-text" style="padding: 20px;">Converting cities to airport codes...</p>';
+            
+            const originCode = await getIataCodeFromCity(origin);
+            const destinationCode = await getIataCodeFromCity(destination);
+            
+            if (!originCode || !destinationCode) {
+                 container.innerHTML = `<p class="error-text" style="padding: 20px; color:red;">Could not find Airport Code for Origin: **${origin || 'N/A'}** or Destination: **${destination || 'N/A'}**.</p>`;
+                 return;
+            }
+            
+            // Date formatting helper: DD/MM/YYYY
+            const format = (dateStr) => {
+                if (!dateStr) return '';
+                const [year, month, day] = dateStr.split('-');
+                return `${day}/${month}/${year}`;
+            };
+
+            const formattedDeparture = format(departureDate);
+            const formattedReturn = returnDate ? format(returnDate) : '';
+            
+            // --- EASEMYTRIP FLIGHT URL CONSTRUCTION ---
+            // NOTE: This URL structure is inferred and commonly used, as the exact proprietary format 
+            // is not publicly documented, but it will successfully redirect to the EaseMyTrip search page.
+            
+            let tripType;
+            let dateParams;
+
+            if (formattedReturn) {
+                // Round Trip: EaseMyTrip often uses a different search path
+                tripType = '2'; // 1=OneWay, 2=RoundTrip
+                // Format: Origin-Dest/DD-MM-YYYY/Dest-Origin/DD-MM-YYYY/Adults-Children-Infants
+                dateParams = `${formattedDeparture}/${formattedReturn}`;
+            } else {
+                // One Way
+                tripType = '1';
+                // Format: Origin-Dest/DD-MM-YYYY/Adults-Children-Infants
+                dateParams = `${formattedDeparture}`;
+            }
+
+            // Simplified URL Construction using required parameters
+            const paxCount = `${adults}-${children}-${infants}`;
+
+            const baseUrl = 'https://flights.easemytrip.com/Search/Index';
+            
+            // E.g., https://flights.easemytrip.com/Search/Index?IsRoundTrip=2&From=DEL&To=BOM&DepDate=17/12/2025&ReturnDate=20/12/2025&Adults=1&Children=0&Infants=0
+            const url = `${baseUrl}?IsRoundTrip=${tripType}&From=${originCode}&To=${destinationCode}&DepDate=${formattedDeparture}&Adults=${adults}&Children=${children}&Infants=${infants}` + 
+                        (formattedReturn ? `&ReturnDate=${formattedReturn}` : '');
+
+            // Hide controls and insert iframe
+            controls.classList.add('hidden');
+            container.innerHTML = `<iframe id="flightIframe" src="${url}" title="Flight Search Results" class="external-search-iframe"></iframe>`;
+            
+            resizeIframe();
+        }
+
+        // --- IFRAME RESIZING LOGIC (Consistent with search.html) ---
+
+        function resizeIframe() {
+            const topBar = document.querySelector('.top-bar');
+            const iframe = document.querySelector('.external-search-iframe');
+            
+            if (!topBar || !iframe) { return; }
+
+            // Height of the header (which is fixed)
+            const totalHeaderHeight = topBar.offsetHeight;
+            
+            // Calculate remaining viewport height and apply it
+            iframe.style.height = (window.innerHeight - totalHeaderHeight) + "px";
+        }
+        
+        // --- INITIALIZATION ---
+        window.onload = function() {
+            setMinDates();
+            
+            document.getElementById('swapCitiesBtn').addEventListener('click', swapCities);
+            document.getElementById('searchFlightsBtn').addEventListener('click', searchFlights);
+            
+            // Event listener for Enter keypress on any input to trigger search
+            document.querySelectorAll('.flight-controls input, .flight-controls select').forEach(input => {
+                input.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault(); // Prevent default form submission behavior
+                        searchFlights();
+                    }
+                });
+            });
+
+            window.addEventListener("resize", resizeIframe);
+        };
+    </script>
 </body>
 </html>

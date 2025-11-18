@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Flights</title>
+    <link rel="stylesheet" href="styles.css"> 
+    <link rel="stylesheet" href="search-styles.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        /* Top Bar Consistency */
+        .search-header .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background-color: #f7b949;
+            color: black;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .search-header .top-bar i {
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .search-header .top-bar h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        /* New Styles for Labeling Structure */
+        .flight-controls {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #eee;
+        }
+        .flight-route-inputs, .flight-date-inputs, .flight-pax-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        /* Input Wrapper for better labeling (CRUCIAL for dropdown positioning) */
+        .input-group-label-wrap {
+    position: relative; 
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; 
+    /* 🛑 FIX: Add min-width: 0 to allow flex items to shrink below their content size 🛑 */
+    min-width: 0; 
+}
+
+        .flight-route-inputs input, 
+        .flight-date-inputs input, 
+        .flight-pax-input select {
+            width: 100%; 
+    flex-grow: 1; /* Keep this */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+        }
+
+        .input-label {
+            font-size: 11px;
+            color: #6c757d;
+            margin-top: 4px;
+            text-align: center;
+        }
+        
+        .swap-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e9ecef;
+    /* 🛑 FIX: Define a small, fixed width to reserve space 🛑 */
+    min-width: 30px; 
+    max-width: 30px;
+    cursor: pointer;
+    color: #007bff;
+    margin-top: 10px; 
+}
+        .search-action-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .external-search-iframe {
+            width: 100%;
+            border: none;
+        }
+
+        /* --- DROPDOWN STYLES --- */
+        .suggestions-dropdown {
+            position: absolute;
+            top: 48px; /* Position below the input field */
+            left: 0;
+            z-index: 1000;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            border-radius: 4px;
+            display: none; /* Initially hidden */
+        }
+        .suggestion-item {
+            padding: 8px 10px;
+            cursor: pointer;
+            font-size: 14px;
+            border-bottom: 1px solid #eee;
+        }
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+        .suggestion-item:hover {
+            background-color: #e9ecef;
+        }
+        .suggestion-iata {
+            font-weight: bold;
+            color: #007bff;
+            margin-right: 5px;
+        }
+        .suggestion-city {
+            color: #333;
+        }
+        .suggestion-country {
+            color: #6c757d;
+            font-size: 12px;
+            float: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="search-header">
+            <div class="top-bar">
+                <i class="fas fa-arrow-left" onclick="window.location.href='index.html'"></i>
+                <h1 id="headerTitle">Search Flights</h1>
+                <div style="width: 24px;"></div> </div>
+        </header>
+
+        <main class="content-viewer">
+            <section id="flightView" class="tab-view active">
+                <div class="flight-controls">
+                    <p class="search-prompt">Where are you flying?</p>
+
+                    <div class="flight-route-inputs">
+                        <div class="input-group-label-wrap">
+                            <input type="text" id="originCity" placeholder="Origin City" title="Origin City">
+                            
+                            <div id="originSuggestions" class="suggestions-dropdown"></div> 
+                        </div>
+                        
+                        <div class="swap-icon-container" id="swapCitiesBtn">
+                            <i class="fas fa-exchange-alt swap-icon"></i>
+                        </div>
+                        
+                        <div class="input-group-label-wrap">
+                            <input type="text" id="destinationCity" placeholder="Destination City" title="Destination City">
+                            
+                            <div id="destinationSuggestions" class="suggestions-dropdown"></div> 
+                        </div>
+                    </div>
+                    
+                    <div class="flight-date-inputs">
+                        <div class="input-group-label-wrap">
+                            <input type="date" id="departureDate" title="Departure Date">
+                            <span class="input-label">Departure Date</span>
+                        </div>
+                        <div class="input-group-label-wrap">
+                            <input type="date" id="returnDate" title="Return Date (Optional)">
+                            <span class="input-label">Return Date (Optional)</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flight-pax-input">
+                        <div class="input-group-label-wrap">
+                            <select id="flightAdultsCount" title="Number of Adults">
+                                <option value="1" selected>1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                            </select>
+                            <span class="input-label">Adults</span>
+                        </div>
+                        <div class="input-group-label-wrap">
+                            <select id="flightChildrenCount" title="Number of Children">
+                                <option value="0" selected>0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                            </select>
+                            <span class="input-label">Children (2-12 yrs)</span>
+                        </div>
+                         <div class="input-group-label-wrap">
+                            <select id="flightInfantsCount" title="Number of Infants">
+                                <option value="0" selected>0</option>
+                                <option value="1">1</option>
+                            </select>
+                            <span class="input-label">Infants (0-2 yrs)</span>
+                        </div>
+                    </div>
+                    
+                    <button id="searchFlightsBtn" class="search-action-btn">Search Flights</button>
+                </div>
+                
+                <div id="flightResultsContainer" class="results-list">
+                    <p class="loading-text" style="padding: 20px;">Enter your flight details above to search.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script>
+        // 🛑 IMPORTANT: CONFIGURE YOUR AMADEUS API KEYS HERE 🛑
+        const AMADEUS_CLIENT_ID = 'WybaRGUnYSc4mIhgOBYDukWKMyUwUA0F';
+        const AMADEUS_CLIENT_SECRET = '5fAba2snyf6KUmWi';
+        
+        // Caching for Access Token (Amadeus only requires auth token refresh every ~30 minutes)
+        let amadeusAccessToken = null;
+        let amadeusTokenExpiry = 0;
+
+        // --- UTILITY FUNCTIONS (GLOBAL SCOPE) ---
+
+        /**
+         * Debounce utility to limit API calls on user input.
+         */
+        function debounce(func, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => {
+                    func.apply(this, args);
+                }, delay);
+            };
+        }
+
+        /**
+         * Handles Amadeus OAuth 2.0 Authorization and caches the token.
+         */
+        async function authorizeAmadeus() {
+            if (amadeusAccessToken && Date.now() < amadeusTokenExpiry) {
+                return amadeusAccessToken;
+            }
+            
+            if (AMADEUS_CLIENT_ID.includes('YOUR') || AMADEUS_CLIENT_SECRET.includes('YOUR')) {
+                console.error("Amadeus Error: Client ID or Secret is not configured.");
+                return null;
+            }
+
+            try {
+                const authResponse = await fetch("https://test.api.amadeus.com/v1/security/oauth2/token", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `grant_type=client_credentials&client_id=${AMADEUS_CLIENT_ID}&client_secret=${AMADEUS_CLIENT_SECRET}`
+                });
+                
+                if (!authResponse.ok) {
+                    throw new Error(`Auth failed with status ${authResponse.status}`);
+                }
+
+                const authData = await authResponse.json();
+                amadeusAccessToken = authData.access_token;
+                amadeusTokenExpiry = Date.now() + (authData.expires_in - 10) * 1000;
+                return amadeusAccessToken;
+                
+            } catch (error) {
+                console.error('Amadeus Authorization Error:', error);
+                return null;
+            }
+        }
+
+        /**
+         * Sets the minimum date for date inputs to today.
+         */
+        function setMinDates() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const minDate = `${yyyy}-${mm}-${dd}`;
+            
+            document.getElementById('departureDate').setAttribute('min', minDate);
+            document.getElementById('returnDate').setAttribute('min', minDate);
+        }
+
+        /**
+         * Swaps the values between the Origin and Destination input fields.
+         */
+        function swapCities() {
+            const originInput = document.getElementById('originCity');
+            const destinationInput = document.getElementById('destinationCity');
+            
+            const temp = originInput.value;
+            originInput.value = destinationInput.value;
+            destinationInput.value = temp;
+        }
+        
+        /**
+         * Hides all suggestion dropdowns. (FIXED SCOPE: Global)
+         */
+        function hideSuggestions() {
+            document.getElementById('originSuggestions').style.display = 'none';
+            document.getElementById('destinationSuggestions').style.display = 'none';
+        }
+
+        /**
+         * Fetches location suggestions (City/Airport) and filters them for relevance.
+         */
+        async function fetchSuggestions(query, dropdownElement) {
+            dropdownElement.innerHTML = '';
+            dropdownElement.style.display = 'none';
+
+            if (query.length < 3) return;
+
+            const token = await authorizeAmadeus();
+            if (!token) {
+                 dropdownElement.innerHTML = '<div class="suggestion-item" style="color:red;">Authorization Failed. Check API Keys.</div>';
+                 dropdownElement.style.display = 'block';
+                 return;
+            }
+
+            try {
+                // FIXED ENDPOINT: Search for CITY and AIRPORT with correct paging parameter
+                const amadeusUrl = `https://test.api.amadeus.com/v1/reference-data/locations?subType=CITY,AIRPORT&keyword=${encodeURIComponent(query)}&page%5Blimit%5D=10&view=FULL`;
+                
+                const response = await fetch(amadeusUrl, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) {
+                    const errorDetails = await response.text();
+                    console.error('Amadeus Suggestion API HTTP Error:', response.status, errorDetails);
+                    throw new Error(`API call failed with status ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                const suggestedIataCodes = new Set();
+                
+                if (data.data && data.data.length > 0) {
+                    data.data.forEach(item => {
+                        // Filter out duplicates (e.g., Delhi, New Delhi) and non-city/airport types
+                        if (suggestedIataCodes.has(item.iataCode) || item.subType === 'OTHER') {
+                            return; 
+                        }
+
+                        // Robust Data Parsing
+                        const city = item?.address?.cityName || item.name || 'N/A City';
+                        const country = item?.address?.countryName || 'N/A Country';
+                        const iata = item.iataCode;
+                        
+                        // Add to set to prevent future duplicates
+                        suggestedIataCodes.add(iata); 
+
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'suggestion-item';
+                        itemDiv.innerHTML = `<span class="suggestion-iata">${iata}</span> <span class="suggestion-city">${city}</span> <span class="suggestion-country">${country}</span>`;
+                        
+                        // Store the data required for final search
+                        itemDiv.dataset.iata = iata;
+                        itemDiv.dataset.city = city;
+                        itemDiv.dataset.country = country;
+                        
+                        dropdownElement.appendChild(itemDiv);
+                    });
+                    
+                    if (dropdownElement.children.length > 0) {
+                        dropdownElement.style.display = 'block';
+                    } else {
+                        dropdownElement.innerHTML = '<div class="suggestion-item">No relevant results found.</div>';
+                        dropdownElement.style.display = 'block';
+                    }
+
+                } else {
+                    dropdownElement.innerHTML = '<div class="suggestion-item">No results found.</div>';
+                    dropdownElement.style.display = 'block';
+                }
+
+            } catch (error) {
+                console.error('Amadeus Suggestion Fetch Error:', error);
+                dropdownElement.innerHTML = '<div class="suggestion-item" style="color:red;">Failed to load suggestions. (See Console for details)</div>';
+                dropdownElement.style.display = 'block';
+            }
+        }
+
+        // --- FLIGHT SEARCH IATA CODE LOOKUP (Used for final search submission) ---
+
+        /**
+         * Fetches IATA code and location details from the Amadeus Location API.
+         */
+        async function getIataCodeFromCity(city) {
+            const token = await authorizeAmadeus();
+            const lowerCity = city.toLowerCase().trim();
+            
+            if (!token) {
+                 console.error("Amadeus Authorization Failed.");
+                 return { code: null, city: null, country: null, isInternational: false };
+            }
+            
+            try {
+                // Use the same endpoint as suggestions for consistency and rich data
+                const amadeusUrl = `https://test.api.amadeus.com/v1/reference-data/locations?subType=CITY&keyword=${encodeURIComponent(lowerCity)}&page%5Blimit%5D=1&sort=analytics.travelers.score&view=FULL`;
+                
+                const response = await fetch(amadeusUrl, {
+                    method: 'GET',
+                    headers: {
+                        'accept': 'application/vnd.amadeus+json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.data && data.data.length > 0) {
+                    const topResult = data.data[0]; 
+                    
+                    const iataCode = topResult.iataCode; 
+                    const countryCode = topResult.address ? topResult.address.countryCode : null;
+                    const resultCityName = topResult.address ? topResult.address.cityName : city; 
+                    const resultCountryName = topResult.address ? topResult.address.countryName : 'India'; 
+
+                    const isInternational = !['IN', 'US', 'CA'].includes(countryCode); 
+                    
+                    return { 
+                        code: iataCode, 
+                        city: resultCityName,
+                        country: resultCountryName,
+                        isInternational: isInternational 
+                    };
+                }
+
+                console.warn(`Amadeus: No IATA code found for city: ${city}`);
+                return { code: null, city: null, country: null, isInternational: false };
+                
+            } catch (error) {
+                console.error('Amadeus Location Lookup Error:', error);
+                return { code: null, city: null, country: null, isInternational: false };
+            }
+        }
+
+        // --- FLIGHT SEARCH LOGIC (EaseMyTrip Integration) ---
+
+        async function searchFlights() {
+            // Hide any open suggestion boxes before search
+            hideSuggestions(); 
+            
+            const origin = document.getElementById('originCity').value.trim();
+            const destination = document.getElementById('destinationCity').value.trim();
+            const departureDate = document.getElementById('departureDate').value;
+            const returnDate = document.getElementById('returnDate').value; 
+            const adults = document.getElementById('flightAdultsCount').value;
+            const children = document.getElementById('flightChildrenCount').value; 
+            const infants = document.getElementById('flightInfantsCount').value; 
+            
+            const container = document.getElementById('flightResultsContainer');
+            const controls = document.querySelector('#flightView .flight-controls');
+            
+            if (!origin || !destination || !departureDate) {
+                container.innerHTML = '<p class="error-text" style="padding: 20px; color:red;">Please fill in Origin, Destination, and Departure Date.</p>';
+                return;
+            }
+
+           
+            // --- CALLING AMADEUS FUNCTION FOR IATA CODE AND LOCATION DETAILS ---
+            const originResult = await getIataCodeFromCity(origin);
+            const destinationResult = await getIataCodeFromCity(destination);
+            
+            const originCode = originResult.code;
+            const destinationCode = destinationResult.code;
+            
+            // Use the Amadeus provided City and Country names for the search URL
+            const originName = originResult.city || origin; 
+            const destinationName = destinationResult.city || destination; 
+            const originCountry = originResult.country || 'India'; 
+            const destinationCountry = destinationResult.country || 'India'; 
+            
+            if (!originCode || !destinationCode) {
+                container.innerHTML = `<p class="error-text" style="padding: 20px; color:red;">Could not find Airport Code for Origin: **${origin || 'N/A'}** or Destination: **${destination || 'N/A'}**.</p>`;
+                return;
+            }
+            
+            // Helper function: EaseMyTrip expects DD/MM/YYYY format
+            const format = (dateStr) => {
+                if (!dateStr) return '';
+                const [year, month, day] = dateStr.split('-');
+                return `${day}/${month}/${year}`;
+            };
+
+            const formattedDeparture = format(departureDate);
+            const formattedReturn = returnDate ? format(returnDate) : '';
+            
+            // --- CORE LOGIC FOR ROUND TRIP VS ONE WAY (EaseMyTrip) ---
+            
+            let isOneWay = 'true';
+            let baseUrl = 'https://flight.easemytrip.com/FlightList/Index';
+            let dateComponent = formattedDeparture; 
+
+            if (formattedReturn) {
+                isOneWay = 'false'; 
+                baseUrl = 'https://flight.easemytrip.com/FlightListRT/Index'; 
+                dateComponent = `${formattedDeparture}-${formattedReturn}`; 
+            }
+            
+            // SRCH format: SRC_CODE-SRC_CITY-SRC_COUNTRY|DEST_CODE-DEST_CITY-DEST_COUNTRY|DATE_COMPONENT
+            const srchParam = `${originCode}-${originName}-${originCountry}|${destinationCode}-${destinationName}-${destinationCountry}|${dateComponent}`;
+            
+            // Assemble the final URL (using the specific parameters you requested)
+            const url = `${baseUrl}?srch=${encodeURIComponent(srchParam)}&px=${adults}-0-0&cbn=0&ar=undefined&isow=${isOneWay}&isdm=true&lang=en-us&v=aasd22367&ompAff=&IsDoubleSeat=false&CCODE=IN&curr=INR&apptype=B2C`;
+
+            console.log("Final EaseMyTrip Search URL (loading into iframe):", url);
+            
+            // Hide controls and insert iframe
+            controls.classList.add('hidden');
+            container.innerHTML = `
+                <iframe id="flightIframe" src="${url}" title="Flight Search Results (EaseMyTrip)" class="external-search-iframe"></iframe>
+            `;
+            
+            resizeIframe();
+        }
+
+        // --- IFRAME RESIZING AND INITIALIZATION ---
+
+        function resizeIframe() {
+            const topBar = document.querySelector('.top-bar');
+            const iframe = document.querySelector('.external-search-iframe');
+            
+            if (!topBar || !iframe) { return; }
+
+            const totalHeaderHeight = topBar.offsetHeight;
+            
+            iframe.style.height = (window.innerHeight - totalHeaderHeight) + "px";
+        }
+        
+        window.onload = function() {
+            setMinDates();
+            
+            // --- EVENT LISTENERS FOR AUTOSUGGEST ---
+            const originInput = document.getElementById('originCity');
+            const destinationInput = document.getElementById('destinationCity');
+            const originDropdown = document.getElementById('originSuggestions');
+            const destinationDropdown = document.getElementById('destinationSuggestions');
+            
+            const debouncedOriginSearch = debounce(query => fetchSuggestions(query, originDropdown), 300);
+            const debouncedDestinationSearch = debounce(query => fetchSuggestions(query, destinationDropdown), 300);
+
+            originInput.addEventListener('input', (e) => debouncedOriginSearch(e.target.value));
+            destinationInput.addEventListener('input', (e) => debouncedDestinationSearch(e.target.value));
+            
+            // Handle selection from dropdown
+            function handleSuggestionClick(e) {
+                const item = e.target.closest('.suggestion-item');
+                if (!item) return;
+
+                const inputId = item.parentElement.id === 'originSuggestions' ? 'originCity' : 'destinationCity';
+                const inputField = document.getElementById(inputId);
+                
+                inputField.value = `${item.dataset.city} (${item.dataset.iata})`; 
+
+                // Calls the globally defined function
+                hideSuggestions(); 
+            }
+
+            originDropdown.addEventListener('click', handleSuggestionClick);
+            destinationDropdown.addEventListener('click', handleSuggestionClick);
+
+            // Hide dropdown when clicking elsewhere
+            document.addEventListener('mousedown', (e) => {
+                if (!e.target.closest('.suggestions-dropdown') && !e.target.closest('input[type="text"]')) {
+                    hideSuggestions();
+                }
+            });
+            
+            // --- OTHER EVENT LISTENERS ---
+            document.getElementById('swapCitiesBtn').addEventListener('click', swapCities);
+            document.getElementById('searchFlightsBtn').addEventListener('click', searchFlights);
+            
+            // Event listener for Enter keypress on any input to trigger search
+            document.querySelectorAll('.flight-controls input, .flight-controls select').forEach(input => {
+                input.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        searchFlights();
+                    }
+                });
+            });
+
+            window.addEventListener("resize", resizeIframe);
+        };
+    </script>
+</body>
+</html>
