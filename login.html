@@ -14,12 +14,40 @@
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-  body { font-family: 'Inter', sans-serif; background: #f7b949; }
-  .card { background:white; padding:2.2rem; border-radius:1.25rem; box-shadow:0 15px 30px rgba(0,0,0,0.12); max-width:420px; margin:64px auto; }
-  .otp-box { width:55px; height:60px; border:2px solid #e5e7eb; border-radius:14px; font-size:1.6rem; font-weight:600; text-align:center; transition:.15s; outline:none; }
-  .otp-box:focus { border-color:#f7b949; box-shadow:0 0 0 4px rgba(247,185,73,0.25); }
-  .hidden { display:none !important; }
-  .small-muted { color:#6b7280; font-size:.9rem; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f7b949;
+    height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;    /* NEW → centers card vertically */
+    padding: 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 420px;
+}
+
+.title-text {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;
+    color: #000000;
+    margin-bottom: 100px;   /* increased from 18px → 40px */
+    margin-top: -40px;     /* pulls the title upward, away from card */
+}
+
+.card {
+    background-color: white;
+    padding: 1.8rem;
+    border-radius: 1.25rem;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12);
+    max-width: 380px;
+    width: 100%;
+}
+
 </style>
 </head>
 
@@ -29,7 +57,8 @@
 <div id="loadingOverlay" class="fixed inset-0 bg-white/90 flex items-center justify-center text-xl z-50 font-semibold text-[#f7b949]">
   Connecting to service...
 </div>
-
+<div class="container" id="authContainer">
+    <h1 class="title-text">Let's Get Started!</h1>
 <div class="card">
 
   <h1 class="text-3xl font-bold text-center mb-4 text-gray-800">Login / Sign Up</h1>
@@ -268,20 +297,22 @@ sendOtpBtn.addEventListener("click", async () => {
     const check = await emailExists(email);
     isExistingUser = !!check.exists;
 
-    if (!isExistingUser) {
-      // show name input for new user
-      show(nameRow);
-      if (!nameInput.value.trim()) {
+   if (isExistingUser) {
+    // Existing user → NO name needed
+    hide(nameRow);
+    nameInput.value = check.name || "";
+} else {
+    // New user → must enter name
+    show(nameRow);
+    if (!nameInput.value.trim()) {
         statusMsg.textContent = "Enter your full name to register";
         statusMsg.style.color = "#374151";
         sendOtpBtn.disabled = false;
         sendOtpBtn.style.opacity = "1";
         return;
-      }
-    } else {
-      hide(nameRow);
-      nameInput.value = check.name || "";
     }
+}
+
 
     const otp = await storeOtp(email);
 
@@ -333,6 +364,7 @@ document.getElementById("changeEmailBtn").addEventListener("click", () => {
   currentEmail = "";
   isExistingUser = false;
   nameInput.value = "";
+  hide(nameRow);
   hide(stepOtp);
   show(stepEmail);
 });
