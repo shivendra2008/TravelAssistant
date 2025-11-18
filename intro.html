@@ -81,9 +81,37 @@
             Get Started
         </button>
     </div>
+<script type="module">
 
-    <script>
-        window.onload = function() {
+// 🌟 LOCAL FLAG CHECK
+if (localStorage.getItem("intro_seen") === "1") {
+    window.location.href = "index.html";
+}
+
+// 🌟 FIREBASE CHECK
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDtkaHB2ER0RAOpsbW-Eg65wSe7G4Uwrkw",
+  authDomain: "travelassistant-1baed.firebaseapp.com",
+  projectId: "travelassistant-1baed",
+  storageBucket: "travelassistant-1baed.appspot.com",
+  messagingSenderId: "67570490262",
+  appId: "1:67570490262:web:7164a2d838b5517a325bb7"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        localStorage.setItem("intro_seen", "1");
+        window.location.href = "index.html";
+    }
+});
+
+window.onload = function() {
             // Initialize Lottie player
             lottie.loadAnimation({
                 container: document.getElementById('lottie-container'), // The DOM element to render the animation
@@ -94,6 +122,8 @@
                 path: 'travel_animation.json'
             });
         };
-    </script>
+</script>
+
+    
 </body>
 </html>

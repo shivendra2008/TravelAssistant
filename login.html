@@ -1,356 +1,418 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login / Sign Up</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Login — Email OTP</title>
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7b949;
-        }
-        .container {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        .card {
-            background-color: white;
-            padding: 2.5rem;
-            border-radius: 1.5rem;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-            width: 90%;
-            max-width: 400px;
-            transition: all 0.3s ease;
-        }
-        .input-field {
-            padding: 12px;
-            border-radius: 0.75rem;
-            border: 1px solid #cbd5e1;
-            width: 100%;
-            margin-bottom: 1rem;
-            transition: border-color 0.3s;
-        }
-        .input-field:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-            outline: none;
-        }
-        .action-button {
-            padding: 12px;
-            border-radius: 0.75rem;
-            width: 100%;
-            font-weight: 600;
-            color: white;
-            background-color: #f7b949;
-            transition: background-color 0.3s, transform 0.1s;
-        }
-        .action-button:hover {
-            background-color: #e0a340;
-            transform: translateY(-1px);
-        }
-        .google-button {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 12px;
-            border-radius: 0.75rem;
-            width: 100%;
-            font-weight: 600;
-            color: #4b5563;
-            background-color: white;
-            border: 1px solid #d1d5db;
-            transition: background-color 0.3s, transform 0.1s;
-        }
-        .google-button:hover {
-            background-color: #f3f4f6;
-            transform: translateY(-1px);
-        }
-        .google-icon {
-            margin-right: 10px;
-            font-size: 1.25rem;
-        }
-        .divider {
-            display: flex;
-            align-items: center;
-            text-align: center;
-            margin: 1.5rem 0;
-            color: #9ca3af;
-        }
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            border-bottom: 1px solid #d1d5db;
-        }
-        .divider:not(:empty)::before {
-            margin-right: .5em;
-        }
-        .divider:not(:empty)::after {
-            margin-left: .5em;
-        }
-        .message-box {
-            padding: 10px;
-            border-radius: 0.5rem;
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            text-align: center;
-        }
-        .error {
-            background-color: #fee2e2;
-            color: #dc2626;
-        }
-        .success {
-            background-color: #d1fae5;
-            color: #059669;
-        }
+<!-- Tailwind + icons (keeps your original look) -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #f7b949;
-        }
-    </style>
+<!-- EmailJS client -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+  body { font-family: 'Inter', sans-serif; background: #f7b949; }
+  .card { background:white; padding:2.2rem; border-radius:1.25rem; box-shadow:0 15px 30px rgba(0,0,0,0.12); max-width:420px; margin:64px auto; }
+  .otp-box { width:55px; height:60px; border:2px solid #e5e7eb; border-radius:14px; font-size:1.6rem; font-weight:600; text-align:center; transition:.15s; outline:none; }
+  .otp-box:focus { border-color:#f7b949; box-shadow:0 0 0 4px rgba(247,185,73,0.25); }
+  .hidden { display:none !important; }
+  .small-muted { color:#6b7280; font-size:.9rem; }
+</style>
 </head>
 
 <body>
-    <div id="loadingOverlay" class="loading-overlay">
-        Connecting to service...
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" class="fixed inset-0 bg-white/90 flex items-center justify-center text-xl z-50 font-semibold text-[#f7b949]">
+  Connecting to service...
+</div>
+
+<div class="card">
+
+  <h1 class="text-3xl font-bold text-center mb-4 text-gray-800">Login / Sign Up</h1>
+
+  <!-- STEP 1: Email -->
+  <div id="stepEmail">
+    <label class="font-semibold text-gray-700">Email</label>
+    <input id="emailInput" class="w-full p-3 border rounded-xl my-3" type="email" placeholder="you@example.com" autocomplete="email">
+
+    <div id="nameRow" class="hidden">
+      <label class="font-semibold text-gray-700">Full Name</label>
+      <input id="nameInput" class="w-full p-3 border rounded-xl my-3" type="text" placeholder="Your full name">
     </div>
 
-    <div class="container hidden" id="authContainer">
-        <div class="card">
-            <h2 id="formTitle" class="text-3xl font-bold text-center mb-6 text-gray-800">Login</h2>
+    <button id="sendOtpBtn" class="w-full py-3 rounded-xl font-bold text-white mt-2" style="background:#f39c12;">
+      Send OTP
+    </button>
 
-            <input type="text" id="emailInput" class="input-field" placeholder="Email">
-            <input type="password" id="passwordInput" class="input-field" placeholder="Password">
+    <p class="text-center small-muted mt-3">We will email you a 6-digit OTP.</p>
+  </div>
 
-            <div id="forgotPasswordContainer" class="text-right mb-4">
-                <button id="forgotPasswordBtn" class="text-sm text-blue-600 hover:text-blue-800 transition duration-150">Forgot Password?</button>
-            </div>
+  <!-- STEP 2: OTP -->
+  <div id="stepOtp" class="hidden">
+    <p class="text-center small-muted">Enter the 6-digit code sent to</p>
+    <p id="emailShown" class="text-center font-semibold mb-4"></p>
 
-            <input type="text" id="nameInput" class="input-field hidden" placeholder="Full Name (for Sign Up)">
-
-            <button id="authButton" class="action-button mb-4">Login</button>
-
-            <div class="divider">OR</div>
-
-            <button id="googleAuthButton" class="google-button">
-                <i class="fab fa-google google-icon"></i>
-                Continue with Google
-            </button>
-
-            <div id="messageBox" class="message-box hidden"></div>
-
-            <p class="text-center text-sm text-gray-600 mt-6">
-                <span id="toggleText">Don't have an account?</span>
-                <button id="toggleFormBtn" class="text-blue-600 font-medium hover:text-blue-800 transition duration-150">Sign Up</button>
-            </p>
-        </div>
+    <div class="flex justify-between mb-4" id="otpContainer">
+      <input maxlength="1" class="otp-box" inputmode="numeric" pattern="[0-9]*" />
+      <input maxlength="1" class="otp-box" inputmode="numeric" pattern="[0-9]*" />
+      <input maxlength="1" class="otp-box" inputmode="numeric" pattern="[0-9]*" />
+      <input maxlength="1" class="otp-box" inputmode="numeric" pattern="[0-9]*" />
+      <input maxlength="1" class="otp-box" inputmode="numeric" pattern="[0-9]*" />
+      <input maxlength="1" class="otp-box" inputmode="numeric" pattern="[0-9]*" />
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import {
-            getAuth,
-            signInWithEmailAndPassword,
-            createUserWithEmailAndPassword,
-            onAuthStateChanged,
-            setPersistence,
-            browserLocalPersistence,
-            sendPasswordResetEmail,
-            GoogleAuthProvider,
-            signInWithRedirect,
-            getRedirectResult
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    <button id="verifyOtpBtn" class="w-full py-3 rounded-xl font-bold text-white" style="background:#10b981;">
+      Verify OTP
+    </button>
 
-        import {
-            getFirestore,
-            doc,
-            setDoc,
-            getDoc
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <div class="flex items-center justify-between mt-4">
+      <button id="resendBtn" class="text-sm text-blue-600">Resend OTP</button>
+      <button id="changeEmailBtn" class="text-sm text-gray-600">Use different email</button>
+    </div>
 
-        const hardcodedAppId = "travelassistant-1baed";
-        const hardcodedFirebaseConfig = {
-            apiKey: "AIzaSyDtkaHB2ER0RAOpsbW-Eg65wSe7G4Uwrkw",
-            authDomain: "travelassistant-1baed.firebaseapp.com",
-            projectId: "travelassistant-1baed",
-            storageBucket: "travelassistant-1baed.firebasestorage.app",
-            messagingSenderId: "67570490262",
-            appId: "1:67570490262:web:7164a2d838b5517a325bb7"
-        };
+    <p class="text-center small-muted mt-3">Code expires in <span id="countdown">05:00</span></p>
+  </div>
 
-        const appId = typeof __app_id !== "undefined" ? __app_id : hardcodedAppId;
-        const firebaseConfig =
-            typeof __firebase_config !== "undefined"
-                ? JSON.parse(__firebase_config)
-                : hardcodedFirebaseConfig;
+  <!-- Status message -->
+  <p id="statusMsg" class="text-center mt-4 font-semibold"></p>
 
-        const googleProvider = new GoogleAuthProvider();
+</div>
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+<script type="module">
+/* ============================
+   FIREBASE IMPORTS
+   ============================ */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { 
+  getAuth,
+  signInAnonymously,
+  setPersistence,
+  browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        setPersistence(auth, browserLocalPersistence);
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  collectionGroup,
+  query,
+  where,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        let isSignUp = false;
-        let isProcessing = false;
+/* ============================
+   CONFIG (unchanged)
+   ============================ */
+const appId = "travelassistant-1baed";
+const firebaseConfig = {
+  apiKey: "AIzaSyDtkaHB2ER0RAOpsbW-Eg65wSe7G4Uwrkw",
+  authDomain: "travelassistant-1baed.firebaseapp.com",
+  projectId: "travelassistant-1baed",
+  storageBucket: "travelassistant-1baed.appspot.com",
+  messagingSenderId: "67570490262",
+  appId: "1:67570490262:web:7164a2d838b5517a325bb7"
+};
 
-        const loadingOverlay = document.getElementById("loadingOverlay");
-        const authContainer = document.getElementById("authContainer");
-        const emailInput = document.getElementById("emailInput");
-        const passwordInput = document.getElementById("passwordInput");
-        const nameInput = document.getElementById("nameInput");
-        const authButton = document.getElementById("authButton");
-        const googleAuthButton = document.getElementById("googleAuthButton");
-        const toggleFormBtn = document.getElementById("toggleFormBtn");
-        const toggleText = document.getElementById("toggleText");
-        const messageBox = document.getElementById("messageBox");
-        const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+setPersistence(auth, browserLocalPersistence);
 
-        function displayMessage(msg, type) {
-            messageBox.textContent = msg;
-            messageBox.className = `message-box ${type}`;
-            messageBox.classList.remove("hidden");
-        }
+/* ============================
+   EmailJS init (use your public key)
+   ============================ */
+window.emailjs && emailjs.init("ksvsBEaCVrEWDxSG_"); // your public key
 
-        function showLoginForm() {
-            loadingOverlay.classList.add("hidden");
-            authContainer.classList.remove("hidden");
-        }
+/* EmailJS IDs */
+const EMAILJS_SERVICE_ID = "service_yx4j3el";
+const EMAILJS_TEMPLATE_ID = "template_8djoyfc";
 
-        function toggleMode() {
-            isSignUp = !isSignUp;
-            document.getElementById("formTitle").textContent = isSignUp ? "Sign Up" : "Login";
-            authButton.textContent = isSignUp ? "Sign Up" : "Login";
-            toggleText.textContent = isSignUp ? "Already have an account?" : "Don't have an account?";
-            toggleFormBtn.textContent = isSignUp ? "Login" : "Sign Up";
-            nameInput.classList.toggle("hidden", !isSignUp);
-        }
+/* ============================
+   UI refs
+   ============================ */
+const loadingOverlay = document.getElementById("loadingOverlay");
+const stepEmail = document.getElementById("stepEmail");
+const stepOtp = document.getElementById("stepOtp");
+const emailInput = document.getElementById("emailInput");
+const nameRow = document.getElementById("nameRow");
+const nameInput = document.getElementById("nameInput");
+const emailShown = document.getElementById("emailShown");
+const statusMsg = document.getElementById("statusMsg");
+const otpInputs = [...document.querySelectorAll(".otp-box")];
+const resendBtn = document.getElementById("resendBtn");
+const countdownEl = document.getElementById("countdown");
+const sendOtpBtn = document.getElementById("sendOtpBtn");
+const verifyOtpBtn = document.getElementById("verifyOtpBtn");
 
-        async function saveUserToFirestore(user, name) {
-            const ref = doc(db, "artifacts", appId, "users", user.uid, "profile", "data");
+let currentEmail = "";
+let isExistingUser = false;
+let otpExpiresAt = 0;
+let resendCooldown = 30;
+let resendTimer = null;
+let otpTimer = null;
 
-            await setDoc(
-                ref,
-                {
-                    uid: user.uid,
-                    email: user.email,
-                    name: name || user.displayName || "User",
-                    photoURL: user.photoURL || null,
-                    createdAt: new Date().toISOString()
-                },
-                { merge: true }
-            );
-        }
+/* small helpers */
+function show(el){ el.classList.remove("hidden"); }
+function hide(el){ el.classList.add("hidden"); }
 
-        async function handleAuth(event) {
-            event.preventDefault();
-            if (isProcessing) return;
-            isProcessing = true;
+/* initialize UI */
+setTimeout(() => {
+  try { hide(loadingOverlay); } catch(e){}
+  show(stepEmail);
+}, 300);
 
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
-            const fullName = nameInput.value.trim();
+/* ============================
+   Firestore helpers
+   ============================ */
 
-            if (!email || !password || (isSignUp && !fullName)) {
-                displayMessage("Please fill all fields.", "error");
-                isProcessing = false;
-                return;
-            }
+/* Check if email exists by collectionGroup('data') */
+async function emailExists(email) {
+  console.log("[DEBUG] emailExists() called for:", email);
+  try {
+    const cg = collectionGroup(db, "data");
+    const q = query(cg, where("email", "==", email));
+    console.log("[DEBUG] Prepared query on collectionGroup 'data' for email:", email);
+    const snaps = await getDocs(q);
+    console.log("[DEBUG] getDocs() completed. snaps.empty =", snaps.empty, "docs:", snaps.docs.length);
+    if (snaps.empty) return { exists: false };
+    const docSnap = snaps.docs[0];
+    const data = docSnap.data();
+    return { exists: true, name: data.name || "" };
+  } catch (err) {
+    console.error("[DEBUG] emailExists() FAILED:", err && err.code, err && err.message, err);
+    // show safe fallback and treat as new user (so flow continues)
+    statusMsg.textContent = "Unable to check existing user. Proceeding with registration.";
+    statusMsg.style.color = "orange";
+    return { exists: false, error: true };
+  }
+}
 
-            try {
-                if (isSignUp) {
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    await saveUserToFirestore(userCredential.user, fullName);
-                    displayMessage("Account created!", "success");
-                    setTimeout(() => (window.location.href = "index.html"), 700);
-                } else {
-                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                    const ref = doc(db, "artifacts", appId, "users", userCredential.user.uid, "profile", "data");
-                    const snap = await getDoc(ref);
+/* Store OTP in Firestore */
+async function storeOtp(email) {
+  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  const expiresAt = Date.now() + 5 * 60 * 1000;
+  await setDoc(doc(db, "otp", email), { code: otp, expiresAt });
+  otpExpiresAt = expiresAt;
+  return otp;
+}
 
-                    let name = snap.exists() ? snap.data().name : userCredential.user.displayName || "User";
+/* Send OTP using EmailJS (template expects {{passcode}}) */
+async function sendOtpEmail(userEmail, otp) {
+  // emailjs.send(serviceID, templateID, templateParams)
+  return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    passcode: otp,
+    to_email: userEmail // optional, your template uses passcode only but including this is harmless
+  });
+}
 
-                    await saveUserToFirestore(userCredential.user, name);
-                    displayMessage("Login successful!", "success");
-                    setTimeout(() => (window.location.href = "index.html"), 700);
-                }
-            } catch (err) {
-                displayMessage("Error: " + err.code, "error");
-            }
+/* ============================
+   UI flow handlers
+   ============================ */
 
-            isProcessing = false;
-        }
+function startResendCooldown(){
+  resendBtn.disabled = true;
+  let t = resendCooldown;
+  resendBtn.textContent = `Resend OTP (${t}s)`;
+  clearInterval(resendTimer);
+  resendTimer = setInterval(()=>{
+    t--;
+    if(t<=0){
+      clearInterval(resendTimer);
+      resendBtn.disabled = false;
+      resendBtn.textContent = "Resend OTP";
+    } else {
+      resendBtn.textContent = `Resend OTP (${t}s)`;
+    }
+  },1000);
+}
 
-        async function handleGoogleSignIn() {
-            try {
-                await signInWithRedirect(auth, googleProvider);
-            } catch (err) {
-                displayMessage("Google Sign-In failed.", "error");
-            }
-        }
+function startOtpCountdown(){
+  clearInterval(otpTimer);
+  otpTimer = setInterval(()=>{
+    let sec = Math.max(0, Math.floor((otpExpiresAt - Date.now())/1000));
+    const m = String(Math.floor(sec/60)).padStart(2,"0");
+    const s = String(sec%60).padStart(2,"0");
+    countdownEl.textContent = `${m}:${s}`;
+    if(sec <= 0) clearInterval(otpTimer);
+  }, 1000);
+}
 
-        // ⭐ FINAL FIXED LOGIC (NO MORE FREEZE)
-        onAuthStateChanged(auth, async (user) => {
-            if (user && !user.isAnonymous) {
-                await saveUserToFirestore(user, user.displayName || "User");
-                window.location.href = "index.html";
-                return;
-            }
+function goToOtpScreen(){
+  hide(stepEmail);
+  show(stepOtp);
+  emailShown.textContent = currentEmail;
+  otpInputs.forEach(i=> i.value="");
+  otpInputs[0].focus();
+  startOtpCountdown();
+}
 
-            try {
-                const result = await getRedirectResult(auth);
+/* Send OTP button click */
+sendOtpBtn.addEventListener("click", async () => {
+  statusMsg.textContent = "";
+  const email = (emailInput.value || "").trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    statusMsg.textContent = "Enter a valid email";
+    statusMsg.style.color = "red";
+    return;
+  }
+  currentEmail = email;
+  sendOtpBtn.disabled = true;
+  sendOtpBtn.style.opacity = "0.6";
 
-                if (result && result.user) {
-                    const gUser = result.user;
-                    await saveUserToFirestore(gUser, gUser.displayName || "User");
-                    window.location.href = "index.html";
-                    return;
-                }
-            } catch (e) {
-                console.error("Redirect error:", e);
-            }
+  try {
+    const check = await emailExists(email);
+    isExistingUser = !!check.exists;
 
-            // ⭐ ALWAYS show form no matter what
-            showLoginForm();
-        });
+    if (!isExistingUser) {
+      // show name input for new user
+      show(nameRow);
+      if (!nameInput.value.trim()) {
+        statusMsg.textContent = "Enter your full name to register";
+        statusMsg.style.color = "#374151";
+        sendOtpBtn.disabled = false;
+        sendOtpBtn.style.opacity = "1";
+        return;
+      }
+    } else {
+      hide(nameRow);
+      nameInput.value = check.name || "";
+    }
 
-        authButton.addEventListener("click", handleAuth);
-        googleAuthButton.addEventListener("click", handleGoogleSignIn);
-        toggleFormBtn.addEventListener("click", toggleMode);
+    const otp = await storeOtp(email);
 
-        forgotPasswordBtn.addEventListener("click", async () => {
-            const email = emailInput.value.trim();
-            if (!email) {
-                displayMessage("Enter your email.", "error");
-                return;
-            }
-            try {
-                await sendPasswordResetEmail(auth, email);
-                displayMessage("Password reset link sent.", "success");
-            } catch {
-                displayMessage("Error sending reset link.", "error");
-            }
-        });
-    </script>
+    try {
+      await sendOtpEmail(email, otp);
+      console.log("OTP sent via EmailJS to user email:", email);
+      statusMsg.textContent = "OTP sent to your email";
+      statusMsg.style.color = "green";
+    } catch (sendErr) {
+      console.error("EmailJS send error:", sendErr);
+      statusMsg.textContent = "Failed to send OTP email. Try again.";
+      statusMsg.style.color = "red";
+      sendOtpBtn.disabled = false;
+      sendOtpBtn.style.opacity = "1";
+      return;
+    }
+
+    startResendCooldown();
+    goToOtpScreen();
+
+  } catch (err) {
+    console.error("Send OTP flow error:", err);
+    statusMsg.textContent = "Unable to send OTP. Try again later.";
+    statusMsg.style.color = "red";
+  } finally {
+    sendOtpBtn.disabled = false;
+    sendOtpBtn.style.opacity = "1";
+  }
+});
+
+/* Resend OTP */
+resendBtn.addEventListener("click", async () => {
+  if (!currentEmail) return;
+  try {
+    const otp = await storeOtp(currentEmail);
+    await sendOtpEmail(currentEmail, otp);
+    statusMsg.textContent = "OTP resent!";
+    statusMsg.style.color = "green";
+    startResendCooldown();
+  } catch (e) {
+    console.error("Resend error:", e);
+    statusMsg.textContent = "Unable to resend OTP.";
+    statusMsg.style.color = "red";
+  }
+});
+
+/* Change email */
+document.getElementById("changeEmailBtn").addEventListener("click", () => {
+  currentEmail = "";
+  isExistingUser = false;
+  nameInput.value = "";
+  hide(stepOtp);
+  show(stepEmail);
+});
+
+/* OTP inputs UX */
+otpInputs.forEach((input, idx) => {
+  input.addEventListener("input", (e) => {
+    e.target.value = e.target.value.replace(/[^0-9]/g, "");
+    if (e.target.value && idx < otpInputs.length - 1) otpInputs[idx+1].focus();
+  });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Backspace" && !e.target.value && idx > 0) otpInputs[idx-1].focus();
+  });
+});
+
+/* Verify OTP */
+verifyOtpBtn.addEventListener("click", async () => {
+  statusMsg.textContent = "";
+  const otp = otpInputs.map(i => i.value.trim()).join("");
+  if (otp.length !== 6) {
+    statusMsg.textContent = "Enter the 6-digit code";
+    statusMsg.style.color = "red";
+    return;
+  }
+
+  try {
+    const snap = await getDoc(doc(db, "otp", currentEmail));
+    if (!snap.exists()) {
+      statusMsg.textContent = "OTP not found. Request again.";
+      statusMsg.style.color = "red";
+      return;
+    }
+    const data = snap.data();
+    if (Date.now() > data.expiresAt) {
+      statusMsg.textContent = "OTP expired. Resend.";
+      statusMsg.style.color = "red";
+      return;
+    }
+    if (data.code !== otp) {
+      statusMsg.textContent = "Incorrect OTP";
+      statusMsg.style.color = "red";
+      return;
+    }
+
+    // OTP correct - sign in anonymously and save profile
+    const anon = await signInAnonymously(auth);
+    const uid = anon.user.uid;
+
+    let finalName = "";
+    if (isExistingUser) {
+      // try to pull existing name if collection has it
+      const check = await emailExists(currentEmail);
+      finalName = check.name || currentEmail.split("@")[0];
+    } else {
+      finalName = nameInput.value.trim() || currentEmail.split("@")[0];
+    }
+
+    await setDoc(doc(db, "artifacts", appId, "users", uid, "profile", "data"), {
+      uid,
+      email: currentEmail,
+      name: finalName,
+      photoURL: null,
+      createdAt: new Date().toISOString()
+    }, { merge: true });
+
+    // invalidate OTP
+    await setDoc(doc(db, "otp", currentEmail), { code: "", expiresAt: 0 }, { merge: true });
+
+    // redirect to index
+    localStorage.setItem("intro_seen", "1");
+    window.location.href = "index.html";
+    
+
+  } catch (err) {
+    console.error("Verify OTP error:", err);
+    statusMsg.textContent = "Unable to verify OTP. Try again.";
+    statusMsg.style.color = "red";
+  }
+});
+</script>
+
 </body>
 </html>
