@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading...</title>
+
+    <!-- Same font & color style as login.html -->
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f7b949; /* login.html blue theme */
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .logo {
+            width: 220px;
+            height: auto;
+            animation: fadeIn 1.4s ease-out;
+        }
+
+        .loading-text {
+            margin-top: 18px;
+            color: white;
+            font-size: 18px;
+            opacity: 0.8;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="logo-container">
+    <img src="Logo.png" class="logo">
+    
+</div>
+
+<!-- Firebase -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDtkaHB2ER0RAOpsbW-Eg65wSe7G4Uwrkw",
+        authDomain: "travelassistant-1baed.firebaseapp.com",
+        projectId: "travelassistant-1baed",
+        storageBucket: "travelassistant-1baed.appspot.com",
+        messagingSenderId: "753584655012",
+        appId: "1:753584655012:web:913ec049751e47de5a53db"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // ⭐ Ultra-fast redirect (within 100ms)
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            window.location.href = "index.html";     // Already logged in
+        } else {
+            window.location.href = "intro.html";     // First-time or signed out
+        }
+    });
+</script>
+
+</body>
+</html>
