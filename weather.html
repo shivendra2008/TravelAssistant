@@ -225,7 +225,7 @@
     }
     
     // --- NEW: FETCH WEATHER BY COORDINATES (for automatic load) ---
-    async function fetchWeatherByCoords(lat, lon) {
+    async function receiveLocationFromApp(lat, lon) {
         const wrapper = document.getElementById('weatherContentWrapper');
         wrapper.innerHTML = '<p class="loading-text" style="padding: 40px; text-align: center;">Locating device and fetching weather...</p>';
         
@@ -386,11 +386,15 @@
 
         // 1. Initial Load Logic: Try URL parameter first, then Geolocation
         if (initialCity) {
-            cityInput.value = initialCity;
-            fetchWeatherData(initialCity);
-        } else {
-            handleGeolocationLoad();
-        }
+        cityInput.value = initialCity;
+        fetchWeatherData(initialCity);
+    } else {
+        // 🛑 CRITICAL FIX: DO NOT CALL handleGeolocationLoad()
+        // We now wait for Kodular to send the location data via receiveLocationFromApp().
+        // Display a message prompting the user to grant location permission in the app.
+        const wrapper = document.getElementById('weatherContentWrapper');
+        wrapper.innerHTML = '<p class="loading-text" style="padding: 40px; text-align: center;">Waiting for App Location Permission...</p>';
+    }
 
         // 2. Button Click Listener
         searchBtn.addEventListener('click', () => {

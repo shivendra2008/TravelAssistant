@@ -80,33 +80,33 @@
     
     <script>
         document.getElementById('searchBtn').addEventListener('click', function() {
-            const city = document.getElementById('cityInput').value;
-            
-            if (city.trim() !== "") {
-                // Redirects to search.html, passing the city name as a URL parameter
-                window.location.href = `search.html?city=${encodeURIComponent(city.trim())}`;
-            } else {
-                alert("Please enter a city name to search.");
-            }
-        });
-        document.querySelectorAll('.links-grid .link-item').forEach(item => {
-            item.addEventListener('click', function() {
-                // Read the data-file attribute which holds the new page name
-                const targetFile = this.getAttribute('data-file');
+    const city = document.getElementById('cityInput').value;
+    
+    if (city.trim() !== "") {
+        // Redirects to search.html, passing the city name as a URL parameter
+        window.location.href = `search.html?city=${encodeURIComponent(city.trim())}`;
+    } else {
+        alert("Please enter a city name to search.");
+    }
+});
+document.querySelectorAll('.links-grid .link-item').forEach(item => {
+    item.addEventListener('click', function() {
+        // Read the data-file attribute which holds the new page name
+        const targetFile = this.getAttribute('data-file');
 
-                if (targetFile) {
-                    // Redirects directly to the separate HTML file
-                    window.location.href = targetFile;
-                }
-            });
-        });
+        if (targetFile) {
+            // Redirects directly to the separate HTML file
+            window.location.href = targetFile;
+        }
+    });
+});
 
-        // Allows 'Enter' key to also trigger the search
-        document.getElementById('cityInput').addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
-                document.getElementById('searchBtn').click();
-            }
-        });
+// Allows 'Enter' key to also trigger the search
+document.getElementById('cityInput').addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        document.getElementById('searchBtn').click();
+    }
+});
     </script>
 </body>
 </html>
