@@ -7,19 +7,18 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* Custom styles for a clean, modern look */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f7b949; /* Primary app color background, as requested */
+            background-color: #f7b949;
         }
         .container {
             min-height: 100vh;
             display: flex;
-            flex-direction: column; /* Stack card vertically */
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 20px; /* Add padding for mobile view */
+            padding: 20px;
         }
         .card {
             background-color: white;
@@ -39,7 +38,7 @@
             transition: border-color 0.3s;
         }
         .input-field:focus {
-            border-color: #2563eb; /* Blue focus ring */
+            border-color: #2563eb;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
             outline: none;
         }
@@ -49,7 +48,7 @@
             width: 100%;
             font-weight: 600;
             color: white;
-            background-color: #f7b949; /* Primary app color */
+            background-color: #f7b949;
             transition: background-color 0.3s, transform 0.1s;
         }
         .action-button:hover {
@@ -64,9 +63,9 @@
             border-radius: 0.75rem;
             width: 100%;
             font-weight: 600;
-            color: #4b5563; /* Gray text */
+            color: #4b5563;
             background-color: white;
-            border: 1px solid #d1d5db; /* Light gray border */
+            border: 1px solid #d1d5db;
             transition: background-color 0.3s, transform 0.1s;
         }
         .google-button:hover {
@@ -111,7 +110,6 @@
             color: #059669;
         }
 
-        /* New overlay to prevent interaction before auth check is done */
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -142,24 +140,20 @@
             <input type="text" id="emailInput" class="input-field" placeholder="Email">
             <input type="password" id="passwordInput" class="input-field" placeholder="Password">
             
-            <!-- Forgot Password Link - Only visible in Login Mode -->
             <div id="forgotPasswordContainer" class="text-right mb-4">
                 <button id="forgotPasswordBtn" class="text-sm text-blue-600 hover:text-blue-800 transition duration-150">Forgot Password?</button>
             </div>
 
-            <!-- Full Name Input (Only visible for Sign Up) -->
             <input type="text" id="nameInput" class="input-field hidden" placeholder="Full Name (for Sign Up)">
             
             <button id="authButton" class="action-button mb-4">Login</button>
 
             <div class="divider">OR</div>
 
-            <!-- Google Sign-In Button -->
             <button id="googleAuthButton" class="google-button">
                 <i class="fab fa-google google-icon"></i>
                 Continue with Google
             </button>
-
 
             <div id="messageBox" class="message-box hidden"></div>
 
@@ -170,7 +164,6 @@
         </div>
     </div>
 
-    <!-- Firebase SDK Imports -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { 
@@ -180,23 +173,17 @@
             onAuthStateChanged,
             setPersistence,
             browserLocalPersistence,
-            signInWithCustomToken,
-            signInAnonymously,
-            sendPasswordResetEmail, // <-- NEW IMPORT
-            // Google Imports
-            GoogleAuthProvider,
-            signInWithPopup
+            signInWithPopup,
+            sendPasswordResetEmail,
+            GoogleAuthProvider
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
         import { 
             getFirestore, 
             doc, 
-            setDoc
+            setDoc,
+            getDoc
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        setLogLevel('Debug');
-
-
-        // --- FIREBASE INITIALIZATION AND GLOBAL VARS ---
 
         const hardcodedAppId = 'travelassistant-1baed';
         const hardcodedFirebaseConfig = {
@@ -208,31 +195,22 @@
             appId: "1:67570490262:web:7164a2d838b5517a325bb7"
         };
         
-        // Use environment variables if they exist, otherwise use the hardcoded values
         const appId = typeof __app_id !== 'undefined' ? __app_id : hardcodedAppId;
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config) 
             : hardcodedFirebaseConfig;
 
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         const googleProvider = new GoogleAuthProvider();
-
-        if (!firebaseConfig) {
-            document.getElementById('loadingOverlay').textContent = "Error: Firebase configuration missing.";
-            throw new Error("Firebase config missing.");
-        }
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
+
         let isSignUp = false;
         let isProcessing = false;
 
         setPersistence(auth, browserLocalPersistence);
 
-
-        // --- DOM ELEMENTS ---
         const authContainer = document.getElementById('authContainer');
         const loadingOverlay = document.getElementById('loadingOverlay');
         const formTitle = document.getElementById('formTitle');
@@ -244,11 +222,8 @@
         const toggleFormBtn = document.getElementById('toggleFormBtn');
         const toggleText = document.getElementById('toggleText');
         const messageBox = document.getElementById('messageBox');
-        const forgotPasswordContainer = document.getElementById('forgotPasswordContainer'); // <-- NEW
-        const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');         // <-- NEW
-
-
-        // --- UTILITY FUNCTIONS ---
+        const forgotPasswordContainer = document.getElementById('forgotPasswordContainer');
+        const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
 
         function displayMessage(message, type) {
             messageBox.textContent = message;
@@ -263,13 +238,10 @@
             toggleText.textContent = isSignUp ? 'Already have an account?' : "Don't have an account?";
             toggleFormBtn.textContent = isSignUp ? 'Login' : 'Sign Up';
             nameInput.classList.toggle('hidden', !isSignUp);
-            
-            // Toggle visibility of Forgot Password link (hidden when signing up)
             forgotPasswordContainer.classList.toggle('hidden', isSignUp);
-            
             messageBox.classList.add('hidden');
         }
-        
+
         function navigateToHome() {
             window.location.href = 'index.html'; 
         }
@@ -278,105 +250,20 @@
             loadingOverlay.classList.add('hidden');
             authContainer.classList.remove('hidden');
         }
-        
-        function showLoading() {
-            loadingOverlay.classList.remove('hidden');
-            authContainer.classList.add('hidden');
-            loadingOverlay.textContent = "Connecting to service...";
-        }
-
-
-        // --- FIREBASE LOGIC ---
 
         async function saveUserToFirestore(user, fullName) {
-            // Path: /artifacts/{appId}/users/{userId}/profile/data
             const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
+
             const dataToSave = {
                 uid: user.uid,
                 email: user.email,
-                name: fullName || user.displayName || 'User', // Use display name for Google login if fullName is null
+                name: fullName || user.displayName || 'User',
                 createdAt: new Date().toISOString()
             };
 
-            await setDoc(userDocRef, dataToSave, { merge: true }); 
+            await setDoc(userDocRef, dataToSave, { merge: true });
         }
 
-        // --- FORGOT PASSWORD HANDLER (NEW) ---
-        async function handleForgotPassword() {
-            if (isProcessing) return;
-
-            const email = emailInput.value.trim();
-            if (!email) {
-                displayMessage('Please enter your email address in the field above.', 'error');
-                return;
-            }
-
-            isProcessing = true;
-            forgotPasswordBtn.textContent = 'Sending...';
-            messageBox.classList.add('hidden');
-
-            try {
-                // Send the password reset email
-                await sendPasswordResetEmail(auth, email);
-                
-                displayMessage(`Password reset link sent to ${email}. Check your inbox/spam folder!`, 'success');
-
-            } catch (error) {
-                console.error("Forgot Password Error:", error);
-
-                let errorMessage = 'Could not send reset link.';
-                if (error.code === 'auth/user-not-found') {
-                    errorMessage = 'No user found with that email address.';
-                } else if (error.code) {
-                    errorMessage = `Error: ${error.code.replace('auth/', '')}`;
-                }
-                
-                displayMessage(errorMessage, 'error');
-
-            } finally {
-                isProcessing = false;
-                forgotPasswordBtn.textContent = 'Forgot Password?';
-            }
-        }
-
-        // --- GOOGLE SIGN-IN HANDLER (EXISTING) ---
-        async function handleGoogleSignIn() {
-            if (isProcessing) return;
-            isProcessing = true;
-            googleAuthButton.textContent = 'Connecting...';
-            messageBox.classList.add('hidden');
-            showLoading();
-
-            try {
-                const result = await signInWithPopup(auth, googleProvider);
-                const user = result.user;
-                
-                // CRITICAL: Await the Firestore save to prevent "Access Denied" race condition
-                await saveUserToFirestore(user, user.displayName); 
-
-                loadingOverlay.textContent = "Sign in successful. Redirecting...";
-                setTimeout(navigateToHome, 500); // Slight delay after save
-
-            } catch (error) {
-                console.error("Google Auth Error:", error);
-                
-                let errorMessage = 'Google Sign-In failed.';
-                if (error.code === 'auth/popup-closed-by-user') {
-                    errorMessage = 'Sign-In window closed.';
-                } else if (error.code) {
-                    errorMessage = `Error: ${error.code.replace('auth/', '')}`;
-                }
-                
-                showLoginForm(); // Show the form again
-                displayMessage(errorMessage, 'error');
-
-            } finally {
-                isProcessing = false;
-                googleAuthButton.textContent = 'Continue with Google';
-            }
-        }
-
-        // --- EMAIL/PASSWORD HANDLER (EXISTING) ---
         async function handleAuth(event) {
             event.preventDefault();
             if (isProcessing) return;
@@ -396,23 +283,36 @@
 
             try {
                 if (isSignUp) {
-                    // Sign Up Flow
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     await saveUserToFirestore(userCredential.user, fullName);
+
                     displayMessage('Account created successfully!', 'success');
 
                 } else {
-                    // Login Flow
-                    await signInWithEmailAndPassword(auth, email, password);
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+                    const existingDocRef = doc(db, 'artifacts', appId, 'users', userCredential.user.uid, 'profile', 'data');
+                    const existingSnap = await getDoc(existingDocRef);
+
+                    let nameToSave = null;
+
+                    if (existingSnap.exists()) {
+                        nameToSave = existingSnap.data().name;
+                    } else {
+                        nameToSave = userCredential.user.displayName || "User";
+                    }
+
+                    await saveUserToFirestore(userCredential.user, nameToSave);
+
                     displayMessage('Login successful!', 'success');
                 }
-                
-                setTimeout(navigateToHome, 1000); 
+
+                setTimeout(navigateToHome, 800);
 
             } catch (error) {
                 console.error("Authentication Error:", error);
-                
                 let errorMessage = 'An error occurred. Please try again.';
+                
                 if (error.code) {
                     switch(error.code) {
                         case 'auth/user-not-found':
@@ -436,38 +336,44 @@
                 authButton.textContent = isSignUp ? 'Sign Up' : 'Login';
             }
         }
-        
-        // --- INITIAL AUTH CHECK (EXISTING) ---
-        
-        onAuthStateChanged(auth, (user) => {
-            // This is the first and primary check
-            if (user && !user.isAnonymous) {
-                // User is signed in (either persisted or just logged in via Google/Email)
-                console.log("User signed in. Redirecting...");
-                navigateToHome();
-            } else if (initialAuthToken) {
-                // If a token is provided by the environment, use it to sign in
-                signInWithCustomToken(auth, initialAuthToken).then(() => {
-                    console.log("Signed in with custom token. Redirecting...");
-                    navigateToHome();
-                }).catch(error => {
-                    console.warn("Custom token sign-in failed, showing login form:", error);
-                    showLoginForm();
-                });
-            } else {
-                // No current user and no token provided: Show the login form.
-                console.log("No user found. Showing login form.");
-                showLoginForm();
-            }
+
+        /* FIX: DO NOT REDIRECT AUTOMATICALLY BEFORE SAVING FIRESTORE */
+        onAuthStateChanged(auth, () => {
+            showLoginForm();
         });
-        
-        // --- EVENT LISTENERS ---
-        
+
         authButton.addEventListener('click', handleAuth);
         googleAuthButton.addEventListener('click', handleGoogleSignIn);
         toggleFormBtn.addEventListener('click', toggleMode);
-        forgotPasswordBtn.addEventListener('click', handleForgotPassword); // <-- NEW LISTENER
-        
+        forgotPasswordBtn.addEventListener('click', handleForgotPassword);
+
+        async function handleGoogleSignIn() {
+            try {
+                const result = await signInWithPopup(auth, googleProvider);
+                const user = result.user;
+
+                await saveUserToFirestore(user, user.displayName);
+                navigateToHome();
+            } catch (e) {
+                console.error(e);
+                displayMessage("Google sign-in failed", "error");
+            }
+        }
+
+        async function handleForgotPassword() {
+            const email = emailInput.value.trim();
+            if (!email) {
+                displayMessage("Enter your email to reset password", "error");
+                return;
+            }
+            try {
+                await sendPasswordResetEmail(auth, email);
+                displayMessage("Password reset email sent", "success");
+            } catch (e) {
+                displayMessage("Failed to send reset email", "error");
+            }
+        }
+
     </script>
 </body>
 </html>

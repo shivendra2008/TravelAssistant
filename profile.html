@@ -102,20 +102,16 @@ import {
     getDownloadURL
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-
-/* -----------------------------------------
-   UPDATED STORAGE BUCKET (IMPORTANT FIX)
------------------------------------------- */
+/* ---- Your Firebase config ---- */
 const appId = "travelassistant-1baed";
 const firebaseConfig = {
     apiKey: "AIzaSyDtkaHB2ER0RAOpsbW-Eg65wSe7G4Uwrkw",
     authDomain: "travelassistant-1baed.firebaseapp.com",
     projectId: "travelassistant-1baed",
-    storageBucket: "travelassistant-1baed.appspot.com",   // ← FIXED HERE
+    storageBucket: "travelassistant-1baed.firebasestorage.app",
     messagingSenderId: "67570490262",
     appId: "1:67570490262:web:7164a2d838b5517a325bb7"
 };
-
 
 /* Init services */
 const app = initializeApp(firebaseConfig);
@@ -164,16 +160,12 @@ onAuthStateChanged(auth, async (user) => {
         const data = snap.data();
 
         nameInput.value = data.name || "";
-        currentPhotoURL =
-            data.photoURL ||
-            user.photoURL ||
-            "https://via.placeholder.com/150";
+        currentPhotoURL = data.photoURL || user.photoURL || "https://via.placeholder.com/150";
         profileImage.src = currentPhotoURL;
     } else {
+        // Fallback for new users
         nameInput.value = user.displayName || "";
-        currentPhotoURL =
-            user.photoURL ||
-            "https://via.placeholder.com/150";
+        currentPhotoURL = user.photoURL || "https://via.placeholder.com/150";
         profileImage.src = currentPhotoURL;
     }
 
@@ -243,7 +235,6 @@ logoutBtn.addEventListener("click", async () => {
     await signOut(auth);
     window.location.href = "login.html";
 });
-
 </script>
 
 </body>
