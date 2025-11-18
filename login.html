@@ -6,7 +6,6 @@
     <title>Login / Sign Up</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body {
@@ -110,6 +109,7 @@
             background-color: #d1fae5;
             color: #059669;
         }
+
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -127,294 +127,276 @@
         }
     </style>
 </head>
-
 <body>
-
-<div id="loadingOverlay" class="loading-overlay">
-    Connecting to service...
-</div>
-
-<div class="container hidden" id="authContainer">
-
-    <div class="card">
-        <h2 id="formTitle" class="text-3xl font-bold text-center mb-6 text-gray-800">Login</h2>
-
-        <input type="text" id="emailInput" class="input-field" placeholder="Email">
-        <input type="password" id="passwordInput" class="input-field" placeholder="Password">
-
-        <div id="forgotPasswordContainer" class="text-right mb-4">
-            <button id="forgotPasswordBtn" class="text-sm text-blue-600 hover:text-blue-800 transition duration-150">
-                Forgot Password?
-            </button>
-        </div>
-
-        <input type="text" id="nameInput" class="input-field hidden" placeholder="Full Name (for Sign Up)">
-
-        <button id="authButton" class="action-button mb-4">Login</button>
-
-        <div class="divider">OR</div>
-
-        <button id="googleAuthButton" class="google-button">
-            <i class="fab fa-google google-icon"></i>
-            Continue with Google
-        </button>
-
-        <div id="messageBox" class="message-box hidden"></div>
-
-        <p class="text-center text-sm text-gray-600 mt-6">
-            <span id="toggleText">Don't have an account?</span>
-            <button id="toggleFormBtn" class="text-blue-600 font-medium hover:text-blue-800 transition duration-150">
-                Sign Up
-            </button>
-        </p>
+    <div id="loadingOverlay" class="loading-overlay">
+        Connecting to service...
     </div>
-</div>
 
-<script type="module">
+    <div class="container hidden" id="authContainer">
+        
+        <div class="card">
+            <h2 id="formTitle" class="text-3xl font-bold text-center mb-6 text-gray-800">Login</h2>
+            
+            <input type="text" id="emailInput" class="input-field" placeholder="Email">
+            <input type="password" id="passwordInput" class="input-field" placeholder="Password">
+            
+            <div id="forgotPasswordContainer" class="text-right mb-4">
+                <button id="forgotPasswordBtn" class="text-sm text-blue-600 hover:text-blue-800 transition duration-150">Forgot Password?</button>
+            </div>
 
-/* ---------------- IMPORTS ---------------- */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+            <input type="text" id="nameInput" class="input-field hidden" placeholder="Full Name (for Sign Up)">
+            
+            <button id="authButton" class="action-button mb-4">Login</button>
 
-import {
-    getAuth,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    onAuthStateChanged,
-    setPersistence,
-    browserLocalPersistence,
-    GoogleAuthProvider,
-    signInWithRedirect,
-    getRedirectResult,
-    sendPasswordResetEmail
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+            <div class="divider">OR</div>
 
-import {
-    getFirestore,
-    doc,
-    setDoc,
-    getDoc
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+            <button id="googleAuthButton" class="google-button">
+                <i class="fab fa-google google-icon"></i>
+                Continue with Google
+            </button>
 
+            <div id="messageBox" class="message-box hidden"></div>
 
-/* ---------------- FIREBASE CONFIG ---------------- */
-const firebaseConfig = {
-    apiKey: "AIzaSyDtkaHB2ER0RAOpsbW-Eg65wSe7G4Uwrkw",
-    authDomain: "travelassistant-1baed.firebaseapp.com",
-    projectId: "travelassistant-1baed",
-    storageBucket: "travelassistant-1baed.appspot.com",
-    messagingSenderId: "67570490262",
-    appId: "1:67570490262:web:7164a2d838b5517a325bb7"
-};
+            <p class="text-center text-sm text-gray-600 mt-6">
+                <span id="toggleText">Don't have an account?</span>
+                <button id="toggleFormBtn" class="text-blue-600 font-medium hover:text-blue-800 transition duration-150">Sign Up</button>
+            </p>
+        </div>
+    </div>
 
-const appId = "travelassistant-1baed";
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInWithEmailAndPassword, 
+            createUserWithEmailAndPassword, 
+            onAuthStateChanged,
+            setPersistence,
+            browserLocalPersistence,
+            sendPasswordResetEmail,
+            GoogleAuthProvider,
+            signInWithRedirect,
+            getRedirectResult
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+        import { 
+            getFirestore, 
+            doc, 
+            setDoc,
+            getDoc
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-const googleProvider = new GoogleAuthProvider();
+        const hardcodedAppId = 'travelassistant-1baed';
+        const hardcodedFirebaseConfig = {
+            apiKey: "AIzaSyDtkaHB2ER0RAOpsbW-Eg65wSe7G4Uwrkw",
+            authDomain: "travelassistant-1baed.firebaseapp.com",
+            projectId: "travelassistant-1baed",
+            storageBucket: "travelassistant-1baed.firebasestorage.app",
+            messagingSenderId: "67570490262",
+            appId: "1:67570490262:web:7164a2d838b5517a325bb7"
+        };
+        
+        const appId = typeof __app_id !== 'undefined' ? __app_id : hardcodedAppId;
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : hardcodedFirebaseConfig;
 
-setPersistence(auth, browserLocalPersistence);
+        const googleProvider = new GoogleAuthProvider();
 
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-/* ---------------- UI ELEMENTS ---------------- */
-const authContainer = document.getElementById('authContainer');
-const loadingOverlay = document.getElementById('loadingOverlay');
-const formTitle = document.getElementById('formTitle');
-const emailInput = document.getElementById('emailInput');
-const passwordInput = document.getElementById('passwordInput');
-const nameInput = document.getElementById('nameInput');
-const authButton = document.getElementById('authButton');
-const googleAuthButton = document.getElementById('googleAuthButton');
-const toggleFormBtn = document.getElementById('toggleFormBtn');
-const toggleText = document.getElementById('toggleText');
-const messageBox = document.getElementById('messageBox');
-const forgotPasswordContainer = document.getElementById('forgotPasswordContainer');
-const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+        setPersistence(auth, browserLocalPersistence);
 
-let isSignUp = false;
-let isProcessing = false;
+        let isSignUp = false;
+        let isProcessing = false;
 
+        const authContainer = document.getElementById('authContainer');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const formTitle = document.getElementById('formTitle');
+        const emailInput = document.getElementById('emailInput');
+        const passwordInput = document.getElementById('passwordInput');
+        const nameInput = document.getElementById('nameInput');
+        const authButton = document.getElementById('authButton');
+        const googleAuthButton = document.getElementById('googleAuthButton');
+        const toggleFormBtn = document.getElementById('toggleFormBtn');
+        const toggleText = document.getElementById('toggleText');
+        const messageBox = document.getElementById('messageBox');
+        const forgotPasswordContainer = document.getElementById('forgotPasswordContainer');
+        const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
 
-/* ---------------- FUNCTIONS ---------------- */
-function displayMessage(message, type) {
-    messageBox.textContent = message;
-    messageBox.className = `message-box ${type}`;
-    messageBox.classList.remove('hidden');
-}
-
-function toggleMode() {
-    isSignUp = !isSignUp;
-
-    formTitle.textContent = isSignUp ? 'Sign Up' : 'Login';
-    authButton.textContent = isSignUp ? 'Sign Up' : 'Login';
-
-    toggleText.textContent = isSignUp ? 'Already have an account?' : "Don't have an account?";
-    toggleFormBtn.textContent = isSignUp ? 'Login' : 'Sign Up';
-
-    nameInput.classList.toggle('hidden', !isSignUp);
-    forgotPasswordContainer.classList.toggle('hidden', isSignUp);
-    messageBox.classList.add('hidden');
-}
-
-function navigateToHome() {
-    window.location.href = 'index.html';
-}
-
-function showLoginForm() {
-    loadingOverlay.classList.add('hidden');
-    authContainer.classList.remove('hidden');
-}
-
-
-/* ---------------- SAVE USER TO FIRESTORE ---------------- */
-async function saveUserToFirestore(user, fullName) {
-    const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
-
-    const dataToSave = {
-        uid: user.uid,
-        email: user.email,
-        name: fullName || user.displayName || 'User',
-        photoURL: user.photoURL || null,
-        createdAt: new Date().toISOString()
-    };
-
-    await setDoc(userDocRef, dataToSave, { merge: true });
-}
-
-
-/* ---------------- EMAIL LOGIN / SIGNUP ---------------- */
-async function handleAuth(event) {
-    event.preventDefault();
-    if (isProcessing) return;
-
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-    const fullName = nameInput.value.trim();
-
-    if (!email || !password || (isSignUp && !fullName)) {
-        displayMessage('Please fill in all fields.', 'error');
-        return;
-    }
-
-    isProcessing = true;
-    authButton.textContent = isSignUp ? 'Signing Up...' : 'Logging In...';
-    messageBox.classList.add('hidden');
-
-    try {
-        if (isSignUp) {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            await saveUserToFirestore(userCredential.user, fullName);
-            displayMessage('Account created successfully!', 'success');
-
-        } else {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
-            const existingDocRef = doc(
-                db,
-                'artifacts',
-                appId,
-                'users',
-                userCredential.user.uid,
-                'profile',
-                'data'
-            );
-
-            const existingSnap = await getDoc(existingDocRef);
-
-            let nameToSave = existingSnap.exists()
-                ? existingSnap.data().name
-                : userCredential.user.displayName || "User";
-
-            await saveUserToFirestore(userCredential.user, nameToSave);
-
-            displayMessage('Login successful!', 'success');
+        function displayMessage(message, type) {
+            messageBox.textContent = message;
+            messageBox.className = `message-box ${type}`;
+            messageBox.classList.remove('hidden');
         }
 
-        setTimeout(navigateToHome, 1000);
+        function toggleMode() {
+            isSignUp = !isSignUp;
+            formTitle.textContent = isSignUp ? 'Sign Up' : 'Login';
+            authButton.textContent = isSignUp ? 'Sign Up' : 'Login';
+            toggleText.textContent = isSignUp ? 'Already have an account?' : "Don't have an account?";
+            toggleFormBtn.textContent = isSignUp ? 'Login' : 'Sign Up';
+            nameInput.classList.toggle('hidden', !isSignUp);
+            forgotPasswordContainer.classList.toggle('hidden', isSignUp);
+            messageBox.classList.add('hidden');
+        }
 
-    } catch (error) {
-        console.error("Authentication Error:", error);
-        let errorMessage = 'An error occurred. Please try again.';
+        function navigateToHome() {
+            window.location.href = 'index.html'; 
+        }
 
-        if (error.code) {
-            switch (error.code) {
-                case 'auth/user-not-found':
-                case 'auth/wrong-password':
-                    errorMessage = 'Invalid email or password.';
-                    break;
-                case 'auth/email-already-in-use':
-                    errorMessage = 'This email is already registered. Try logging in.';
-                    break;
-                case 'auth/weak-password':
-                    errorMessage = 'Password should be at least 6 characters.';
-                    break;
-                default:
-                    errorMessage = `Error: ${error.code.replace('auth/', '')}`;
+        function showLoginForm() {
+            loadingOverlay.classList.add('hidden');
+            authContainer.classList.remove('hidden');
+        }
+
+        async function saveUserToFirestore(user, fullName) {
+            const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
+
+            const dataToSave = {
+                uid: user.uid,
+                email: user.email,
+                name: fullName || user.displayName || 'User',
+                photoURL: user.photoURL || null,
+                createdAt: new Date().toISOString()
+            };
+
+            await setDoc(userDocRef, dataToSave, { merge: true });
+        }
+
+        async function handleAuth(event) {
+            event.preventDefault();
+            if (isProcessing) return;
+
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            const fullName = nameInput.value.trim();
+
+            if (!email || !password || (isSignUp && !fullName)) {
+                displayMessage('Please fill in all fields.', 'error');
+                return;
+            }
+
+            isProcessing = true;
+            authButton.textContent = isSignUp ? 'Signing Up...' : 'Logging In...';
+            messageBox.classList.add('hidden');
+
+            try {
+                if (isSignUp) {
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    await saveUserToFirestore(userCredential.user, fullName);
+                    displayMessage('Account created successfully!', 'success');
+                    setTimeout(navigateToHome, 800);
+
+                } else {
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+                    const existingDocRef = doc(db, 'artifacts', appId, 'users', userCredential.user.uid, 'profile', 'data');
+                    const existingSnap = await getDoc(existingDocRef);
+
+                    let nameToSave = null;
+
+                    if (existingSnap.exists()) {
+                        nameToSave = existingSnap.data().name;
+                    } else {
+                        nameToSave = userCredential.user.displayName || "User";
+                    }
+
+                    await saveUserToFirestore(userCredential.user, nameToSave);
+
+                    displayMessage('Login successful!', 'success');
+                    setTimeout(navigateToHome, 800);
+                }
+
+            } catch (error) {
+                console.error("Authentication Error:", error);
+                let errorMessage = 'An error occurred. Please try again.';
+                
+                if (error.code) {
+                    switch(error.code) {
+                        case 'auth/user-not-found':
+                        case 'auth/wrong-password':
+                            errorMessage = 'Invalid email or password.';
+                            break;
+                        case 'auth/email-already-in-use':
+                            errorMessage = 'This email is already registered. Try logging in.';
+                            break;
+                        case 'auth/weak-password':
+                            errorMessage = 'Password should be at least 6 characters.';
+                            break;
+                        default:
+                            errorMessage = `Error: ${error.code.replace('auth/', '')}`;
+                    }
+                }
+                displayMessage(errorMessage, 'error');
+
+            } finally {
+                isProcessing = false;
+                authButton.textContent = isSignUp ? 'Sign Up' : 'Login';
             }
         }
-        displayMessage(errorMessage, 'error');
 
-    } finally {
-        isProcessing = false;
-        authButton.textContent = isSignUp ? 'Sign Up' : 'Login';
-    }
-}
-
-
-/* ---------------- GOOGLE SIGN-IN (REDIRECT) ---------------- */
-async function handleGoogleSignIn() {
-    try {
-        await signInWithRedirect(auth, googleProvider);
-    } catch (error) {
-        console.error("Google Redirect Error:", error);
-        displayMessage("Google Sign-In failed.", "error");
-    }
-}
-
-
-/* ---------------- HANDLE REDIRECT RESULT ---------------- */
-getRedirectResult(auth)
-    .then(async (result) => {
-        if (result && result.user) {
-            const user = result.user;
-
-            await saveUserToFirestore(
-                user,
-                user.displayName || "User"
-            );
-
-            navigateToHome();
+        // ⭐ FIXED: GOOGLE LOGIN VIA REDIRECT (WORKS IN KODULAR)
+        async function handleGoogleSignIn() {
+            try {
+                await signInWithRedirect(auth, googleProvider);
+            } catch (error) {
+                console.error("Google Sign-In Error:", error);
+                displayMessage("Google Sign-In failed.", "error");
+            }
         }
-    })
-    .catch((error) => {
-        console.error("Redirect Error:", error);
-    });
 
+        // ⭐ Handle redirect result (after login completes)
+        onAuthStateChanged(auth, async (user) => {
+            if (user && !user.isAnonymous) {
+                await saveUserToFirestore(
+                    user,
+                    user.displayName || "User"
+                );
+                navigateToHome();
+                return;
+            }
 
-/* ---------------- AUTH LISTENER ---------------- */
-onAuthStateChanged(auth, (user) => {
-    if (user && !user.isAnonymous) {
-        navigateToHome();
-    } else {
-        showLoginForm();
-    }
-});
+            try {
+                const result = await getRedirectResult(auth);
+                if (result && result.user) {
+                    const gUser = result.user;
 
+                    await saveUserToFirestore(
+                        gUser,
+                        gUser.displayName || "User"
+                    );
 
-/* ---------------- EVENT LISTENERS ---------------- */
-authButton.addEventListener('click', handleAuth);
-googleAuthButton.addEventListener('click', handleGoogleSignIn);
-toggleFormBtn.addEventListener('click', toggleMode);
-forgotPasswordBtn.addEventListener('click', async () => {
-    if (!emailInput.value.trim()) {
-        displayMessage("Enter your email first.", "error");
-        return;
-    }
-    await sendPasswordResetEmail(auth, emailInput.value.trim());
-    displayMessage("Password reset mail sent!", "success");
-});
+                    navigateToHome();
+                } else {
+                    showLoginForm();
+                }
+            } catch (error) {
+                console.error("Google Redirect Error:", error);
+                showLoginForm();
+            }
+        });
 
-</script>
+        authButton.addEventListener('click', handleAuth);
+        googleAuthButton.addEventListener('click', handleGoogleSignIn);
+        toggleFormBtn.addEventListener('click', toggleMode);
+
+        forgotPasswordBtn.addEventListener('click', async () => {
+            const email = emailInput.value.trim();
+            if (!email) {
+                displayMessage("Enter your email first.", "error");
+                return;
+            }
+            try {
+                await sendPasswordResetEmail(auth, email);
+                displayMessage("Reset link sent to your email.", "success");
+            } catch {
+                displayMessage("Unable to send email.", "error");
+            }
+        });
+
+    </script>
 </body>
 </html>
