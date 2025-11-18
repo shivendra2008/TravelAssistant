@@ -21,6 +21,7 @@
         max-width: 430px;
         margin: auto;
         margin-top: 60px;
+        position: relative;
     }
     .profile-pic {
         width: 110px;
@@ -30,47 +31,71 @@
         margin: auto;
         border: 3px solid #f7b949;
     }
+    .back-arrow {
+        position: absolute;
+        top: -50px;
+        left: 10px;
+        font-size: 28px;
+        cursor: pointer;
+        color: white;
+    }
 </style>
 </head>
 
 <body>
 
 <div class="card">
+
+    <!-- Back -->
+    <i class="fas fa-arrow-left back-arrow" onclick="window.location.href='index.html'"></i>
+
     <h2 class="text-center text-3xl font-bold mb-6 text-gray-800">Your Profile</h2>
 
-    <!-- Profile Image -->
+    <!-- Profile Photo -->
     <div class="text-center mb-4">
         <img id="profileImage" class="profile-pic" src="" alt="Profile Picture">
-
-        <!-- Only for email users -->
-        <input type="file" id="imageUpload" class="hidden" accept="image/*">
-        <button id="changePicBtn"
-            class="mt-3 px-4 py-2 bg-gray-200 rounded-lg font-semibold hidden">
-            Change Picture
-        </button>
     </div>
 
     <!-- Name -->
     <label class="font-semibold text-gray-700">Full Name</label>
-    <input id="nameInput" 
-           class="w-full p-3 border rounded-xl my-2" 
-           type="text">
+    <input id="nameInput" class="w-full p-3 border rounded-xl my-2" type="text">
 
     <!-- Email -->
     <label class="font-semibold text-gray-700">Email</label>
-    <input id="emailInput" disabled 
-           class="w-full p-3 border rounded-xl my-2 bg-gray-100">
+    <input id="emailInput" disabled class="w-full p-3 border rounded-xl my-2 bg-gray-100">
 
-    <!-- Save Button -->
+    <!-- Save -->
     <button id="saveBtn"
         class="w-full mt-4 py-3 rounded-xl font-bold text-white"
         style="background:#f39c12;">
         Save Changes
     </button>
 
+    <!-- Dropdown Settings -->
+    <div class="mt-6">
+        <button id="settingsToggle" class="w-full py-3 flex justify-between items-center font-semibold text-gray-700 border rounded-xl px-3">
+            Account Settings
+            <i class="fas fa-chevron-down" id="settingsIcon"></i>
+        </button>
+
+        <div id="settingsPanel" class="hidden mt-3">
+
+            <button id="changePasswordBtn"
+                class="w-full mt-2 py-3 rounded-xl font-bold text-white bg-blue-500">
+                Change Password
+            </button>
+
+            <button id="deleteAccountBtn"
+                class="w-full mt-3 py-3 rounded-xl font-bold text-white bg-red-600">
+                Delete Account
+            </button>
+
+        </div>
+    </div>
+
     <!-- Logout -->
     <button id="logoutBtn"
-        class="w-full mt-3 py-3 rounded-xl font-bold text-white bg-red-500">
+        class="w-full mt-5 py-3 rounded-xl font-bold text-white bg-gray-700">
         Logout
     </button>
 
@@ -80,12 +105,14 @@
 
 <script type="module">
 
-/* ---------------- Firebase Setup ---------------- */
+/* ---------- Firebase Setup (unchanged) ---------- */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { 
     getAuth, 
     onAuthStateChanged,
-    signOut
+    signOut,
+    sendPasswordResetEmail,
+    deleteUser
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
 import {
@@ -95,150 +122,91 @@ import {
     setDoc
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-import {
-    getStorage,
-    ref,
-    uploadBytes,
-    getDownloadURL
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
-
-
-/* -----------------------------------------
-   UPDATED STORAGE BUCKET (IMPORTANT FIX)
------------------------------------------- */
 const appId = "travelassistant-1baed";
 const firebaseConfig = {
     apiKey: "AIzaSyDtkaHB2ER0RAOpsbW-Eg65wSe7G4Uwrkw",
     authDomain: "travelassistant-1baed.firebaseapp.com",
     projectId: "travelassistant-1baed",
-    storageBucket: "travelassistant-1baed.appspot.com",   // ← FIXED HERE
+    storageBucket: "travelassistant-1baed.appspot.com",
     messagingSenderId: "67570490262",
     appId: "1:67570490262:web:7164a2d838b5517a325bb7"
 };
 
-
-/* Init services */
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
 
 /* UI elements */
 const profileImage = document.getElementById("profileImage");
-const changePicBtn = document.getElementById("changePicBtn");
-const imageUpload = document.getElementById("imageUpload");
 const nameInput = document.getElementById("nameInput");
 const emailInput = document.getElementById("emailInput");
 const saveBtn = document.getElementById("saveBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const statusMsg = document.getElementById("statusMsg");
+const changePasswordBtn = document.getElementById("changePasswordBtn");
+const deleteAccountBtn = document.getElementById("deleteAccountBtn");
 
-let currentUser = null;
-let currentPhotoURL = null;
+/* Settings dropdown */
+const settingsToggle = document.getElementById("settingsToggle");
+const settingsPanel = document.getElementById("settingsPanel");
+const settingsIcon = document.getElementById("settingsIcon");
 
+settingsToggle.addEventListener("click", () => {
+    const isOpen = !settingsPanel.classList.contains("hidden");
+    settingsPanel.classList.toggle("hidden");
 
-/* ---------------- Load User Data ---------------- */
+    settingsIcon.classList.toggle("fa-chevron-down", isOpen);
+    settingsIcon.classList.toggle("fa-chevron-up", !isOpen);
+});
+
+/* ---------- Load User + Firestore ---------- */
 onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-        window.location.href = "login.html";
-        return;
-    }
+    if (!user) return (window.location.href = "login.html");
 
-    currentUser = user;
     emailInput.value = user.email;
 
-    // Firestore path
-    const userRef = doc(
-        db,
-        "artifacts",
-        appId,
-        "users",
-        user.uid,
-        "profile",
-        "data"
-    );
-
+    const userRef = doc(db, "artifacts", appId, "users", user.uid, "profile", "data");
     const snap = await getDoc(userRef);
 
-    if (snap.exists()) {
-        const data = snap.data();
+    nameInput.value = snap.exists() ? snap.data().name : (user.displayName || "");
 
-        nameInput.value = data.name || "";
-        currentPhotoURL =
-            data.photoURL ||
-            user.photoURL ||
-            "https://via.placeholder.com/150";
-        profileImage.src = currentPhotoURL;
-    } else {
-        nameInput.value = user.displayName || "";
-        currentPhotoURL =
-            user.photoURL ||
-            "https://via.placeholder.com/150";
-        profileImage.src = currentPhotoURL;
-    }
-
-    // If Google user → no picture editing
-    if (user.providerData[0].providerId === "google.com") {
-        changePicBtn.classList.add("hidden");
-    } else {
-        changePicBtn.classList.remove("hidden");
-    }
+    // Google photo OR default
+    profileImage.src =
+        user.providerData[0].providerId === "google.com"
+            ? user.photoURL
+            : "profile-picture.png";
 });
 
-
-/* ---------------- Change Picture (Email Users Only) ---------------- */
-changePicBtn.addEventListener("click", () => {
-    imageUpload.click();
-});
-
-imageUpload.addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    // Upload to Firebase Storage
-    const storageRef = ref(storage, `profilePics/${currentUser.uid}.jpg`);
-    await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(storageRef);
-
-    currentPhotoURL = downloadURL;
-    profileImage.src = downloadURL;
-
-    statusMsg.textContent = "Profile picture updated!";
-    statusMsg.style.color = "green";
-});
-
-
-/* ---------------- Save Profile Changes ---------------- */
+/* ---------- Save ---------- */
 saveBtn.addEventListener("click", async () => {
+    const user = auth.currentUser;
+    const userRef = doc(db, "artifacts", appId, "users", user.uid, "profile", "data");
 
-    const userRef = doc(
-        db,
-        "artifacts",
-        appId,
-        "users",
-        currentUser.uid,
-        "profile",
-        "data"
-    );
+    await setDoc(userRef, {
+        name: nameInput.value.trim(),
+        email: user.email,
+        updatedAt: new Date().toISOString()
+    }, { merge: true });
 
-    await setDoc(
-        userRef,
-        {
-            uid: currentUser.uid,
-            email: currentUser.email,
-            name: nameInput.value.trim(),
-            photoURL: currentPhotoURL,
-            updatedAt: new Date().toISOString()
-        },
-        { merge: true }
-    );
-
-    statusMsg.textContent = "Saved successfully!";
+    statusMsg.textContent = "Saved!";
     statusMsg.style.color = "green";
 });
 
+/* Change Password */
+changePasswordBtn.addEventListener("click", async () => {
+    await sendPasswordResetEmail(auth, auth.currentUser.email);
+    alert("Password reset email sent!");
+});
 
-/* ---------------- Logout ---------------- */
+/* Delete Account */
+deleteAccountBtn.addEventListener("click", async () => {
+    if (!confirm("Are you sure? This cannot be undone.")) return;
+    await deleteUser(auth.currentUser);
+    alert("Account deleted.");
+    window.location.href = "login.html";
+});
+
+/* Logout */
 logoutBtn.addEventListener("click", async () => {
     await signOut(auth);
     window.location.href = "login.html";

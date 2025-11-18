@@ -348,17 +348,37 @@
         forgotPasswordBtn.addEventListener('click', handleForgotPassword);
 
         async function handleGoogleSignIn() {
-            try {
-                const result = await signInWithPopup(auth, googleProvider);
-                const user = result.user;
+    try {
+        await signInWithRedirect(auth, googleProvider);
+    } catch (error) {
+        console.error("Google Redirect Error:", error);
+        displayMessage("Google Sign-In failed.", "error");
+    }
+}
+getRedirectResult(auth)
+    .then(async (result) => {
+        if (result && result.user) {
+            const user = result.user;
 
-                await saveUserToFirestore(user, user.displayName);
-                navigateToHome();
-            } catch (e) {
-                console.error(e);
-                displayMessage("Google sign-in failed", "error");
-            }
+            // Save user to Firestore
+            const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
+            await setDoc(userDocRef, {
+                uid: user.uid,
+                name: user.displayName || "User",
+                email: user.email,
+                photoURL: user.photoURL,
+                createdAt: new Date().toISOString()
+            }, { merge: true });
+
+            // redirect to home
+            window.location.href = "index.html";
         }
+    })
+    .catch(err => {
+        console.error("Redirect Error:", err);
+    });
+
+
 
         async function handleForgotPassword() {
             const email = emailInput.value.trim();
