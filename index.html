@@ -12,7 +12,7 @@
         <header class="header">
             <div class="header-text">
                 <h1>Welcome,</h1>
-                <h2>Shivendra Sontakke</h2>
+                <h2 id="userNameDisplay">Loading...</h2>
             </div>
             <div class="profile-icon">
                 <i class="fas fa-user-circle"></i>
@@ -79,6 +79,79 @@
     </div>
     
     <script>
+           import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInWithCustomToken, 
+            signInAnonymously, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            getDoc,
+            setLogLevel
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Set logging to debug level for development
+        setLogLevel('Debug');
+
+        // --- GLOBAL VARIABLES & INITIALIZATION ---
+
+        // IMPORTANT: These are provided by the canvas environment.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let auth, db;
+        if (firebaseConfig) {
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            // Automatically sign in using the provided token or anonymously
+            async function initialSignIn() {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken).catch(e => console.error("Custom token sign-in failed:", e));
+                } else {
+                    await signInAnonymously(auth).catch(e => console.error("Anonymous sign-in failed:", e));
+                }
+            }
+            initialSignIn();
+        }
+
+        // --- CORE FUNCTIONALITY TO DISPLAY USER NAME ---
+
+        onAuthStateChanged(auth, async (user) => {
+            const userNameElement = document.getElementById('userNameDisplay');
+
+            if (user) {
+                // User is signed in. Now, manually add the logic to fetch the name.
+                // 1. Define the Firestore path to the user's profile document.
+                const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
+                
+                try {
+                    const docSnap = await getDoc(userDocRef);
+
+                    if (docSnap.exists()) {
+                        const userData = docSnap.data();
+                        // 2. IMPORTANT: Use the 'name' field saved during sign-up/Google login.
+                        // You can confirm this field structure in login.html.
+                        const nameToDisplay = userData.name || user.email; 
+                        userNameElement.textContent = nameToDisplay;
+                    } else {
+                        // Fallback if profile document doesn't exist
+                        userNameElement.textContent = user.email || "Traveler";
+                    }
+                } catch (error) {
+                    console.error("Error fetching user profile:", error);
+                    userNameElement.textContent = "Traveler";
+                }
+            } else {
+                // If the user somehow reaches this page without authentication, show a default.
+                userNameElement.textContent = "Guest";
+            }
+        });
         document.getElementById('searchBtn').addEventListener('click', function() {
     const city = document.getElementById('cityInput').value;
     

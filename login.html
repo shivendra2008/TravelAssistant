@@ -142,6 +142,11 @@
             <input type="text" id="emailInput" class="input-field" placeholder="Email">
             <input type="password" id="passwordInput" class="input-field" placeholder="Password">
             
+            <!-- Forgot Password Link - Only visible in Login Mode -->
+            <div id="forgotPasswordContainer" class="text-right mb-4">
+                <button id="forgotPasswordBtn" class="text-sm text-blue-600 hover:text-blue-800 transition duration-150">Forgot Password?</button>
+            </div>
+
             <!-- Full Name Input (Only visible for Sign Up) -->
             <input type="text" id="nameInput" class="input-field hidden" placeholder="Full Name (for Sign Up)">
             
@@ -177,6 +182,7 @@
             browserLocalPersistence,
             signInWithCustomToken,
             signInAnonymously,
+            sendPasswordResetEmail, // <-- NEW IMPORT
             // Google Imports
             GoogleAuthProvider,
             signInWithPopup
@@ -238,6 +244,8 @@
         const toggleFormBtn = document.getElementById('toggleFormBtn');
         const toggleText = document.getElementById('toggleText');
         const messageBox = document.getElementById('messageBox');
+        const forgotPasswordContainer = document.getElementById('forgotPasswordContainer'); // <-- NEW
+        const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');         // <-- NEW
 
 
         // --- UTILITY FUNCTIONS ---
@@ -255,6 +263,9 @@
             toggleText.textContent = isSignUp ? 'Already have an account?' : "Don't have an account?";
             toggleFormBtn.textContent = isSignUp ? 'Login' : 'Sign Up';
             nameInput.classList.toggle('hidden', !isSignUp);
+            
+            // Toggle visibility of Forgot Password link (hidden when signing up)
+            forgotPasswordContainer.classList.toggle('hidden', isSignUp);
             
             messageBox.classList.add('hidden');
         }
@@ -290,7 +301,45 @@
             await setDoc(userDocRef, dataToSave, { merge: true }); 
         }
 
-        // --- GOOGLE SIGN-IN HANDLER ---
+        // --- FORGOT PASSWORD HANDLER (NEW) ---
+        async function handleForgotPassword() {
+            if (isProcessing) return;
+
+            const email = emailInput.value.trim();
+            if (!email) {
+                displayMessage('Please enter your email address in the field above.', 'error');
+                return;
+            }
+
+            isProcessing = true;
+            forgotPasswordBtn.textContent = 'Sending...';
+            messageBox.classList.add('hidden');
+
+            try {
+                // Send the password reset email
+                await sendPasswordResetEmail(auth, email);
+                
+                displayMessage(`Password reset link sent to ${email}. Check your inbox/spam folder!`, 'success');
+
+            } catch (error) {
+                console.error("Forgot Password Error:", error);
+
+                let errorMessage = 'Could not send reset link.';
+                if (error.code === 'auth/user-not-found') {
+                    errorMessage = 'No user found with that email address.';
+                } else if (error.code) {
+                    errorMessage = `Error: ${error.code.replace('auth/', '')}`;
+                }
+                
+                displayMessage(errorMessage, 'error');
+
+            } finally {
+                isProcessing = false;
+                forgotPasswordBtn.textContent = 'Forgot Password?';
+            }
+        }
+
+        // --- GOOGLE SIGN-IN HANDLER (EXISTING) ---
         async function handleGoogleSignIn() {
             if (isProcessing) return;
             isProcessing = true;
@@ -327,7 +376,7 @@
             }
         }
 
-        // --- EMAIL/PASSWORD HANDLER ---
+        // --- EMAIL/PASSWORD HANDLER (EXISTING) ---
         async function handleAuth(event) {
             event.preventDefault();
             if (isProcessing) return;
@@ -388,7 +437,7 @@
             }
         }
         
-        // --- INITIAL AUTH CHECK ---
+        // --- INITIAL AUTH CHECK (EXISTING) ---
         
         onAuthStateChanged(auth, (user) => {
             // This is the first and primary check
@@ -407,8 +456,6 @@
                 });
             } else {
                 // No current user and no token provided: Show the login form.
-                // We SKIP signInAnonymously here to prevent unnecessary console messages/errors 
-                // since the user can successfully log in with Google/Email anyway.
                 console.log("No user found. Showing login form.");
                 showLoginForm();
             }
@@ -419,6 +466,7 @@
         authButton.addEventListener('click', handleAuth);
         googleAuthButton.addEventListener('click', handleGoogleSignIn);
         toggleFormBtn.addEventListener('click', toggleMode);
+        forgotPasswordBtn.addEventListener('click', handleForgotPassword); // <-- NEW LISTENER
         
     </script>
 </body>
