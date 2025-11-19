@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category Checklist</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f8;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            min-height: 100vh;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+        }
+        
+        /* Top Bar Consistency - Matching flights.html DNA */
+        .search-header .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background-color: #f7b949; /* Yellow background */
+            color: black;
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .search-header .top-bar i {
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+        }
+        .search-header .top-bar h1 {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        /* Category Styles */
+        .checklist-section {
+            padding: 0 15px 15px 15px;
+        }
+
+        .category-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #007bff; /* Blue category color */
+            background-color: #eaf5ff;
+            padding: 10px 15px;
+            margin: 20px -15px 0 -15px; /* Extend full width */
+            border-top: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: 0;
+        }
+
+        .checklist-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            background-color: #fff;
+            cursor: pointer;
+            transition: background-color 0.1s;
+        }
+        
+        .checklist-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .checklist-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-text {
+            flex-grow: 1;
+            font-size: 15px;
+            color: #333;
+            user-select: none;
+            line-height: 1.4;
+        }
+
+        .action-icon {
+            font-size: 20px;
+            cursor: pointer;
+            margin-left: 15px;
+        }
+        
+        .complete-icon {
+            color: #ccc; /* Default uncompleted color */
+        }
+        .complete-icon.completed {
+            color: #28a745; /* Green for completed */
+        }
+
+        /* Completed item visual feedback */
+        .checklist-item.completed .item-text {
+            text-decoration: line-through;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="search-header">
+            <div class="top-bar">
+                <!-- Back button links to the main index page -->
+                <i class="fas fa-arrow-left" onclick="window.location.href='index.html'" title="Go Back"></i>
+                <h1 id="headerTitle">Essential Travel Checklist</h1>
+                <div style="width: 24px;"></div> 
+            </div>
+        </header>
+
+        <main class="content-viewer">
+            <section id="checklistView" class="checklist-section">
+                <!-- Categories will be rendered here -->
+            </section>
+        </main>
+    </div>
+    
+    <script>
+        // --- Core Data and Elements ---
+        const CHECKLIST_KEY = 'travelCategorizedChecklistItems';
+        const checklistView = document.getElementById('checklistView');
+
+        // Initial checklist data grouped by category, with unique IDs
+        const defaultChecklist = [
+            // DOCUMENTS (5 items)
+            { id: 1, text: 'Passport / Photo ID (Checked expiry date)', category: 'Documents', completed: false },
+            { id: 2, text: 'Visa (if required) and its copies', category: 'Documents', completed: false },
+            { id: 3, text: 'Flight, Hotel, and Car Rental confirmations', category: 'Documents', completed: false },
+            { id: 4, text: 'Travel Insurance Policy', category: 'Documents', completed: false },
+            { id: 5, text: 'Driving License (International Permit if needed)', category: 'Documents', completed: false },
+            
+            // ELECTRONICS (5 items)
+            { id: 6, text: 'Universal Power Adapter', category: 'Electronics', completed: false },
+            { id: 7, text: 'Phone and Camera Chargers', category: 'Electronics', completed: false },
+            { id: 8, text: 'Portable Power Bank', category: 'Electronics', completed: false },
+            { id: 9, text: 'Headphones/Earbuds', category: 'Electronics', completed: false },
+            { id: 10, text: 'Travel Entertainment (Tablet/Book Reader)', category: 'Electronics', completed: false },
+
+            // CLOTHES (5 items)
+            { id: 11, text: 'Undergarments and Socks (One for each day + 2 extra)', category: 'Clothes', completed: false },
+            { id: 12, text: 'Weather-appropriate Jacket/Coat', category: 'Clothes', completed: false },
+            { id: 13, text: 'Swimsuit/Trunks (if applicable)', category: 'Clothes', completed: false },
+            { id: 14, text: 'Comfortable Walking Shoes', category: 'Clothes', completed: false },
+            { id: 15, text: 'Formal or Dressy Outfit (for special occasions)', category: 'Clothes', completed: false },
+
+            // FINANCE (5 items)
+            { id: 16, text: 'Local Currency Cash', category: 'Finance', completed: false },
+            { id: 17, text: 'Credit/Debit Cards (Notified bank of travel dates)', category: 'Finance', completed: false },
+            { id: 18, text: 'Emergency Contact numbers for Banks', category: 'Finance', completed: false },
+            { id: 19, text: 'Small, secure wallet or money belt', category: 'Finance', completed: false },
+            { id: 20, text: 'Copy of bank statements/proof of funds (if needed for visa)', category: 'Finance', completed: false },
+
+            // HEALTH (5 items)
+            { id: 21, text: 'Prescription Medications (with original containers)', category: 'Health', completed: false },
+            { id: 22, text: 'Basic Pain Relievers (Paracetamol/Ibuprofen)', category: 'Health', completed: false },
+            { id: 23, text: 'Hand Sanitizer and Face Masks', category: 'Health', completed: false },
+            { id: 24, text: 'Sunscreen and Insect Repellent', category: 'Health', completed: false },
+            { id: 25, text: 'First Aid Kit (band-aids, antiseptic wipes)', category: 'Health', completed: false },
+        ];
+        
+        let checklist = [];
+
+        // --- Persistence Functions (Using LocalStorage) ---
+
+        /**
+         * Loads checklist items from local storage, or uses defaults if none exist.
+         */
+        function loadChecklist() {
+            const storedList = localStorage.getItem(CHECKLIST_KEY);
+            if (storedList) {
+                // Parse stored list
+                checklist = JSON.parse(storedList);
+                
+                // Optional: Check if default list has new items and merge them
+                const existingIds = new Set(checklist.map(item => item.id));
+                defaultChecklist.forEach(defaultItem => {
+                    if (!existingIds.has(defaultItem.id)) {
+                        checklist.push(defaultItem); // Add new default items
+                    }
+                });
+                
+                // Filter out any items that might have been removed from the default list
+                const defaultIds = new Set(defaultChecklist.map(item => item.id));
+                checklist = checklist.filter(item => defaultIds.has(item.id));
+                
+            } else {
+                // Initial load: use the full default list
+                checklist = JSON.parse(JSON.stringify(defaultChecklist));
+            }
+            renderChecklist();
+        }
+
+        /**
+         * Saves the current checklist array to local storage.
+         */
+        function saveChecklist() {
+            localStorage.setItem(CHECKLIST_KEY, JSON.stringify(checklist));
+        }
+
+        // --- UI Rendering ---
+
+        /**
+         * Clears the list and re-renders all items from the 'checklist' array, grouped by category.
+         */
+        function renderChecklist() {
+            checklistView.innerHTML = ''; // Clear existing content
+            
+            // Group items by category
+            const categories = checklist.reduce((acc, item) => {
+                const category = item.category;
+                if (!acc[category]) {
+                    acc[category] = [];
+                }
+                acc[category].push(item);
+                return acc;
+            }, {});
+            
+            // Define the order of categories explicitly
+            const categoryOrder = ['Documents', 'Electronics', 'Clothes', 'Finance', 'Health'];
+
+            categoryOrder.forEach(categoryName => {
+                if (categories[categoryName]) {
+                    // Create the category title heading
+                    const title = document.createElement('h2');
+                    title.className = 'category-title';
+                    title.textContent = categoryName;
+                    checklistView.appendChild(title);
+
+                    // Create the list for items in this category
+                    const ul = document.createElement('ul');
+                    ul.className = 'checklist-list';
+                    
+                    categories[categoryName].forEach(item => {
+                        const li = document.createElement('li');
+                        li.className = `checklist-item ${item.completed ? 'completed' : ''}`;
+                        li.dataset.id = item.id;
+                        
+                        // Icon for completion status
+                        const checkIcon = item.completed 
+                            ? '<i class="fas fa-check-circle action-icon complete-icon completed" title="Mark as Pending"></i>'
+                            : '<i class="far fa-circle action-icon complete-icon" title="Mark as Complete"></i>';
+
+                        li.innerHTML = `
+                            <span class="item-text">${item.text}</span>
+                            <div class="item-actions">
+                                ${checkIcon}
+                            </div>
+                        `;
+                        
+                        ul.appendChild(li);
+                    });
+                    
+                    checklistView.appendChild(ul);
+                }
+            });
+            
+            saveChecklist(); // Save after rendering
+        }
+
+        // --- Interaction Handler ---
+
+        /**
+         * Handles clicks on the list (for toggle action).
+         */
+        function handleListClick(e) {
+            const itemElement = e.target.closest('.checklist-item');
+            const actionTarget = e.target.closest('.complete-icon');
+
+            // Only proceed if clicking a checklist item or the specific icon
+            if (!itemElement || !actionTarget) return;
+
+            const itemId = parseInt(itemElement.dataset.id);
+            const item = checklist.find(i => i.id === itemId);
+
+            if (item) {
+                item.completed = !item.completed;
+                renderChecklist(); // Re-render to update the visual state
+            }
+        }
+        
+        // --- Initialization ---
+        window.onload = function() {
+            loadChecklist();
+
+            // Event Listener for the whole checklist area
+            checklistView.addEventListener('click', handleListClick);
+        };
+    </script>
+</body>
+</html>

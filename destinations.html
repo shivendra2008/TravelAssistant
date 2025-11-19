@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Destinations by Category</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Tailwind gray-100 */
+        }
+
+        /* Hide scrollbar for cleaner look */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Custom Toggle Styles */
+        .toggle-switch-container {
+            position: relative;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 9999px;
+            padding: 4px;
+            cursor: pointer;
+            user-select: none;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .toggle-options {
+            display: flex;
+            position: relative;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 50%;
+            background-color: white;
+            border-radius: 9999px;
+            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1;
+        }
+
+        .toggle-option {
+            flex: 1;
+            text-align: center;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #4b5563; /* gray-600 */
+            z-index: 2;
+            position: relative;
+            transition: color 0.3s;
+            white-space: nowrap;
+        }
+
+        .toggle-option.active {
+            color: #111827; /* gray-900 */
+            font-weight: 700;
+        }
+
+        /* Result Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        /* Select Dropdown Arrow Override */
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 0.65em auto;
+        }
+
+        /* Modal Animation */
+        .modal-enter {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        .modal-enter-active {
+            opacity: 1;
+            transform: scale(1);
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        }
+        .modal-exit {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .modal-exit-active {
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 0.2s ease-in, transform 0.2s ease-in;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="max-w-lg mx-auto bg-white min-h-screen shadow-2xl relative flex flex-col">
+        
+        <!-- Header Section -->
+        <header class="sticky top-0 z-40">
+            <div class="flex items-center justify-between px-4 py-3" style="background-color: #f7b949; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                <!-- Back Button -->
+                <button onclick="window.location.href='index.html'" class="p-2 rounded-full hover:bg-black/10 transition-colors" title="Go Back">
+                    <i class="fas fa-arrow-left text-gray-900 text-lg"></i>
+                </button>
+                
+                <h1 class="text-gray-900 font-bold text-lg tracking-tight flex-grow text-center">Explore</h1>
+                
+                <!-- Toggle Switch -->
+                <div class="toggle-switch-container" id="modeToggle">
+                    <div class="toggle-options">
+                        <div class="toggle-slider" id="toggleSlider"></div>
+                        <span class="toggle-option active" data-mode="Indian">Indian</span>
+                        <span class="toggle-option" data-mode="International">World</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- State Selector (Conditional Render) -->
+            <div id="stateSelectorContainer" class="bg-white border-b border-gray-100 px-4 py-3 hidden transition-all duration-300">
+                <div class="relative">
+                    <select id="stateSelect" class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl focus:ring-yellow-500 focus:border-yellow-500 block w-full p-3 pr-10 font-medium shadow-sm outline-none transition-all hover:bg-gray-100">
+                        <option value="" disabled selected>Select Indian State</option>
+                        <!-- Dynamic Options -->
+                    </select>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow p-4 pb-20">
+            
+            <!-- Dynamic Heading -->
+            <div class="mb-6 text-center">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Discover</p>
+                <h2 class="text-xl font-bold text-gray-800">
+                    Top Picks for <span id="currentSelection" class="text-yellow-600 border-b-2 border-yellow-400 pb-0.5">International</span>
+                </h2>
+            </div>
+
+            <!-- Category Grid -->
+            <div class="grid grid-cols-3 gap-3 mb-8" id="categoryGrid">
+                
+                <!-- Beach Card -->
+                <div class="category-card group bg-white p-3 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col items-center gap-3 active:scale-95" data-category="Beach & Sun" id="beachCard">
+                    <div class="w-12 h-12 rounded-full bg-cyan-50 flex items-center justify-center group-hover:bg-cyan-100 transition-colors">
+                        <i class="fas fa-umbrella-beach text-cyan-500 text-xl"></i>
+                    </div>
+                    <span class="text-xs font-medium text-gray-600 text-center leading-tight group-hover:text-cyan-600">Beach & Sun</span>
+                </div>
+
+                <!-- Temple Card -->
+                <div class="category-card group bg-white p-3 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col items-center gap-3 active:scale-95" data-category="Temple/Religion">
+                    <div class="w-12 h-12 rounded-full bg-pink-50 flex items-center justify-center group-hover:bg-pink-100 transition-colors">
+                        <i class="fas fa-gopuram text-pink-500 text-xl"></i>
+                    </div>
+                    <span class="text-xs font-medium text-gray-600 text-center leading-tight group-hover:text-pink-600">Spiritual</span>
+                </div>
+                
+                <!-- Adventure Card -->
+                <div class="category-card group bg-white p-3 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col items-center gap-3 active:scale-95" data-category="Adventure & Thrill">
+                    <div class="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
+                        <i class="fas fa-hiking text-orange-500 text-xl"></i>
+                    </div>
+                    <span class="text-xs font-medium text-gray-600 text-center leading-tight group-hover:text-orange-600">Adventure</span>
+                </div>
+
+                <!-- History Card -->
+                <div class="category-card group bg-white p-3 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col items-center gap-3 active:scale-95" data-category="Culture & History">
+                    <div class="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+                        <i class="fas fa-landmark text-purple-500 text-xl"></i>
+                    </div>
+                    <span class="text-xs font-medium text-gray-600 text-center leading-tight group-hover:text-purple-600">Heritage</span>
+                </div>
+
+                <!-- City Card -->
+                <div class="category-card group bg-white p-3 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col items-center gap-3 active:scale-95" data-category="City Breaks">
+                    <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                        <i class="fas fa-city text-blue-500 text-xl"></i>
+                    </div>
+                    <span class="text-xs font-medium text-gray-600 text-center leading-tight group-hover:text-blue-600">City Life</span>
+                </div>
+
+                <!-- Nature Card -->
+                <div class="category-card group bg-white p-3 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col items-center gap-3 active:scale-95" data-category="Nature & Wildlife">
+                    <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center group-hover:bg-green-100 transition-colors">
+                        <i class="fas fa-leaf text-green-500 text-xl"></i>
+                    </div>
+                    <span class="text-xs font-medium text-gray-600 text-center leading-tight group-hover:text-green-600">Nature</span>
+                </div>
+                
+                <!-- Food Card -->
+                <div class="category-card group bg-white p-3 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col items-center gap-3 active:scale-95" data-category="Food & Cuisine">
+                    <div class="w-12 h-12 rounded-full bg-yellow-50 flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
+                        <i class="fas fa-utensils text-yellow-500 text-xl"></i>
+                    </div>
+                    <span class="text-xs font-medium text-gray-600 text-center leading-tight group-hover:text-yellow-600">Food</span>
+                </div>
+            </div>
+            
+            <!-- Results Section -->
+            <section id="destinationResults" class="transition-all duration-300">
+                <div class="bg-white rounded-2xl p-6 text-center shadow-sm border border-gray-100">
+                    <div class="bg-yellow-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-map-marked-alt text-yellow-500 text-2xl"></i>
+                    </div>
+                    <p class="text-gray-500 text-sm font-medium">Tap a category above to find your next destination.</p>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Modal for Destination Details -->
+    <div id="detailModal" class="fixed inset-0 z-50 hidden flex items-center justify-center px-4">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity opacity-0" id="modalBackdrop" onclick="closeModal()"></div>
+        
+        <!-- Modal Card -->
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm relative transform scale-95 opacity-0 transition-all duration-300 z-10 overflow-hidden" id="modalCard">
+            
+            <!-- Header with Image Placeholder Style -->
+            <div class="h-24 bg-gradient-to-r from-yellow-400 to-orange-400 relative">
+                <button onclick="closeModal()" class="absolute top-3 right-3 bg-white/20 hover:bg-white/40 text-white rounded-full p-2 backdrop-blur-md transition-colors">
+                    <i class="fas fa-times text-lg w-5 h-5 flex items-center justify-center"></i>
+                </button>
+                <div class="absolute -bottom-8 left-6">
+                    <div class="w-16 h-16 bg-white rounded-2xl shadow-md flex items-center justify-center text-yellow-500 border-4 border-white">
+                        <i class="fas fa-map-pin text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="pt-10 px-6 pb-6">
+                <h3 id="modalTitle" class="text-2xl font-bold text-gray-900 mb-1">Destination Name</h3>
+                <p id="modalLocation" class="text-sm text-gray-500 font-medium flex items-center mb-5">
+                    <i class="fas fa-globe-asia mr-2 text-gray-400"></i> <span>Location</span>
+                </p>
+
+                <div class="space-y-4">
+                    <!-- Best Time -->
+                    <div class="flex items-start">
+                        <div class="w-8 flex-shrink-0 pt-1">
+                            <i class="fas fa-clock text-blue-500"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wide">Best Time to Visit</h4>
+                            <p id="modalTime" class="text-gray-700 text-sm font-medium">Oct - Mar</p>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="flex items-start">
+                        <div class="w-8 flex-shrink-0 pt-1">
+                            <i class="fas fa-info-circle text-purple-500"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wide">About</h4>
+                            <p id="modalDesc" class="text-gray-600 text-sm leading-relaxed">
+                                Description goes here...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="closeModal()" class="mt-6 w-full bg-gray-900 text-white py-3 rounded-xl font-semibold hover:bg-gray-800 active:scale-95 transition-all shadow-lg shadow-gray-200">
+                    Got it
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // --- 1. Core Data: State Info ---
+        const allStates = [
+            { name: 'Andhra Pradesh', isCoastal: true },
+            { name: 'Arunachal Pradesh', isCoastal: false },
+            { name: 'Assam', isCoastal: false },
+            { name: 'Bihar', isCoastal: false },
+            { name: 'Chhattisgarh', isCoastal: false },
+            { name: 'Goa', isCoastal: true },
+            { name: 'Gujarat', isCoastal: true },
+            { name: 'Haryana', isCoastal: false },
+            { name: 'Himachal Pradesh', isCoastal: false },
+            { name: 'Jharkhand', isCoastal: false },
+            { name: 'Karnataka', isCoastal: true },
+            { name: 'Kerala', isCoastal: true },
+            { name: 'Madhya Pradesh', isCoastal: false },
+            { name: 'Maharashtra', isCoastal: true },
+            { name: 'Manipur', isCoastal: false },
+            { name: 'Meghalaya', isCoastal: false },
+            { name: 'Mizoram', isCoastal: false },
+            { name: 'Nagaland', isCoastal: false },
+            { name: 'Odisha', isCoastal: true },
+            { name: 'Punjab', isCoastal: false },
+            { name: 'Rajasthan', isCoastal: false },
+            { name: 'Sikkim', isCoastal: false },
+            { name: 'Tamil Nadu', isCoastal: true },
+            { name: 'Telangana', isCoastal: false },
+            { name: 'Tripura', isCoastal: false },
+            { name: 'Uttar Pradesh', isCoastal: false },
+            { name: 'Uttarakhand', isCoastal: false },
+            { name: 'West Bengal', isCoastal: true },
+            { name: 'Andaman and Nicobar Islands', isCoastal: true },
+            { name: 'Puducherry', isCoastal: true }
+        ];
+        const stateCoastalMap = new Map(allStates.map(state => [state.name, state.isCoastal]));
+
+        // --- 2. EXTENSIVE DESTINATION LIST (At least 8-10 items per category) ---
+        const destinationsData = {
+            'International': {
+                'Beach & Sun': ['Maldives (Atolls)', 'Bali (Nusa Dua)', 'Phuket (Patong)', 'Bora Bora', 'Maui (Hawaii)', 'Santorini (Red Beach)', 'Gold Coast (Australia)', 'Cancun (Mexico)', 'Seychelles', 'Fiji Islands'],
+                'Temple/Religion': ['Vatican City', 'Mecca (Saudi Arabia)', 'Angkor Wat (Cambodia)', 'Kyoto Temples (Japan)', 'Jerusalem', 'Bagan (Myanmar)', 'Paro Taktsang (Bhutan)', 'Blue Mosque (Turkey)', 'Notre Dame (Paris)', 'Wat Arun (Bangkok)'],
+                'Adventure & Thrill': ['Queenstown (Bungee)', 'Interlaken (Skydiving)', 'Kathmandu (Everest Base)', 'Costa Rica (Ziplining)', 'Dubai (Skydive)', 'Cape Town (Shark Dive)', 'Patagonia (Trekking)', 'Banff (Skiing)', 'Moab (Rock Climbing)', 'Cairns (Scuba)'],
+                'Culture & History': ['Rome (Colosseum)', 'Cairo (Pyramids)', 'Machu Picchu (Peru)', 'Athens (Acropolis)', 'Petra (Jordan)', 'Taj Mahal (India)', 'Great Wall (China)', 'Chichen Itza (Mexico)', 'Stonehenge (UK)', 'Louvre Museum (Paris)'],
+                'City Breaks': ['New York City', 'London', 'Paris', 'Tokyo', 'Dubai', 'Singapore', 'Hong Kong', 'Barcelona', 'Amsterdam', 'Sydney'],
+                'Nature & Wildlife': ['Serengeti (Safari)', 'Amazon Rainforest', 'Galapagos Islands', 'Great Barrier Reef', 'Yellowstone National Park', 'Kruger National Park', 'Iguazu Falls', 'Grand Canyon', 'Swiss Alps', 'Ha Long Bay'],
+                'Food & Cuisine': ['Naples (Pizza)', 'Tokyo (Sushi)', 'Bangkok (Street Food)', 'Paris (Pastries)', 'Mexico City (Tacos)', 'Istanbul (Kebabs)', 'New Orleans (Creole)', 'Lima (Ceviche)', 'Mumbai (Chaat)', 'Hanoi (Pho)'],
+            },
+            'Maharashtra': {
+                'Beach & Sun': ['Alibaug', 'Kashid Beach', 'Tarkarli', 'Ganpatipule', 'Diveagar', 'Murud Janjira', 'Guhagar', 'Harihareshwar', 'Velas Beach', 'Dahanu Bordi'],
+                'Temple/Religion': ['Siddhivinayak (Mumbai)', 'Shirdi Sai Baba', 'Trimbakeshwar (Nashik)', 'Bhimashankar', 'Tuljapur Bhavani', 'Mahalakshmi (Kolhapur)', 'Shani Shingnapur', 'Grishneshwar', 'Jejuri', 'Dagadusheth Halwai (Pune)'],
+                'Adventure & Thrill': ['Lonavala (Tiger Point)', 'Kalsubai Peak Trek', 'Sandhan Valley', 'Kolad River Rafting', 'Malshej Ghat', 'Rajmachi Fort Trek', 'Pawna Lake Camping', 'Harishchandragad', 'Lohagad Fort', 'Sinhagad Trek'],
+                'Culture & History': ['Gateway of India', 'Ajanta Caves', 'Ellora Caves', 'Elephanta Caves', 'Raigad Fort', 'Shaniwar Wada', 'Aga Khan Palace', 'Chhatrapati Shivaji Terminus', 'Daulatabad Fort', 'Janjira Fort'],
+                'City Breaks': ['Mumbai', 'Pune', 'Nashik', 'Nagpur', 'Aurangabad', 'Kolhapur', 'Thane', 'Navi Mumbai', 'Solapur', 'Amravati'],
+                'Nature & Wildlife': ['Tadoba National Park', 'Sanjay Gandhi National Park', 'Kaas Plateau', 'Pench Tiger Reserve', 'Bhimashankar Wildlife', 'Karnala Bird Sanctuary', 'Radhanagari Bison Sanctuary', 'Lonar Crater Lake', 'Amboli Ghat', 'Nannaj Bustard Sanctuary'],
+                'Food & Cuisine': ['Mumbai Vada Pav', 'Pune Misal Pav', 'Kolhapuri Tambda Rassa', 'Nagpur Saoji Chicken', 'Malvani Fish Curry', 'Puran Poli', 'Bhel Puri at Chowpatty', 'Thalipeeth', 'Sol Kadhi', 'Modak'],
+            },
+            'Kerala': {
+                'Beach & Sun': ['Kovalam', 'Varkala', 'Marari Beach', 'Cherai Beach', 'Bekal Beach', 'Alappuzha Beach', 'Kappad Beach', 'Muzhappilangad Drive-in', 'Poovar Island', 'Kannur Beach'],
+                'Temple/Religion': ['Padmanabhaswamy Temple', 'Guruvayur Temple', 'Sabarimala', 'Attukal Bhagavathy', 'Vadakkunnathan (Thrissur)', 'Chottanikkara', 'Ambalapuzha Temple', 'Thirunelli Temple', 'Ettumanoor Shiva', 'Sree Poornathrayeesa'],
+                'Adventure & Thrill': ['Wayanad Trekking', 'Thekkady Bamboo Rafting', 'Paragliding in Vagamon', 'Kayaking in Alleppey', 'Rock Climbing at Thenmala', 'Wildlife Safari Periyar', 'Trekking Agasthyarkoodam', 'River Rafting Bhothathankettu', 'Camping in Munnar', 'Scuba in Kovalam'],
+                'Culture & History': ['Fort Kochi', 'Mattancherry Palace', 'Jewish Synagogue', 'Napier Museum', 'Edakkal Caves', 'Bekal Fort', 'Krishnapuram Palace', 'Thripunithura Hill Palace', 'Keralam Museum', 'Chinese Fishing Nets'],
+                'City Breaks': ['Kochi (Cochin)', 'Thiruvananthapuram', 'Kozhikode (Calicut)', 'Thrissur', 'Kollam', 'Kannur', 'Alappuzha Town', 'Palakkad', 'Kottayam', 'Thalassery'],
+                'Nature & Wildlife': ['Munnar Tea Gardens', 'Periyar National Park', 'Silent Valley NP', 'Kumarakom Bird Sanctuary', 'Eravikulam NP', 'Athirappilly Falls', 'Wayanad Wildlife Sanctuary', 'Vembanad Lake', 'Thattekkad Bird Sanctuary', 'Neyyar Dam'],
+                'Food & Cuisine': ['Kerala Sadya', 'Malabar Biryani', 'Appam with Stew', 'Puttu and Kadala', 'Karimeen Pollichathu', 'Banana Chips', 'Palada Payasam', 'Thalassery Biryani', 'Fish Molee', 'Kappa and Meen Curry'],
+            },
+            'Rajasthan': {
+                'Beach & Sun': [], 
+                'Temple/Religion': ['Brahma Temple (Pushkar)', 'Karni Mata (Deshnok)', 'Eklingji Temple', 'Govind Dev Ji (Jaipur)', 'Ranakpur Jain Temple', 'Dilwara Temples', 'Birla Mandir (Jaipur)', 'Salasar Balaji', 'Rani Sati Dadi', 'Shrinathji (Nathdwara)'],
+                'Adventure & Thrill': ['Desert Safari Jaisalmer', 'Hot Air Balloon Jaipur', 'Zipline Mehrangarh', 'Camping in Sam Dunes', 'Trekking Mount Abu', 'Wildlife Safari Ranthambore', 'Dune Bashing', 'Camel Safari Bikaner', 'Parasailing Jaisalmer', 'Cycling Tours Udaipur'],
+                'Culture & History': ['Amber Fort', 'City Palace Udaipur', 'Hawa Mahal', 'Mehrangarh Fort', 'Jaisalmer Fort', 'Chittorgarh Fort', 'Kumbhalgarh Fort', 'Jantar Mantar', 'Umaid Bhawan Palace', 'Patwon Ki Haveli'],
+                'City Breaks': ['Jaipur', 'Udaipur', 'Jodhpur', 'Jaisalmer', 'Bikaner', 'Pushkar', 'Ajmer', 'Mount Abu', 'Kota', 'Mandawa'],
+                'Nature & Wildlife': ['Ranthambore National Park', 'Sariska Tiger Reserve', 'Keoladeo Ghana (Bharatpur)', 'Desert National Park', 'Kumbhalgarh Wildlife', 'Tal Chhapar Sanctuary', 'Darrah National Park', 'Mount Abu Sanctuary', 'Jhalana Leopard Reserve', 'Sambhar Salt Lake'],
+                'Food & Cuisine': ['Dal Baati Churma', 'Laal Maas', 'Ghewar', 'Pyaz Ki Kachori', 'Ker Sangri', 'Gatte Ki Sabzi', 'Mirchi Vada', 'Mawa Kachori', 'Bajre Ki Roti', 'Mohan Maas'],
+            },
+            'Goa': {
+                'Beach & Sun': ['Baga Beach', 'Calangute Beach', 'Anjuna Beach', 'Palolem Beach', 'Arambol Beach', 'Morjim Beach', 'Colva Beach', 'Vagator Beach', 'Agonda Beach', 'Butterfly Beach'],
+                'Temple/Religion': ['Basilica of Bom Jesus', 'Se Cathedral', 'Mangeshi Temple', 'Shanta Durga Temple', 'Mahalaxmi Temple', 'Church of St. Cajetan', 'Reis Magos Church', 'Tambdi Surla Temple', 'Safac Masjid', 'Maruti Temple'],
+                'Adventure & Thrill': ['Dudhsagar Waterfalls Trek', 'Scuba Diving Grande Island', 'Parasailing at Baga', 'Jet Skiing Calangute', 'Bungee Jumping Mayem', 'Kayaking in Sal Backwaters', 'Snorkeling', 'Go Karting Arpora', 'White Water Rafting Mhadei', 'Windsurfing'],
+                'Culture & History': ['Fort Aguada', 'Chapora Fort', 'Fontainhas (Latin Quarter)', 'Goa State Museum', 'Ancestral Goa (Big Foot)', 'Cabo de Rama Fort', 'Naval Aviation Museum', 'Braganza House', 'Reis Magos Fort', 'Corjuem Fort'],
+                'City Breaks': ['Panaji', 'Margao', 'Vasco da Gama', 'Mapusa', 'Ponda', 'Old Goa', 'Porvorim', 'Bicholim', 'Curchorem', 'Sanguem'],
+                'Nature & Wildlife': ['Salim Ali Bird Sanctuary', 'Bhagwan Mahavir Sanctuary', 'Bondla Wildlife Sanctuary', 'Cotigao Wildlife Sanctuary', 'Netravali Wildlife', 'Dr. Salim Ali Bird Sanctuary', 'Mollem National Park', 'Butterfly Conservatory', 'Chorla Ghats', 'Arvalem Caves'],
+                'Food & Cuisine': ['Goan Fish Curry', 'Prawn Balchao', 'Chicken Xacuti', 'Pork Vindaloo', 'Bebinca', 'Goan Sausages', 'Crab Xec Xec', 'Sannas', 'Feni', 'Serradura'],
+            },
+            'Himachal Pradesh': {
+                'Beach & Sun': [],
+                'Temple/Religion': ['Hidimba Devi (Manali)', 'Jakhu Temple (Shimla)', 'Baijnath Temple', 'Chamunda Devi', 'Jwala Ji', 'Naina Devi', 'Chintpurni', 'Manikaran Sahib', 'Dalai Lama Temple', 'Masroor Rock Cut Temple'],
+                'Adventure & Thrill': ['Paragliding in Bir Billing', 'River Rafting in Kullu', 'Trekking Triund', 'Skiing in Solang', 'Spiti Valley Bike Trip', 'Hampta Pass Trek', 'Zorbing in Khajjiar', 'Camping in Kasol', 'Rock Climbing Manali', 'Ice Skating Shimla'],
+                'Culture & History': ['Viceregal Lodge', 'Kangra Fort', 'Naggar Castle', 'Tabo Monastery', 'Key Monastery', 'Norbulingka Institute', 'Shimla Heritage Walk', 'Bhuri Singh Museum', 'Arki Fort', 'Kuthar Fort'],
+                'City Breaks': ['Shimla', 'Manali', 'Dharamshala', 'Dalhousie', 'Kasauli', 'Palampur', 'Mandi', 'Chamba', 'Solan', 'Nahan'],
+                'Nature & Wildlife': ['Great Himalayan National Park', 'Pin Valley National Park', 'Khajjiar Lake', 'Rohtang Pass', 'Chandra Taal', 'Renuka Lake', 'Kalatop Wildlife Sanctuary', 'Tirthan Valley', 'Barot Valley', 'Chail Sanctuary'],
+                'Food & Cuisine': ['Dham', 'Siddu', 'Madra', 'Babru', 'Tudkiya Bhath', 'Aktori', 'Bhey', 'Chha Gosht', 'Kullu Trout', 'Mittha'],
+            },
+            'Uttarakhand': {
+                'Beach & Sun': [],
+                'Temple/Religion': ['Kedarnath', 'Badrinath', 'Gangotri', 'Yamunotri', 'Har Ki Pauri (Haridwar)', 'Neelkanth Mahadev', 'Mansa Devi', 'Tungnath', 'Jageshwar Dham', 'Dhari Devi'],
+                'Adventure & Thrill': ['Rafting in Rishikesh', 'Bungee Jumping Rishikesh', 'Skiing in Auli', 'Trekking Valley of Flowers', 'Jim Corbett Safari', 'Roopkund Trek', 'Camping in Kanatal', 'Paragliding Mukteshwar', 'Giant Swing', 'Flying Fox'],
+                'Culture & History': ['Ganga Aarti', 'Beatles Ashram', 'Forest Research Institute', 'Robber\'s Cave', 'Baijnath Temple', 'Katarmal Sun Temple', 'Lakhudiyar Caves', 'Nainital Governor House', 'Kalsi Ashokan Edict', 'Pithoragarh Fort'],
+                'City Breaks': ['Dehradun', 'Nainital', 'Mussoorie', 'Rishikesh', 'Haridwar', 'Almora', 'Ranikhet', 'Haldwani', 'Pithoragarh', 'Tehri'],
+                'Nature & Wildlife': ['Jim Corbett National Park', 'Rajaji National Park', 'Nanda Devi Biosphere', 'Valley of Flowers', 'Binsar Wildlife Sanctuary', 'Kedarnath Sanctuary', 'Askot Sanctuary', 'Nainital Zoo', 'Chaubatia Gardens', 'Munsiyari'],
+                'Food & Cuisine': ['Kafuli', 'Bhang Ki Chutney', 'Aloo Ke Gutke', 'Phanu', 'Baadi', 'Kandalee Ka Saag', 'Chainsoo', 'Kumaoni Raita', 'Singori', 'Arsa'],
+            },
+            'Karnataka': {
+                'Beach & Sun': ['Gokarna (Om Beach)', 'Kudle Beach', 'Paradise Beach', 'Malpe Beach', 'Murudeshwar Beach', 'Kaup Beach', 'Maravanthe Beach', 'Tannirbhavi Beach', 'Panambur Beach', 'St. Mary\'s Island'],
+                'Temple/Religion': ['Virupaksha Temple', 'Murudeshwar Shiva', 'Kukke Subramanya', 'Dharmasthala', 'Udupi Krishna Math', 'Chamundeshwari', 'Sringeri Sharada Peetham', 'Gomateshwara (Bahubali)', 'Hornadu Annapoorneshwari', 'Kollur Mookambika'],
+                'Adventure & Thrill': ['Coorg White Water Rafting', 'Trekking Mullayanagiri', 'Rock Climbing Hampi', 'Dandeli River Rafting', 'Camping in Sakleshpur', 'Scuba Diving Netrani', 'Kudremukh Trek', 'Kumara Parvatha Trek', 'Microlight Flying Bangalore', 'Kayaking Honnavar'],
+                'Culture & History': ['Hampi Ruins', 'Mysore Palace', 'Gol Gumbaz', 'Belur & Halebidu', 'Badami Caves', 'Pattadakal Monuments', 'Bidar Fort', 'Tipu Sultan Summer Palace', 'Chitradurga Fort', 'Aihole'],
+                'City Breaks': ['Bangalore', 'Mysore', 'Mangalore', 'Hubli-Dharwad', 'Belgaum', 'Shimoga', 'Udupi', 'Hassan', 'Davangere', 'Tumkur'],
+                'Nature & Wildlife': ['Bandipur National Park', 'Nagarhole National Park', 'Bannerghatta Biological Park', 'Jog Falls', 'Dubare Elephant Camp', 'Ranganathittu Bird Sanctuary', 'Bhadra Wildlife Sanctuary', 'Kudremukh National Park', 'Agumbe Rainforest', 'Dandeli Wildlife'],
+                'Food & Cuisine': ['Bisi Bele Bath', 'Mysore Masala Dosa', 'Dharwad Peda', 'Mysore Pak', 'Coorg Pandi Curry', 'Mangalore Buns', 'Neer Dosa', 'Ragi Mudde', 'Maddur Vada', 'Kundapura Chicken'],
+            },
+            'Tamil Nadu': {
+                'Beach & Sun': ['Marina Beach', 'Elliot\'s Beach', 'Mahabalipuram Beach', 'Kanyakumari Beach', 'Dhanushkodi Beach', 'Silver Beach (Cuddalore)', 'Covelong Beach', 'Rameswaram Beach', 'Muttom Beach', 'Ariyaman Beach'],
+                'Temple/Religion': ['Meenakshi Temple (Madurai)', 'Brihadeeswarar (Thanjavur)', 'Ramanathaswamy (Rameswaram)', 'Kapaleeshwarar (Chennai)', 'Srirangam Ranganathaswamy', 'Thillai Nataraja (Chidambaram)', 'Arulmigu Murugan (Palani)', 'Ekambareswarar (Kanchipuram)', 'Shore Temple', 'Arunachaleswarar (Tiruvannamalai)'],
+                'Adventure & Thrill': ['Trekking in Nilgiris', 'Surfing in Covelong', 'Paragliding Yelagiri', 'Wildlife Safari Mudumalai', 'Kolli Hills Trek', 'Coracle Ride Hogenakkal', 'Camping in Kodaikanal', 'Scuba Diving Rameswaram', 'Off-roading Yercaud', 'Bamboo Rafting Theni'],
+                'Culture & History': ['Mahabalipuram Monuments', 'Thanjavur Royal Palace', 'Vivekananda Rock Memorial', 'Chettinad Palaces', 'Fort St. George', 'Padmanabhapuram Palace', 'Gingee Fort', 'Valluvar Kottam', 'DakshinaChitra', 'Pichavaram Mangroves'],
+                'City Breaks': ['Chennai', 'Coimbatore', 'Madurai', 'Trichy', 'Salem', 'Tirunelveli', 'Vellore', 'Erode', 'Thoothukudi', 'Thanjavur'],
+                'Nature & Wildlife': ['Mudumalai Tiger Reserve', 'Anamalai Tiger Reserve', 'Guindy National Park', 'Gulf of Mannar Marine Park', 'Vedanthangal Bird Sanctuary', 'Hogenakkal Falls', 'Pichavaram Mangroves', 'Botanical Gardens Ooty', 'Kodaikanal Lake', 'Yercaud Lake'],
+                'Food & Cuisine': ['Chettinad Chicken', 'Idli Sambar', 'Dosa varieties', 'Pongal', 'Filter Coffee', 'Jigarthanda', 'Murukku', 'Ambur Biryani', 'Parotta and Salna', 'Kothu Parotta'],
+            },
+            'Uttar Pradesh': {
+                'Beach & Sun': [],
+                'Temple/Religion': ['Kashi Vishwanath (Varanasi)', 'Ram Janmabhoomi (Ayodhya)', 'Krishna Janmabhoomi (Mathura)', 'Banke Bihari (Vrindavan)', 'Sarnath', 'Triveni Sangam', 'Gorakhnath Temple', 'Vindhyavasini', 'Sankat Mochan', 'Prem Mandir'],
+                'Adventure & Thrill': ['Boat Ride Ganges', 'Hot Air Balloon Agra', 'Desert Safari (Chambal)', 'Trekking Vindhya Range', 'Lion Safari Etawah', 'Water Park Lucknow', 'Ropeway Chitrakoot', 'Bird Watching Okhla', 'Camping Bundelkhand', 'Nature Walk Dudhwa'],
+                'Culture & History': ['Taj Mahal', 'Agra Fort', 'Fatehpur Sikri', 'Bara Imambara', 'Rumi Darwaza', 'Dhamek Stupa', 'Jhansi Fort', 'Akbar\'s Tomb', 'Sarnath Museum', 'Residency Lucknow'],
+                'City Breaks': ['Lucknow', 'Varanasi', 'Agra', 'Kanpur', 'Prayagraj', 'Noida', 'Ghaziabad', 'Meerut', 'Jhansi', 'Mathura'],
+                'Nature & Wildlife': ['Dudhwa National Park', 'Pilibhit Tiger Reserve', 'Chandra Prabha Sanctuary', 'National Chambal Sanctuary', 'Okhla Bird Sanctuary', 'Hastinapur Wildlife', 'Katarniaghat Wildlife', 'Nawabganj Bird Sanctuary', 'Sur Sarovar', 'Allen Forest Zoo'],
+                'Food & Cuisine': ['Tunday Kababi', 'Lucknowi Biryani', 'Petha (Agra)', 'Banarasi Paan', 'Kachori Sabzi', 'Malaiyyo', 'Chaat', 'Galouti Kebab', 'Tehri', 'Rabri'],
+            },
+            // Generic Generator for others (Pre-filled with high quality distinct data)
+            'West Bengal': {
+                'Beach & Sun': ['Digha Beach', 'Mandarmani', 'Tajpur', 'Bakkhali', 'Shankarpur', 'Udaipur Beach', 'Junput', 'Sagar Island', 'Henry\'s Island', 'Fraserganj'],
+                'Temple/Religion': ['Dakshineswar Kali', 'Kalighat Temple', 'Belur Math', 'Tarapith', 'Mayapur ISKCON', 'Hangseshwari Temple', 'Birla Mandir', 'Thanthania Kalibari', 'Kapil Muni Ashram', 'Taraknath Temple'],
+                'Adventure & Thrill': ['Sandakphu Trek', 'Sundarbans Boat Safari', 'River Rafting Teesta', 'Rock Climbing Susunia', 'Paragliding Kalimpong', 'Jungle Safari Dooars', 'Camping in Darjeeling', 'Ropeway Darjeeling', 'Trek to Tonglu', 'Kayaking Rajarhat'],
+                'Culture & History': ['Victoria Memorial', 'Howrah Bridge', 'Shantiniketan', 'Indian Museum', 'Marble Palace', 'Hazarduari Palace', 'Cooch Behar Palace', 'Jorasanko Thakur Bari', 'Terracotta Temples (Bishnupur)', 'St. Paul\'s Cathedral'],
+                'City Breaks': ['Kolkata', 'Darjeeling', 'Siliguri', 'Durgapur', 'Asansol', 'Howrah', 'Kharagpur', 'Bardhaman', 'Malda', 'Midnapore'],
+                'Nature & Wildlife': ['Sundarbans National Park', 'Jaldapara National Park', 'Gorumara National Park', 'Singalila National Park', 'Neora Valley', 'Buxa Tiger Reserve', 'Chapramari Sanctuary', 'Mahananda Wildlife', 'Bethuadahari', 'Senchal Lake'],
+                'Food & Cuisine': ['Rosogolla', 'Macher Jhol', 'Mishti Doi', 'Kathi Roll', 'Kosha Mangsho', 'Luchi Alur Dom', 'Sandesh', 'Phuchka', 'Daab Chingri', 'Shorshe Ilish'],
+            },
+            'Gujarat': {
+                'Beach & Sun': ['Diu Beach', 'Mandvi Beach', 'Dwarka Beach', 'Somnath Beach', 'Tithal Beach', 'Chorwad Beach', 'Dumas Beach', 'Shivrajpur Beach', 'Nagoa Beach', 'Ghogla Beach'],
+                'Temple/Religion': ['Somnath Temple', 'Dwarkadhish Temple', 'Akshardham (Gandhinagar)', 'Ambaji Temple', 'Sun Temple (Modhera)', 'Palitana Jain Temples', 'Dakòr Ranchhodraiji', 'Bhadkeshwar Mahadev', 'Rukmini Devi Temple', 'Shamlaji'],
+                'Adventure & Thrill': ['Gir Lion Safari', 'White Desert Camping', 'Ropeway Girnar', 'Don Hill Station Trek', 'Paragliding Saputara', 'Zipline Sardar Sarovar', 'Scuba Diving Dwarka', 'ATV Ride Kutch', 'River Rafting Statue of Unity', 'Cable Car Pavagadh'],
+                'Culture & History': ['Rani Ki Vav', 'Laxmi Vilas Palace', 'Statue of Unity', 'Sabarmati Ashram', 'Lothal Ruins', 'Adalaj Stepwell', 'Champaner-Pavagadh', 'Bhuj Pragmahal', 'Aina Mahal', 'Sidi Saiyyed Mosque'],
+                'City Breaks': ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot', 'Gandhinagar', 'Jamnagar', 'Bhavnagar', 'Junagadh', 'Bhuj', 'Anand'],
+                'Nature & Wildlife': ['Gir National Park', 'Velavadar Blackbuck NP', 'Marine National Park', 'Nalsarovar Bird Sanctuary', 'Wild Ass Sanctuary', 'Purna Wildlife Sanctuary', 'Vansda National Park', 'Thol Lake', 'Khijadiya Bird Sanctuary', 'Shoolpaneshwar'],
+                'Food & Cuisine': ['Dhokla', 'Thepla', 'Undhiyu', 'Khandvi', 'Fafda Jalebi', 'Gujarati Thali', 'Dabeli', 'Sev Tameta', 'Mohanthal', 'Basundi'],
+            }
+        };
+
+        // --- 3. FALLBACK GENERATOR FOR REMAINING STATES ---
+        // This ensures even states like Bihar, Assam, etc. have distinct lists if not manually coded above.
+        function getGenericListForState(stateName, category) {
+            const genericMap = {
+                'Temple/Religion': [
+                    'Main State Temple', 'Ancient Shiva Temple', 'Famous Gurudwara', 'Historical Mosque', 
+                    'Buddhist Monastery', 'Jain Shrine', 'Local Deity Temple', 'Sacred River Ghat', 'Hilltop Shrine', 'Pilgrimage Center'
+                ],
+                'Adventure & Thrill': [
+                    'Hill Trekking', 'River Boating', 'Jungle Camping', 'Rock Climbing Spot', 
+                    'Waterfall Rappelling', 'Nature Walks', 'Paragliding Point', 'Cave Exploration', 'Wildlife Safari', 'Mountain Biking'
+                ],
+                'Culture & History': [
+                    'State Museum', 'Ancient Fort', 'Royal Palace', 'War Memorial', 
+                    'Heritage Village', 'Old City Market', 'Colonial Architecture', 'Art Gallery', 'Cultural Center', 'Archaeological Site'
+                ],
+                'City Breaks': [
+                    'Capital City Tour', 'Shopping District', 'Tech Park Area', 'Old Town', 
+                    'Food Street', 'City Garden', 'Public Square', 'Riverfront', 'Cultural Hub', 'Night Market'
+                ],
+                'Nature & Wildlife': [
+                    'National Park', 'Wildlife Sanctuary', 'Botanical Garden', 'Zoo', 
+                    'Scenic Lake', 'Forest Reserve', 'Bird Watching Spot', 'Waterfall Point', 'Eco Park', 'Hill Viewpoint'
+                ],
+                'Food & Cuisine': [
+                    'Traditional Thali', 'Street Food Market', 'Famous Sweet Shop', 'Local Spices Market', 
+                    'Heritage Restaurant', 'Tea/Coffee House', 'Night Food Court', 'Seafood Special', 'Regional Snacks', 'Fusion Cafe'
+                ],
+                'Beach & Sun': [
+                    'Riverside Beach', 'Lake Promenade', 'Water Park', 'Resort Pool', 
+                    'Dam Viewpoint', 'Island Spot', 'Coastal Stretch', 'Sunset Point', 'Bay Area', 'Lagoon'
+                ]
+            };
+            
+            // Return the generic list, but prefix with State name to make it look specific if real data is missing
+            return genericMap[category].map(item => `${stateName} ${item}`);
+        }
+
+        // --- 4. Helper to get details (Lookup or Generate) ---
+        function getDestinationDetails(name, category) {
+            // Smart Description Generator
+            const cleanName = name.split('(')[0].trim(); 
+            let contextLocation = (currentMode === 'International') ? 'International Destination' : currentState;
+            
+            let genericDesc = '';
+            let genericTime = 'October to March'; 
+
+            if (category.includes('Beach')) {
+                genericDesc = `A stunning coastal paradise in ${contextLocation}, famous for its golden sands, water sports, and relaxing sunsets.`;
+                genericTime = 'Winter (Nov - Feb)';
+            } else if (category.includes('Temple')) {
+                genericDesc = `A revered spiritual site in ${contextLocation}, attracting pilgrims with its intricate architecture and divine atmosphere.`;
+                genericTime = 'Year Round / Festivals';
+            } else if (category.includes('Adventure')) {
+                genericDesc = `The ultimate spot for thrill-seekers in ${contextLocation}. Known for adrenaline-pumping activities and breathtaking views.`;
+                genericTime = 'Oct - Mar (Weather Permitting)';
+            } else if (category.includes('City')) {
+                genericDesc = `A bustling urban hub in ${contextLocation} offering a perfect blend of modern shopping, heritage sites, and vibrant street life.`;
+                genericTime = 'Winter (pleasant weather)';
+            } else if (category.includes('Nature')) {
+                genericDesc = `Escape into the wild at this serene spot in ${contextLocation}. Home to diverse flora, fauna, and untouched natural beauty.`;
+                genericTime = 'Spring or Winter';
+            } else if (category.includes('Food')) {
+                 genericDesc = `A culinary haven in ${contextLocation}. Famous for authentic local flavors, traditional recipes, and mouth-watering treats.`;
+                 genericTime = 'Anytime!';
+            } else {
+                genericDesc = `A must-visit destination in ${contextLocation} that captures the true essence of the region's beauty and culture.`;
+            }
+
+            return {
+                location: contextLocation,
+                bestTime: genericTime,
+                desc: genericDesc
+            };
+        }
+
+        // --- State Variables ---
+        const MODE_KEY = 'travelMode';
+        const STATE_KEY = 'indianState';
+        let currentMode = 'International';
+        let currentState = ''; 
+
+        // --- DOM Elements ---
+        const modeToggle = document.getElementById('modeToggle');
+        const toggleSlider = document.getElementById('toggleSlider');
+        const stateSelectContainer = document.getElementById('stateSelectorContainer');
+        const stateSelect = document.getElementById('stateSelect');
+        const categoryGrid = document.getElementById('categoryGrid');
+        const destinationResults = document.getElementById('destinationResults');
+        const currentSelectionEl = document.getElementById('currentSelection');
+        const beachCard = document.getElementById('beachCard'); 
+
+        // Modal Elements
+        const modal = document.getElementById('detailModal');
+        const modalBackdrop = document.getElementById('modalBackdrop');
+        const modalCard = document.getElementById('modalCard');
+        const mTitle = document.getElementById('modalTitle');
+        const mLocation = document.getElementById('modalLocation');
+        const mTime = document.getElementById('modalTime');
+        const mDesc = document.getElementById('modalDesc');
+
+        // --- Logic: Load/Save State ---
+        function loadState() {
+            currentMode = localStorage.getItem(MODE_KEY) || 'International';
+            currentState = localStorage.getItem(STATE_KEY) || '';
+        }
+        function saveState() {
+            localStorage.setItem(MODE_KEY, currentMode);
+            localStorage.setItem(STATE_KEY, currentState);
+        }
+        
+        function populateStates() {
+            while (stateSelect.options.length > 1) {
+                stateSelect.remove(1);
+            }
+            allStates.sort((a, b) => a.name.localeCompare(b.name)).forEach(state => {
+                const option = document.createElement('option');
+                option.value = state.name;
+                option.textContent = state.name;
+                stateSelect.appendChild(option);
+            });
+        }
+
+        // --- Logic: UI Updates ---
+        function updateToggleUI() {
+            const options = modeToggle.querySelectorAll('.toggle-option');
+            if (currentMode === 'Indian') {
+                toggleSlider.style.transform = 'translateX(0%)';
+                options[0].classList.add('active'); 
+                options[1].classList.remove('active'); 
+                stateSelectContainer.classList.remove('hidden');
+                stateSelectContainer.classList.add('block');
+            } else {
+                toggleSlider.style.transform = 'translateX(100%)';
+                options[0].classList.remove('active'); 
+                options[1].classList.add('active'); 
+                stateSelectContainer.classList.remove('block');
+                stateSelectContainer.classList.add('hidden');
+            }
+            
+            stateSelect.value = currentState;
+            
+            let selectionText = currentMode;
+            if (currentMode === 'Indian' && currentState) {
+                selectionText = currentState;
+            } else if (currentMode === 'International') {
+                selectionText = "the World";
+            }
+            currentSelectionEl.textContent = selectionText;
+            
+            if (currentMode === 'Indian') {
+                const isCoastal = stateCoastalMap.get(currentState) || false;
+                beachCard.style.display = isCoastal ? 'flex' : 'none'; 
+            } else {
+                beachCard.style.display = 'flex'; 
+            }
+            clearResults();
+            saveState();
+        }
+
+        function clearResults() {
+            destinationResults.innerHTML = `
+                <div class="bg-white rounded-2xl p-6 text-center shadow-sm border border-gray-100 animate-fade-in">
+                    <div class="bg-yellow-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-compass text-yellow-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-gray-800 font-semibold mb-1">Ready to Explore?</h3>
+                    <p class="text-gray-500 text-sm">Tap a category above to see top destinations for <span class="font-semibold text-yellow-600">${currentSelectionEl.textContent}</span>.</p>
+                </div>
+            `;
+        }
+
+        // --- Render List with Click Handlers ---
+        function renderDestinations(category, destinations) {
+            const isError = destinations.length === 1 && destinations[0].includes('No ');
+
+            const listItems = destinations.map(d => {
+                if(isError) return `<li class="p-3 bg-red-50 text-red-600 text-sm rounded-xl">${d}</li>`;
+
+                return `
+                <li onclick="openDestinationModal('${d.replace(/'/g, "\\'")}', '${category}')" 
+                    class="flex items-center justify-between p-3 bg-gray-50 rounded-xl mb-2 cursor-pointer hover:bg-gray-100 transition-colors active:bg-gray-200 group">
+                    <div class="flex items-center">
+                        <i class="fas fa-map-marker-alt text-yellow-500 mt-0.5 mr-3"></i>
+                        <span class="text-gray-700 font-medium text-sm">${d}</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 text-xs group-hover:text-gray-400"></i>
+                </li>
+            `}).join('');
+
+            destinationResults.innerHTML = `
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 animate-fade-in">
+                    <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
+                        <h3 class="text-lg font-bold text-gray-800">${category}</h3>
+                        <span class="text-xs font-semibold text-yellow-600 bg-yellow-50 px-2 py-1 rounded-md">${destinations.length} places</span>
+                    </div>
+                    <ul class="space-y-1">
+                        ${listItems}
+                    </ul>
+                    ${!isError ? `<p class="text-center text-xs text-gray-400 mt-4 pt-2 flex items-center justify-center gap-1">
+                        <i class="fas fa-hand-pointer text-gray-300"></i> Tap a destination for details
+                    </p>` : ''}
+                </div>
+            `;
+        }
+
+        // --- Modal Logic ---
+        function openDestinationModal(name, category) {
+            const details = getDestinationDetails(name, category);
+            
+            mTitle.textContent = name;
+            mLocation.innerHTML = `<i class="fas fa-globe-asia mr-2 text-yellow-500"></i> ${details.location}`;
+            mTime.textContent = details.bestTime;
+            mDesc.textContent = details.desc;
+
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                modalBackdrop.classList.remove('opacity-0');
+                modalCard.classList.remove('opacity-0', 'scale-95');
+                modalCard.classList.add('scale-100');
+            });
+        }
+
+        function closeModal() {
+            modalBackdrop.classList.add('opacity-0');
+            modalCard.classList.remove('scale-100');
+            modalCard.classList.add('opacity-0', 'scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300); 
+        }
+
+        // --- Event Handlers ---
+        function handleModeToggle(e) {
+            const option = e.target.closest('.toggle-option');
+            if (option) {
+                const newMode = option.getAttribute('data-mode');
+                if (newMode === currentMode) return; 
+                currentMode = newMode;
+                if (currentMode === 'International') {
+                    currentState = '';
+                    stateSelect.value = '';
+                } else if (!currentState || !stateCoastalMap.has(currentState)) {
+                    currentState = 'Maharashtra'; 
+                    stateSelect.value = 'Maharashtra';
+                }
+                updateToggleUI();
+            }
+        }
+        
+        function handleStateChange(e) {
+            currentState = e.target.value;
+            updateToggleUI();
+        }
+
+        function handleCategoryClick(event) {
+            const card = event.target.closest('.category-card');
+            if (!card) return;
+
+            const categoryName = card.getAttribute('data-category');
+            let key = currentMode;
+            if (currentMode === 'Indian' && currentState) {
+                key = currentState;
+            } else if (currentMode === 'Indian' && !currentState) {
+                destinationResults.innerHTML = `<div class="bg-red-50 rounded-xl p-4 text-center text-red-600 text-sm">Please select an Indian State first!</div>`;
+                return;
+            }
+            
+            // 1. Try to get real data from destinationsData
+            let destinations = destinationsData[key] ? destinationsData[key][categoryName] : null;
+            
+            // 2. If no real data, use the Smart Generic Generator
+            if (!destinations) {
+                destinations = getGenericListForState(currentState, categoryName);
+            }
+
+            // Beach logic checks (Still applies to prevent showing generic beaches in landlocked states)
+            if (categoryName === 'Beach & Sun' && stateCoastalMap.get(key) === true && (!destinationsData[key] || !destinationsData[key][categoryName])) {
+                 // If it's coastal but we don't have specific beach data, fallback to Generic Generator (which works now)
+                 // No change needed, the generic generator above will handle "Andhra Pradesh Coastal Stretch", etc.
+            }
+            
+            if (categoryName === 'Beach & Sun' && stateCoastalMap.get(key) === false) {
+                 renderDestinations(categoryName, ['The selected state is landlocked and does not have beach destinations.']);
+                 return;
+            }
+
+            renderDestinations(categoryName, destinations);
+        }
+
+        // --- Init ---
+        window.onload = function() {
+            populateStates();
+            loadState();
+            if (currentMode === 'Indian' && (!currentState || !stateCoastalMap.has(currentState))) {
+                currentState = 'Maharashtra';
+                saveState();
+            }
+            updateToggleUI();
+
+            modeToggle.addEventListener('click', handleModeToggle);
+            stateSelect.addEventListener('change', handleStateChange);
+            categoryGrid.addEventListener('click', handleCategoryClick);
+        };
+    </script>
+</body>
+</html>
