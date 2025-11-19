@@ -1,142 +1,263 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Login — Email OTP</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>GPay Style — Email OTP Mockup</title>
 
-<!-- Tailwind + icons (keeps your original look) -->
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-<!-- EmailJS client -->
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+window.addEventListener("load", () => {
+    emailjs.init("ksvsBEaCVrEWDxSG_");  // your public key
+});
+</script>
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+  :root {
+    --yellow: #f7b81a;
+    --top-yellow: #ffb600;
+    --muted: #6b7280;
+    --thin-border: rgba(0,0,0,0.25);
+  }
+
   body {
-    font-family: 'Inter', sans-serif;
-    background-color: #f7b949;
-    height: 100vh;
-    margin: 0;
+    font-family: Inter, system-ui, Arial;
+    background: var(--yellow);
     display: flex;
+    align-items: center;
     justify-content: center;
-    align-items: center;    /* NEW → centers card vertically */
+    min-height: 100vh;
     padding: 20px;
+    margin: 0;
+  }
+  .btn-loading {
+    position: relative;
 }
 
-.container {
+.btn-loading i {
+    visibility: hidden; /* Hides arrow icon cleanly */
+}
+
+  .wrap {
     width: 100%;
     max-width: 420px;
+    border-radius: 28px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #000;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.62);
+  }
+
+  .top {
+    background: var(--top-yellow);
+    padding: 48px 30px 70px;
+    position: relative;
+  }
+
+  .logo {
+    width: 64px; height: 64px; border-radius: 12px;
+    background: rgba(0,0,0,0.06);
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .wave {
+    position:absolute; left:0; right:0; bottom:-30px; height:80px;
+    background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 120"><path d="M0,60 C150,0 300,120 800,60 L800 120 L0 120 Z" fill="%23ffffff"/></svg>')
+      no-repeat center bottom/cover;
+  }
+
+  .content {
+    padding: 28px 26px 38px;
+    margin-top: 10px;
+  }
+
+  .pill {
+    display:flex; align-items:center; gap:12px;
+    padding:12px 16px;
+    border-radius:999px;
+    background:#fff;
+    border:1px solid var(--thin-border);
+    box-shadow:0 6px 18px rgba(0,0,0,0.06);
+  }
+
+  .pill input {
+    background:transparent;
+    border:none;
+    outline:none;
+    width:100%;
+    font-weight:600;
+    font-size:15px;
+  }
+
+  .go {
+    width:56px; height:56px;
+    border-radius:50%;
+    background:#111;
+    color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    margin:14px auto;
+    box-shadow:0 12px 28px rgba(0,0,0,0.15);
+    border:none;
+    cursor:pointer;
+    position:relative;
+  }
+
+  .go i { color:#fff; font-size:18px; }
+
+  .otp-row {
+    display:grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap:8px;
+    margin-top:14px;
+    justify-items:center;
+  }
+
+  .otp {
+    width:48px; height:52px;
+    box-sizing:border-box;
+    font-size:20px;
+    text-align:center;
+    border-radius:12px;
+    background:#f6f6f7;
+    border:1px solid var(--thin-border);
+    outline:none;
+    font-family: ui-monospace, monospace;
+  }
+
+  .otp:focus {
+    box-shadow:0 0 0 3px rgba(0,0,0,0.06);
+  }
+
+  #verify {
+    width:100%; background:#111; color:#fff;
+    border-radius:12px; padding:12px; border:none;
+    margin-top:12px; display:flex; justify-content:center;
+    align-items:center; gap:10px; cursor:pointer;
+  }
+
+  #verify i { color:#fff; font-size:14px; }
+  #verify.btn-loading {
+    position: relative;
+}
+#verify.btn-loading:after {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border: 3px solid white;
+    border-top-color: transparent;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: spin .7s linear infinite;
+}
+#verify.btn-loading i {
+    visibility: hidden;
 }
 
-.title-text {
-    text-align: center;
-    font-size: 28px;
-    font-weight: 700;
-    color: #000000;
-    margin-bottom: 100px;   /* increased from 18px → 40px */
-    margin-top: -40px;     /* pulls the title upward, away from card */
-}
+  .muted { color:var(--muted); font-size:13px; }
 
-.card {
-    background-color: white;
-    padding: 1.8rem;
-    border-radius: 1.25rem;
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12);
-    max-width: 380px;
-    width: 100%;
-}
+  .btn-loading { position:relative; pointer-events:none; opacity:0.85; }
+  .btn-loading:after {
+    content:""; position:absolute; top:50%; left:50%;
+    transform:translate(-50%, -50%);
+    width:18px; height:18px;
+    border:3px solid white;
+    border-top-color:transparent;
+    border-radius:50%;
+    animation:spin .7s linear infinite;
+  }
 
+  @keyframes spin { to { transform:translate(-50%, -50%) rotate(360deg);} }
 </style>
 </head>
 
 <body>
 
-<!-- LOADING OVERLAY -->
-<div id="loadingOverlay" class="fixed inset-0 bg-white/90 flex items-center justify-center text-xl z-50 font-semibold text-[#f7b949]">
-  Connecting to service...
-</div>
-<div class="container" id="authContainer">
-    <h1 class="title-text">Let's Get Started!</h1>
-<div class="card">
+<div class="wrap">
 
-  <h1 class="text-3xl font-bold text-center mb-4 text-gray-800">Login / Sign Up</h1>
+  <div class="top">
+    <div style="display:flex; justify-content:space-between;">
+      <div>
+        <h1 style="font-size:26px;font-weight:700">Welcome!</h1>
+        <div style="margin-top:6px;color:rgba(0,0,0,0.75)">Sign in to Continue</div>
+      </div>
 
-  <!-- STEP 1: Email -->
-  <div id="stepEmail">
-    <label class="font-semibold text-gray-700">Email</label>
-    <input id="emailInput" class="w-full p-3 border rounded-xl my-3" type="email" placeholder="you@example.com" autocomplete="email">
-
-    <div id="nameRow" class="hidden">
-      <label class="font-semibold text-gray-700">Full Name</label>
-      <input id="nameInput" class="w-full p-3 border rounded-xl my-3" type="text" placeholder="Your full name">
+      <div class="logo">
+        <img src="Logo.png" style="width:102px" >
+      </div>
     </div>
-
-    <button id="sendOtpBtn" class="w-full py-3 rounded-xl font-bold text-white mt-2" style="background:#f39c12;">
-      Send OTP
-    </button>
-
-    <p class="text-center small-muted mt-3">We will email you a 6-digit OTP.</p>
+    <div class="wave"></div>
   </div>
 
-  <!-- STEP 2: OTP -->
-  <div id="stepOtp" class="hidden">
-    <p class="text-center small-muted">Enter the 6-digit code sent to</p>
-    <p id="emailShown" class="text-center font-semibold mb-4"></p>
+  <div class="content">
 
-    <div class="flex justify-between mb-4" id="otpContainer">
-      <input maxlength="1" class="otp-box" inputmode="numeric" pattern="[0-9]*" />
-      <input maxlength="1" class="otp-box" inputmode="numeric" pattern="[0-9]*" />
-      <input maxlength="1" class="otp-box" inputmode="numeric" pattern="[0-9]*" />
-      <input maxlength="1" class="otp-box" inputmode="numeric" pattern="[0-9]*" />
-      <input maxlength="1" class="otp-box" inputmode="numeric" pattern="[0-9]*" />
-      <input maxlength="1" class="otp-box" inputmode="numeric" pattern="[0-9]*" />
+    <div id="emailStep">
+      <div class="pill" style="margin-bottom:12px">
+        <i class="fa-regular fa-envelope text-gray-500"></i>
+        <input id="email" placeholder="Email">
+      </div>
+
+      <div id="nameRow" style="display:none;margin-bottom:12px">
+        <div class="pill">
+          <i class="fa-regular fa-user text-gray-500"></i>
+          <input id="name" placeholder="Full name">
+        </div>
+      </div>
+
+      <div style="text-align:center">
+        <button id="go" class="go"><i class="fa-solid fa-arrow-right"></i></button>
+      </div>
     </div>
 
-    <button id="verifyOtpBtn" class="w-full py-3 rounded-xl font-bold text-white" style="background:#10b981;">
-      Verify OTP
-    </button>
+    <div id="otpStep" style="display:none">
 
-    <div class="flex items-center justify-between mt-4">
-      <button id="resendBtn" class="text-sm text-blue-600">Resend OTP</button>
-      <button id="changeEmailBtn" class="text-sm text-gray-600">Use different email</button>
+      <div class="muted small text-center">Enter OTP sent to</div>
+      <div id="emailShown" style="text-align:center;font-weight:600;margin-top:6px"></div>
+
+      <div class="otp-row">
+        <input maxlength="1" class="otp" inputmode="numeric">
+        <input maxlength="1" class="otp" inputmode="numeric">
+        <input maxlength="1" class="otp" inputmode="numeric">
+        <input maxlength="1" class="otp" inputmode="numeric">
+        <input maxlength="1" class="otp" inputmode="numeric">
+        <input maxlength="1" class="otp" inputmode="numeric">
+      </div>
+
+      <button id="verify">Verify OTP <i class="fa-solid fa-arrow-right"></i></button>
+
+      <div style="display:flex;justify-content:space-between;margin-top:10px">
+        <button id="resend" class="muted small">Resend OTP</button>
+        <button id="change" class="muted small">Use different email</button>
+      </div>
+
+      <div class="muted small" style="text-align:center;margin-top:10px">
+        Code expires in <span id="countdown">05:00</span>
+      </div>
+
     </div>
 
-    <p class="text-center small-muted mt-3">Code expires in <span id="countdown">05:00</span></p>
+    <div id="status" class="muted small" style="margin-top:12px;text-align:center"></div>
+
   </div>
-
-  <!-- Status message -->
-  <p id="statusMsg" class="text-center mt-4 font-semibold"></p>
-
 </div>
 
 <script type="module">
-/* ============================
-   FIREBASE IMPORTS
-   ============================ */
+
+/* FIREBASE */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { 
-  getAuth,
-  signInAnonymously,
-  setPersistence,
-  browserLocalPersistence
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getAuth } 
+from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collectionGroup, query, where, getDocs } 
+from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  getDoc,
-  collectionGroup,
-  query,
-  where,
-  getDocs
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-/* ============================
-   CONFIG (unchanged)
-   ============================ */
+/* CONFIG */
 const appId = "travelassistant-1baed";
 const firebaseConfig = {
   apiKey: "AIzaSyDtkaHB2ER0RAOpsbW-Eg65wSe7G4Uwrkw",
@@ -147,303 +268,258 @@ const firebaseConfig = {
   appId: "1:67570490262:web:7164a2d838b5517a325bb7"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-setPersistence(auth, browserLocalPersistence);
+initializeApp(firebaseConfig);
+const auth = getAuth(); 
+const db = getFirestore();
 
-/* ============================
-   EmailJS init (use your public key)
-   ============================ */
-window.emailjs && emailjs.init("ksvsBEaCVrEWDxSG_"); // your public key
-
-/* EmailJS IDs */
-const EMAILJS_SERVICE_ID = "service_yx4j3el";
-const EMAILJS_TEMPLATE_ID = "template_8djoyfc";
-
-/* ============================
-   UI refs
-   ============================ */
-const loadingOverlay = document.getElementById("loadingOverlay");
-const stepEmail = document.getElementById("stepEmail");
-const stepOtp = document.getElementById("stepOtp");
-const emailInput = document.getElementById("emailInput");
+/* UI REFS */
+const stepEmail = document.getElementById("emailStep");
+const stepOtp = document.getElementById("otpStep");
+const emailInput = document.getElementById("email");
 const nameRow = document.getElementById("nameRow");
-const nameInput = document.getElementById("nameInput");
+const nameInput = document.getElementById("name");
+const sendOtpBtn = document.getElementById("go");
 const emailShown = document.getElementById("emailShown");
-const statusMsg = document.getElementById("statusMsg");
-const otpInputs = [...document.querySelectorAll(".otp-box")];
-const resendBtn = document.getElementById("resendBtn");
+const statusMsg = document.getElementById("status");
+const resendBtn = document.getElementById("resend");
+const verifyBtn = document.getElementById("verify");
+const changeBtn = document.getElementById("change");
 const countdownEl = document.getElementById("countdown");
-const sendOtpBtn = document.getElementById("sendOtpBtn");
-const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+const otpInputs = [...document.querySelectorAll(".otp")];
 
 let currentEmail = "";
 let isExistingUser = false;
 let otpExpiresAt = 0;
-let resendCooldown = 30;
-let resendTimer = null;
-let otpTimer = null;
+let correctUserName = ""; // Stores the correct name to be persisted
 
-/* small helpers */
-function show(el){ el.classList.remove("hidden"); }
-function hide(el){ el.classList.add("hidden"); }
-
-/* initialize UI */
-setTimeout(() => {
-  try { hide(loadingOverlay); } catch(e){}
-  show(stepEmail);
-}, 300);
-
-/* ============================
-   Firestore helpers
-   ============================ */
-
-/* Check if email exists by collectionGroup('data') */
-async function emailExists(email) {
-  console.log("[DEBUG] emailExists() called for:", email);
-  try {
-    const cg = collectionGroup(db, "data");
-    const q = query(cg, where("email", "==", email));
-    console.log("[DEBUG] Prepared query on collectionGroup 'data' for email:", email);
-    const snaps = await getDocs(q);
-    console.log("[DEBUG] getDocs() completed. snaps.empty =", snaps.empty, "docs:", snaps.docs.length);
-    if (snaps.empty) return { exists: false };
-    const docSnap = snaps.docs[0];
-    const data = docSnap.data();
-    return { exists: true, name: data.name || "" };
-  } catch (err) {
-    console.error("[DEBUG] emailExists() FAILED:", err && err.code, err && err.message, err);
-    // show safe fallback and treat as new user (so flow continues)
-    statusMsg.textContent = "Unable to check existing user. Proceeding with registration.";
-    statusMsg.style.color = "orange";
-    return { exists: false, error: true };
-  }
+/* UID GENERATOR */
+function getUidFromEmail(email) {
+    // Creates a unique, stable, and Firestore-doc-ID-safe UID from the email
+    return btoa(email).replace(/=+$/, ''); 
 }
 
-/* Store OTP in Firestore */
+/* FIRESTORE HELPERS */
+async function emailExists(email) {
+  // Look inside the "profile" documents under /users
+  const q = query(
+    collectionGroup(db, "profile"),
+    where("email", "==", email)
+  );
+
+  const snaps = await getDocs(q);
+
+  if (snaps.empty) {
+    return { exists: false, name: "" };
+  }
+
+  const data = snaps.docs[0].data();
+  return {
+    exists: true,
+    name: data.name || ""
+  };
+}
+
+
 async function storeOtp(email) {
   const otp = String(Math.floor(100000 + Math.random() * 900000));
   const expiresAt = Date.now() + 5 * 60 * 1000;
-  await setDoc(doc(db, "otp", email), { code: otp, expiresAt });
   otpExpiresAt = expiresAt;
+  await setDoc(doc(db, "otp", email), { code: otp, expiresAt });
   return otp;
 }
 
-/* Send OTP using EmailJS (template expects {{passcode}}) */
-async function sendOtpEmail(userEmail, otp) {
-  // emailjs.send(serviceID, templateID, templateParams)
-  return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-    passcode: otp,
-    to_email: userEmail // optional, your template uses passcode only but including this is harmless
-  });
-}
 
-/* ============================
-   UI flow handlers
-   ============================ */
-
-function startResendCooldown(){
-  resendBtn.disabled = true;
-  let t = resendCooldown;
-  resendBtn.textContent = `Resend OTP (${t}s)`;
-  clearInterval(resendTimer);
-  resendTimer = setInterval(()=>{
-    t--;
-    if(t<=0){
-      clearInterval(resendTimer);
-      resendBtn.disabled = false;
-      resendBtn.textContent = "Resend OTP";
-    } else {
-      resendBtn.textContent = `Resend OTP (${t}s)`;
-    }
+function startOtpCountdown(){
+  const timer = setInterval(()=>{
+    let sec = Math.max(0, Math.floor((otpExpiresAt - Date.now())/1000));
+    countdownEl.textContent = 
+      `${String(Math.floor(sec/60)).padStart(2,"0")}:${String(sec%60).padStart(2,"0")}`;
+    if(sec<=0) clearInterval(timer);
   },1000);
 }
 
-function startOtpCountdown(){
-  clearInterval(otpTimer);
-  otpTimer = setInterval(()=>{
-    let sec = Math.max(0, Math.floor((otpExpiresAt - Date.now())/1000));
-    const m = String(Math.floor(sec/60)).padStart(2,"0");
-    const s = String(sec%60).padStart(2,"0");
-    countdownEl.textContent = `${m}:${s}`;
-    if(sec <= 0) clearInterval(otpTimer);
-  }, 1000);
+async function sendOtpEmail(userEmail, otp) {
+  return emailjs.send("service_yx4j3el", "template_8djoyfc", {
+    passcode: otp,
+    to_email: userEmail
+  });
 }
 
-function goToOtpScreen(){
-  hide(stepEmail);
-  show(stepOtp);
+/* TRANSITION */
+function goToOtpScreen() {
+  stepEmail.style.display = "none";
+  stepOtp.style.display = "block";
   emailShown.textContent = currentEmail;
   otpInputs.forEach(i=> i.value="");
   otpInputs[0].focus();
   startOtpCountdown();
 }
 
-/* Send OTP button click */
-sendOtpBtn.addEventListener("click", async () => {
+/* SEND OTP */
+sendOtpBtn.addEventListener("click", async ()=>{
   statusMsg.textContent = "";
-  const email = (emailInput.value || "").trim().toLowerCase();
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  const email = emailInput.value.trim().toLowerCase();
+
+  if(!email || !/^\S+@\S+\.\S+$/.test(email)){
     statusMsg.textContent = "Enter a valid email";
     statusMsg.style.color = "red";
     return;
   }
+
   currentEmail = email;
-  sendOtpBtn.disabled = true;
-  sendOtpBtn.style.opacity = "0.6";
+  sendOtpBtn.classList.add("btn-loading");
 
   try {
     const check = await emailExists(email);
-    isExistingUser = !!check.exists;
+    isExistingUser = check.exists;
+    
+    if(isExistingUser){
+      nameRow.style.display="none";
+      nameInput.value = check.name || ""; // Load name into input (hidden)
+      // For existing users, use the name retrieved from the DB (with fallback)
+      correctUserName = check.name || email.split("@")[0]; 
 
-   if (isExistingUser) {
-    // Existing user → NO name needed
-    hide(nameRow);
-    nameInput.value = check.name || "";
-} else {
-    // New user → must enter name
-    show(nameRow);
-    if (!nameInput.value.trim()) {
-        statusMsg.textContent = "Enter your full name to register";
-        statusMsg.style.color = "#374151";
-        sendOtpBtn.disabled = false;
-        sendOtpBtn.style.opacity = "1";
-        return;
-    }
-}
-
-
-    const otp = await storeOtp(email);
-
-    try {
-      await sendOtpEmail(email, otp);
-      console.log("OTP sent via EmailJS to user email:", email);
-      statusMsg.textContent = "OTP sent to your email";
-      statusMsg.style.color = "green";
-    } catch (sendErr) {
-      console.error("EmailJS send error:", sendErr);
-      statusMsg.textContent = "Failed to send OTP email. Try again.";
-      statusMsg.style.color = "red";
-      sendOtpBtn.disabled = false;
-      sendOtpBtn.style.opacity = "1";
-      return;
+    } else {
+      nameRow.style.display="block";
+      const enteredName = nameInput.value.trim(); // Capture entered name
+      if (!enteredName){
+        // If new user and no name is entered, prompt to enter name
+        statusMsg.textContent = "Please enter your name, then tap GO again.";
+        statusMsg.style.color = "red";
+        sendOtpBtn.classList.remove("btn-loading");
+        return; 
+      }
+      // For new users, use the name from the input field
+      correctUserName = enteredName;
     }
 
-    startResendCooldown();
+    const otp = await storeOtp(email); 
+    await sendOtpEmail(email, otp); 
+
+    statusMsg.textContent = "OTP sent!";
+    statusMsg.style.color = "green";
     goToOtpScreen();
-
-  } catch (err) {
-    console.error("Send OTP flow error:", err);
-    statusMsg.textContent = "Unable to send OTP. Try again later.";
-    statusMsg.style.color = "red";
-  } finally {
-    sendOtpBtn.disabled = false;
-    sendOtpBtn.style.opacity = "1";
+    
+  } catch(err){
+    console.error("Full error on send OTP attempt:", err);
+    statusMsg.textContent = "Failed to send OTP.";
+    statusMsg.style.color="red";
   }
+
+  sendOtpBtn.classList.remove("btn-loading");
 });
 
-/* Resend OTP */
-resendBtn.addEventListener("click", async () => {
-  if (!currentEmail) return;
+/* RESEND */
+resendBtn.addEventListener("click", async ()=>{
+  if(!currentEmail) return;
+
   try {
     const otp = await storeOtp(currentEmail);
     await sendOtpEmail(currentEmail, otp);
     statusMsg.textContent = "OTP resent!";
-    statusMsg.style.color = "green";
-    startResendCooldown();
-  } catch (e) {
-    console.error("Resend error:", e);
-    statusMsg.textContent = "Unable to resend OTP.";
-    statusMsg.style.color = "red";
+    statusMsg.style.color="green";
+    startOtpCountdown();
+  } catch {
+    statusMsg.textContent = "Unable to resend";
+    statusMsg.style.color="red";
   }
 });
 
-/* Change email */
-document.getElementById("changeEmailBtn").addEventListener("click", () => {
-  currentEmail = "";
-  isExistingUser = false;
-  nameInput.value = "";
-  hide(nameRow);
-  hide(stepOtp);
-  show(stepEmail);
+/* BACK TO EMAIL */
+changeBtn.addEventListener("click", ()=>{
+  stepOtp.style.display = "none";
+  stepEmail.style.display = "block";
+  nameInput.value = ""; 
 });
 
-/* OTP inputs UX */
-otpInputs.forEach((input, idx) => {
-  input.addEventListener("input", (e) => {
-    e.target.value = e.target.value.replace(/[^0-9]/g, "");
-    if (e.target.value && idx < otpInputs.length - 1) otpInputs[idx+1].focus();
+/* OTP INPUT AUTO MOVE */
+otpInputs.forEach((input, idx)=>{
+  input.addEventListener("input", e=>{
+    e.target.value = e.target.value.replace(/\D/g,"");
+    if(e.target.value && idx<5) otpInputs[idx+1].focus();
   });
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Backspace" && !e.target.value && idx > 0) otpInputs[idx-1].focus();
+  input.addEventListener("keydown", e=>{
+    if(e.key==="Backspace" && !e.target.value && idx>0)
+      otpInputs[idx-1].focus();
   });
 });
 
-/* Verify OTP */
-verifyOtpBtn.addEventListener("click", async () => {
-  statusMsg.textContent = "";
-  const otp = otpInputs.map(i => i.value.trim()).join("");
-  if (otp.length !== 6) {
-    statusMsg.textContent = "Enter the 6-digit code";
-    statusMsg.style.color = "red";
+/* VERIFY */
+verifyBtn.addEventListener("click", async ()=>{
+  const code = otpInputs.map(i=>i.value).join("");
+
+  if(code.length !== 6){
+    statusMsg.textContent = "Enter 6 digits";
+    statusMsg.style.color="red";
     return;
   }
 
   try {
-    const snap = await getDoc(doc(db, "otp", currentEmail));
-    if (!snap.exists()) {
-      statusMsg.textContent = "OTP not found. Request again.";
-      statusMsg.style.color = "red";
+    const snap = await getDoc(doc(db,"otp",currentEmail));
+    if(!snap.exists()){
+      statusMsg.textContent="OTP not found";
+      statusMsg.style.color="red";
       return;
     }
+
     const data = snap.data();
-    if (Date.now() > data.expiresAt) {
-      statusMsg.textContent = "OTP expired. Resend.";
-      statusMsg.style.color = "red";
-      return;
-    }
-    if (data.code !== otp) {
-      statusMsg.textContent = "Incorrect OTP";
-      statusMsg.style.color = "red";
+    if(Date.now() > data.expiresAt){
+      statusMsg.textContent="OTP expired";
+      statusMsg.style.color="red";
       return;
     }
 
-    // OTP correct - sign in anonymously and save profile
-    const anon = await signInAnonymously(auth);
-    const uid = anon.user.uid;
-
-    let finalName = "";
-    if (isExistingUser) {
-      // try to pull existing name if collection has it
-      const check = await emailExists(currentEmail);
-      finalName = check.name || currentEmail.split("@")[0];
-    } else {
-      finalName = nameInput.value.trim() || currentEmail.split("@")[0];
+    if(data.code !== code){
+      statusMsg.textContent="Incorrect OTP";
+      statusMsg.style.color="red";
+      return;
     }
 
-    await setDoc(doc(db, "artifacts", appId, "users", uid, "profile", "data"), {
-      uid,
-      email: currentEmail,
-      name: finalName,
-      photoURL: null,
-      createdAt: new Date().toISOString()
-    }, { merge: true });
-
-    // invalidate OTP
-    await setDoc(doc(db, "otp", currentEmail), { code: "", expiresAt: 0 }, { merge: true });
-
-    // redirect to index
-    localStorage.setItem("intro_seen", "1");
-    window.location.href = "index.html";
+    // --- START: NON-ANONYMOUS LOGIN LOGIC (using Stable UID) ---
+    const base64Uid = getUidFromEmail(currentEmail);
     
+    // Determine the name to set (prioritize input for new, pre-loaded for old)
+    let nameToSet;
+    if (isExistingUser) {
+        // Use the name retrieved from Firestore, with fallback
+        nameToSet = correctUserName || currentEmail.split("@")[0];
+    } else {
+        // Use the name entered by the user, with fallback
+        nameToSet = nameInput.value.trim() || currentEmail.split("@")[0];
+    }
+    
+    // 1. Store the session details in Local Storage
+    localStorage.setItem('userUid', base64Uid);
+    localStorage.setItem('userEmail', currentEmail);
+    
+    // 2. Store/Update the profile data using the stable UID
+    const profileData = {
+        uid: base64Uid, 
+        email: currentEmail,
+        name: nameToSet, // <-- Now robustly set to the username
+        photoURL: null,
+        createdAt: new Date().toISOString()
+    };
 
-  } catch (err) {
-    console.error("Verify OTP error:", err);
-    statusMsg.textContent = "Unable to verify OTP. Try again.";
-    statusMsg.style.color = "red";
+    await setDoc(
+      doc(db,"artifacts",appId,"users",base64Uid,"profile","data"),
+      profileData,
+      { merge:true }
+    );
+    // --- END: NON-ANONYMOUS LOGIN LOGIC ---
+
+    // Clear the OTP
+    await setDoc(doc(db,"otp",currentEmail),{ code:"", expiresAt:0 },{ merge:true });
+
+    window.location.href = "index.html";
+
+  } catch (e) {
+    console.error(e);
+    statusMsg.textContent="Verification failed";
+    statusMsg.style.color="red";
   }
 });
+
 </script>
 
 </body>

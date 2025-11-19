@@ -46,32 +46,20 @@
 
 <div class="card">
 
-    <!-- Back -->
     <i class="fas fa-arrow-left back-arrow" onclick="window.location.href='index.html'"></i>
 
     <h2 class="text-center text-3xl font-bold mb-6 text-gray-800">Your Profile</h2>
 
-    <!-- Profile Photo -->
     <div class="text-center mb-4">
-        <img id="profileImage" class="profile-pic" src="" alt="Profile Picture">
+        <img id="profileImage" class="profile-pic" src="profile-picture.png" alt="Profile Picture">
     </div>
 
-    <!-- Name -->
     <label class="font-semibold text-gray-700">Full Name</label>
-    <input id="nameInput" class="w-full p-3 border rounded-xl my-2" type="text">
-
-    <!-- Email -->
+    <input id="nameInput" disabled class="w-full p-3 border rounded-xl my-2 bg-gray-100" type="text"> 
+    
     <label class="font-semibold text-gray-700">Email</label>
     <input id="emailInput" disabled class="w-full p-3 border rounded-xl my-2 bg-gray-100">
 
-    <!-- Save -->
-    <button id="saveBtn"
-        class="w-full mt-4 py-3 rounded-xl font-bold text-white"
-        style="background:#f39c12;">
-        Save Changes
-    </button>
-
-    <!-- Dropdown Settings -->
     <div class="mt-6">
         <button id="settingsToggle" class="w-full py-3 flex justify-between items-center font-semibold text-gray-700 border rounded-xl px-3">
             Account Settings
@@ -80,20 +68,20 @@
 
         <div id="settingsPanel" class="hidden mt-3">
 
-            <button id="changePasswordBtn"
-                class="w-full mt-2 py-3 rounded-xl font-bold text-white bg-blue-500">
-                Change Password
-            </button>
-
             <button id="deleteAccountBtn"
                 class="w-full mt-3 py-3 rounded-xl font-bold text-white bg-red-600">
                 Delete Account
             </button>
 
+            <!-- CONFIRM DELETE BUTTON (hidden by default) -->
+            <button id="confirmDeleteBtn"
+                class="w-full mt-3 py-3 rounded-xl font-bold text-white bg-red-700 hidden">
+                Confirm Delete
+            </button>
+
         </div>
     </div>
 
-    <!-- Logout -->
     <button id="logoutBtn"
         class="w-full mt-5 py-3 rounded-xl font-bold text-white bg-gray-700">
         Logout
@@ -105,13 +93,10 @@
 
 <script type="module">
 
-/* ---------- Firebase Setup (unchanged) ---------- */
+/* ---------- Firebase Setup ---------- */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { 
     getAuth, 
-    onAuthStateChanged,
-    signOut,
-    sendPasswordResetEmail,
     deleteUser
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
@@ -119,7 +104,7 @@ import {
     getFirestore,
     doc,
     getDoc,
-    setDoc
+    deleteDoc,
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 const appId = "travelassistant-1baed";
@@ -133,18 +118,16 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+const auth = getAuth(app); 
 const db = getFirestore(app);
 
-/* UI elements */
-const profileImage = document.getElementById("profileImage");
-const nameInput = document.getElementById("nameInput");
-const emailInput = document.getElementById("emailInput");
-const saveBtn = document.getElementById("saveBtn");
-const logoutBtn = document.getElementById("logoutBtn");
-const statusMsg = document.getElementById("statusMsg");
-const changePasswordBtn = document.getElementById("changePasswordBtn");
+/* UI Elements */
 const deleteAccountBtn = document.getElementById("deleteAccountBtn");
+const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+const statusMsg = document.getElementById("statusMsg");
+const logoutBtn = document.getElementById("logoutBtn");
+const emailInput = document.getElementById("emailInput");
+const nameInput = document.getElementById("nameInput");
 
 /* Settings dropdown */
 const settingsToggle = document.getElementById("settingsToggle");
@@ -159,57 +142,72 @@ settingsToggle.addEventListener("click", () => {
     settingsIcon.classList.toggle("fa-chevron-up", !isOpen);
 });
 
-/* ---------- Load User + Firestore ---------- */
-onAuthStateChanged(auth, async (user) => {
-    if (!user) return (window.location.href = "login.html");
+/* Load Profile */
+const userUid = localStorage.getItem('userUid');
+const userEmail = localStorage.getItem('userEmail');
 
-    emailInput.value = user.email;
+async function loadProfile() {
+    if (!userUid || !userEmail) {
+        return (window.location.href = "login.html");
+    }
 
-    const userRef = doc(db, "artifacts", appId, "users", user.uid, "profile", "data");
+    emailInput.value = userEmail;
+
+    const userRef = doc(db, "artifacts", appId, "users", userUid, "profile", "data");
     const snap = await getDoc(userRef);
 
-    nameInput.value = snap.exists() ? snap.data().name : (user.displayName || "");
+    const fetchedName = snap.exists() ? snap.data().name : '';
+    nameInput.value = fetchedName || userEmail.split("@")[0];
+}
 
-    // Google photo OR default
-    profileImage.src =
-        user.providerData[0].providerId === "google.com"
-            ? user.photoURL
-            : "profile-picture.png";
+loadProfile();
+
+/* DELETE ACCOUNT — Step 1: Show confirm button */
+deleteAccountBtn.addEventListener("click", () => {
+    statusMsg.innerText = "Click again to permanently delete your account.";
+    statusMsg.style.color = "red";
+
+    confirmDeleteBtn.classList.remove("hidden");
 });
 
-/* ---------- Save ---------- */
-saveBtn.addEventListener("click", async () => {
+/* DELETE ACCOUNT — Step 2: Perform deletion */
+confirmDeleteBtn.addEventListener("click", async () => {
     const user = auth.currentUser;
+    if (!user) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    statusMsg.innerText = "Deleting your account...";
+    statusMsg.style.color = "orange";
+
     const userRef = doc(db, "artifacts", appId, "users", user.uid, "profile", "data");
 
-    await setDoc(userRef, {
-        name: nameInput.value.trim(),
-        email: user.email,
-        updatedAt: new Date().toISOString()
-    }, { merge: true });
+    try {
+        await deleteDoc(userRef);
+        await deleteUser(user);
 
-    statusMsg.textContent = "Saved!";
+        statusMsg.innerText = "Account deleted successfully.";
+        statusMsg.style.color = "green";
+
+        setTimeout(() => window.location.href = "login.html", 1500);
+
+    } catch (error) {
+        statusMsg.innerText = 
+            "Delete failed. Logout → Login → Delete again immediately.";
+        statusMsg.style.color = "red";
+    }
+});
+
+/* LOGOUT */
+logoutBtn.addEventListener("click", () => {
+    localStorage.removeItem('userUid');
+    localStorage.removeItem('userEmail');
+
+    statusMsg.innerText = "Logging out...";
     statusMsg.style.color = "green";
-});
 
-/* Change Password */
-changePasswordBtn.addEventListener("click", async () => {
-    await sendPasswordResetEmail(auth, auth.currentUser.email);
-    alert("Password reset email sent!");
-});
-
-/* Delete Account */
-deleteAccountBtn.addEventListener("click", async () => {
-    if (!confirm("Are you sure? This cannot be undone.")) return;
-    await deleteUser(auth.currentUser);
-    alert("Account deleted.");
-    window.location.href = "login.html";
-});
-
-/* Logout */
-logoutBtn.addEventListener("click", async () => {
-    await signOut(auth);
-    window.location.href = "login.html";
+    setTimeout(() => window.location.href = "login.html", 800);
 });
 
 </script>

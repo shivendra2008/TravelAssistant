@@ -11,7 +11,7 @@
     <div class="container">
         <header class="header">
             <div class="header-text">
-                <h1>Welcome,</h1>
+                <h2>Welcome,</h2>   
                 <h2 id="userNameDisplay">Loading...</h2>
             </div>
             <div class="profile-icon">
@@ -82,27 +82,12 @@
 
     <script type="module">
 
-        /* ------------------- FIXED FIREBASE IMPORTS ------------------- */
-
+        /* ------------------- FIREBASE IMPORTS ------------------- */
+        // Only importing necessary Firestore modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        import { 
-            getAuth, 
-            signInWithCustomToken, 
-            signInAnonymously, 
-            onAuthStateChanged,
-            signOut
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-
-        import { 
-            getFirestore, 
-            doc, 
-            getDoc
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-
-        /* ------------------- FIXED CONFIG (NEVER NULL) ------------------- */
-
+        /* ------------------- CONFIG ------------------- */
         const hardcodedFirebaseConfig = {
             apiKey: "AIzaSyDtkaHB2ER0RAOpsbW-Eg65wSe7G4Uwrkw",
             authDomain: "travelassistant-1baed.firebaseapp.com",
@@ -111,66 +96,45 @@
             messagingSenderId: "67570490262",
             appId: "1:67570490262:web:7164a2d838b5517a325bb7"
         };
-
-        const appId = typeof __app_id !== "undefined" ? __app_id : "travelassistant-1baed";
-        const firebaseConfig = typeof __firebase_config !== "undefined"
-            ? JSON.parse(__firebase_config)
-            : hardcodedFirebaseConfig;
-
-        const initialAuthToken = typeof __initial_auth_token !== "undefined" 
-            ? __initial_auth_token 
-            : null;
-
+        const appId = "travelassistant-1baed";
+        const firebaseConfig = hardcodedFirebaseConfig;
 
         /* ------------------- INITIALIZE FIREBASE ------------------- */
-
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
 
+        /* ------------------- USER NAME DISPLAY LOGIC (FIXED) ------------------- */
+        const nameEl = document.getElementById("userNameDisplay"); 
 
-        /* ------------------- USER NAME DISPLAY ------------------- */
+        function loadUserName() {
+            const userUid = localStorage.getItem('userUid');
+            const userEmail = localStorage.getItem('userEmail');
 
-        onAuthStateChanged(auth, async (user) => {
-            const nameEl = document.getElementById("userNameDisplay");
-
-            if (!user) {
+            if (!userUid || !userEmail) {
                 nameEl.textContent = "Guest";
                 return;
             }
 
-            const profileRef = doc(db, "artifacts", appId, "users", user.uid, "profile", "data");
+            const profileRef = doc(db, "artifacts", appId, "users", userUid, "profile", "data");
+            
+            getDoc(profileRef)
+                .then(snap => {
+                    let displayedName = userEmail.split("@")[0]; // Default to email prefix
+                    if (snap.exists()) {
+                        const fetchedName = snap.data().name; 
+                        displayedName = fetchedName || userEmail.split("@")[0];
+                    }
+                    nameEl.textContent = displayedName;
+                })
+                .catch(e => {
+                    console.error("Error loading profile:", e);
+                    nameEl.textContent = "Traveler";
+                });
+        }
 
-            try {
-                const snap = await getDoc(profileRef);
-                if (snap.exists()) {
-                    nameEl.textContent = snap.data().name || user.email;
-                } else {
-                    nameEl.textContent = user.email || "Traveler";
-                }
-            } catch (e) {
-                console.error(e);
-                nameEl.textContent = "Traveler";
-            }
-        });
+        loadUserName();
 
-
-        /* ------------------- LOGOUT BUTTON ------------------- */
-
-        onAuthStateChanged(auth, () => {
-            const btn = document.getElementById("logoutBtn");
-            btn.onclick = async () => {
-                try {
-                    await signOut(auth);
-                    window.location.href = "login.html";
-                } catch (err) {
-                    alert("Logout failed");
-                }
-            };
-        });
-
-
-        /* ------------------- SEARCH & LINKS (UNCHANGED) ------------------- */
+        /* ------------------- NAVIGATION (CLEANED) ------------------- */
 
         document.getElementById("searchBtn").addEventListener("click", function() {
             const city = document.getElementById("cityInput").value;
@@ -194,9 +158,10 @@
                 document.getElementById("searchBtn").click();
             }
         });
-     document.querySelector('.profile-icon').addEventListener('click', () => {
-    window.location.href = 'profile.html';
-});
+        
+        document.querySelector('.profile-icon').addEventListener('click', () => {
+            window.location.href = 'profile.html';
+        });
     </script>
 </body>
 </html>
