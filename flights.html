@@ -246,6 +246,9 @@
     </div>
     
     <script>
+        let selectedOrigin = null;
+let selectedDestination = null;
+
         // 🛑 IMPORTANT: CONFIGURE YOUR AMADEUS API KEYS HERE 🛑
         const AMADEUS_CLIENT_ID = 'WybaRGUnYSc4mIhgOBYDukWKMyUwUA0F';
         const AMADEUS_CLIENT_SECRET = '5fAba2snyf6KUmWi';
@@ -342,7 +345,6 @@
          * Fetches location suggestions (City/Airport) and filters them for relevance.
          */
         async function fetchSuggestions(query, dropdownElement) {
-            
             dropdownElement.innerHTML = '';
             dropdownElement.style.display = 'none';
 
@@ -375,8 +377,6 @@
                 const suggestedIataCodes = new Set();
                 
                 if (data.data && data.data.length > 0) {
-                    
-                    
                     data.data.forEach(item => {
                         // Filter out duplicates (e.g., Delhi, New Delhi) and non-city/airport types
                         if (suggestedIataCodes.has(item.iataCode) || item.subType === 'OTHER') {
@@ -445,16 +445,8 @@
             
             try {
                 // Use the same endpoint as suggestions for consistency and rich data
-               const amadeusUrl =
-  `https://test.api.amadeus.com/v1/reference-data/locations` +
-  `?subType=AIRPORT,CITY` +
-  `&keyword=${encodeURIComponent(query)}` +
-  `&view=FULL` +
-  `&include=analytics.travelers` +
-  `&sort=analytics.travelers.score` +
-  `&page[limit]=50`;
-
-
+                const amadeusUrl = `https://test.api.amadeus.com/v1/reference-data/locations?subType=CITY&keyword=${encodeURIComponent(lowerCity)}&page%5Blimit%5D=1&sort=analytics.travelers.score&view=FULL`;
+                
                 const response = await fetch(amadeusUrl, {
                     method: 'GET',
                     headers: {
@@ -466,7 +458,6 @@
                 const data = await response.json();
 
                 if (data.data && data.data.length > 0) {
-                    
                     const topResult = data.data[0]; 
                     
                     const iataCode = topResult.iataCode; 
@@ -517,17 +508,30 @@
 
            
             // --- CALLING AMADEUS FUNCTION FOR IATA CODE AND LOCATION DETAILS ---
-            const originResult = await getIataCodeFromCity(origin);
-            const destinationResult = await getIataCodeFromCity(destination);
-            
-            const originCode = originResult.code;
-            const destinationCode = destinationResult.code;
-            
-            // Use the Amadeus provided City and Country names for the search URL
-            const originName = originResult.city || origin; 
-            const destinationName = destinationResult.city || destination; 
-            const originCountry = originResult.country || 'India'; 
-            const destinationCountry = destinationResult.country || 'India'; 
+            let originCode, destinationCode, originName, destinationName, originCountry, destinationCountry;
+
+// ORIGIN
+if (selectedOrigin) {
+    originCode = selectedOrigin.iata;
+    originName = selectedOrigin.city;
+    originCountry = selectedOrigin.country;
+} else {
+    const parsed = parseIataFromInput(originInputText);
+    originCode = parsed;
+    originName = originInputText.replace(/\s*\([A-Z]{3}\)\s*/,'').trim();
+}
+
+// DESTINATION
+if (selectedDestination) {
+    destinationCode = selectedDestination.iata;
+    destinationName = selectedDestination.city;
+    destinationCountry = selectedDestination.country;
+} else {
+    const parsed = parseIataFromInput(destinationInputText);
+    destinationCode = parsed;
+    destinationName = destinationInputText.replace(/\s*\([A-Z]{3}\)\s*/,'').trim();
+}
+ 
             
             if (!originCode || !destinationCode) {
                 container.innerHTML = `<p class="error-text" style="padding: 20px; color:red;">Could not find Airport Code for Origin: **${origin || 'N/A'}** or Destination: **${destination || 'N/A'}**.</p>`;
@@ -594,9 +598,16 @@
             const debouncedOriginSearch = debounce(query => fetchSuggestions(query, originDropdown), 300);
             const debouncedDestinationSearch = debounce(query => fetchSuggestions(query, destinationDropdown), 300);
 
-            originInput.addEventListener('input', (e) => debouncedOriginSearch(e.target.value));
-            destinationInput.addEventListener('input', (e) => debouncedDestinationSearch(e.target.value));
-            
+           originInput.addEventListener('input', (e) => {
+    selectedOrigin = null;
+    debouncedOriginSearch(e.target.value);
+});
+
+           destinationInput.addEventListener('input', (e) => {
+    selectedDestination = null;
+    debouncedDestinationSearch(e.target.value);
+});
+
             // Handle selection from dropdown
             function handleSuggestionClick(e) {
                 const item = e.target.closest('.suggestion-item');
@@ -606,6 +617,19 @@
                 const inputField = document.getElementById(inputId);
                 
                 inputField.value = `${item.dataset.city} (${item.dataset.iata})`; 
+                const stored = {
+    iata: item.dataset.iata,
+    city: item.dataset.city,
+    country: item.dataset.country,
+    subtype: item.dataset.subtype
+};
+
+if (inputId === "originCity") {
+    selectedOrigin = stored;
+} else {
+    selectedDestination = stored;
+}
+
 
                 // Calls the globally defined function
                 hideSuggestions(); 
