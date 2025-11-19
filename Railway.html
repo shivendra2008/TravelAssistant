@@ -101,6 +101,29 @@
         margin-bottom:8px;
         cursor:pointer;
         font-weight:600;
+        transition: transform 0.25s ease, opacity 0.25s ease;
+        position: relative;
+    }
+    .trash-icon {
+        position: absolute;
+        right: -40px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 20px;
+        color: red;
+        opacity: 0;
+        transition: right 0.25s ease, opacity 0.25s ease;
+    }
+    .clear-btn {
+        background:#f44336;
+        color:white;
+        border:none;
+        width:100%;
+        padding:8px;
+        border-radius:10px;
+        margin-top:5px;
+        font-weight:700;
+        cursor:pointer;
     }
 </style>
 </head>
@@ -133,192 +156,186 @@
     <button class="search-btn" id="searchBtn">Search Trains</button>
 
     <div class="recent-box">
-        <h3 style="margin:0 0 10px;">Recent Searches</h3>
-        <div id="recentList"></div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h3 style="margin:0;">Recent Searches</h3>
+
+    <!-- Clear button with NO background -->
+    <button 
+        onclick="clearAllRecents()" 
+        style="background:none; border:none; color:#d00; font-weight:600; cursor:pointer; padding:0; font-size:14px;">
+        Clear All
+    </button>
+</div>
+
+<!-- Small instruction text -->
+<div style="font-size:12px; color:#777; margin-top:3px; margin-bottom:10px;">
+    Swipe to delete
+</div>
+
+<div id="recentList"></div>
+
     </div>
 
 </div>
 
 <script>
 
-
-/* ---------------------------------------------------
-   LOAD stations.json
---------------------------------------------------- */
-fetch("IR_Stations.json")
-    .then(res => res.json())
-    .then(data => {
-        stations = data.stations;
-    });
-
-/* ---------------------------------------------------
-   AUTOCOMPLETE HANDLER
---------------------------------------------------- */
-
-function setupAutocomplete(inputId, dropdownId) {
-    const input = document.getElementById(inputId);
-    const dropdown = document.getElementById(dropdownId);
-
-    input.addEventListener("input", () => {
-        const value = input.value.trim().toLowerCase();
-
-        if (value.length < 2) {
-            dropdown.style.display = "none";
-            return;
-        }
-
-        const results = stations.filter(s =>
-            s.stnName.toLowerCase().includes(value) ||
-            s.stnCity.toLowerCase().includes(value) ||
-            s.stnCode.toLowerCase().includes(value)
-        );
-
-        dropdown.innerHTML = "";
-        results.slice(0, 12).forEach(s => {
-            const div = document.createElement("div");
-            div.textContent = `${s.stnName} (${s.stnCode})`;
-            div.onclick = () => {
-                input.value = div.textContent;
-                dropdown.style.display = "none";
-            };
-            dropdown.appendChild(div);
-        });
-
-        dropdown.style.display = "block";
-    });
-
-    document.addEventListener("click", (e) => {
-        if (!dropdown.contains(e.target) && e.target !== input) {
-            dropdown.style.display = "none";
-        }
-    });
-}
-
-setupAutocomplete("fromInput", "fromDropdown");
-setupAutocomplete("toInput", "toDropdown");
-
-
-
-
 let stations = [];
 
-/* ---------------------------------------------------
-   LOAD IR_Stations.json
---------------------------------------------------- */
+/* ---------------- Load stations.json ---------------- */
 fetch("IR_Stations.json")
-    .then(res => res.json())
-    .then(data => {
-        stations = data.stations; // correct shape
-        console.log("Stations loaded:", stations.length);
-    });
+    .then(r => r.json())
+    .then(d => stations = d.stations);
 
-/* ---------------------------------------------------
-   AUTOCOMPLETE HANDLER
---------------------------------------------------- */
+/* ---------------- Autocomplete ---------------- */
 function setupAutocomplete(inputId, dropdownId) {
     const input = document.getElementById(inputId);
     const dropdown = document.getElementById(dropdownId);
 
-    if (!input || !dropdown) {
-        console.error("Missing input or dropdown:", inputId, dropdownId);
-        return;
-    }
-
     input.addEventListener("input", () => {
-        const value = input.value.trim().toLowerCase();
-
-        if (value.length < 2) {
-            dropdown.style.display = "none";
-            dropdown.innerHTML = "";
-            return;
-        }
-
-        if (!Array.isArray(stations)) {
-            console.error("Stations is not an array!", stations);
-            return;
-        }
+        const val = input.value.toLowerCase().trim();
+        if (val.length < 2) return dropdown.style.display = "none";
 
         const results = stations.filter(s =>
-            s.stnName.toLowerCase().includes(value) ||
-            s.stnCity.toLowerCase().includes(value) ||
-            s.stnCode.toLowerCase().startsWith(value)
+            s.stnName.toLowerCase().includes(val) ||
+            s.stnCity.toLowerCase().includes(val) ||
+            s.stnCode.toLowerCase().startsWith(val)
         );
 
         dropdown.innerHTML = "";
         results.slice(0, 12).forEach(s => {
-            const div = document.createElement("div");
-            div.textContent = `${s.stnName} (${s.stnCode})`;
-            div.onclick = () => {
-                input.value = div.textContent;
+            let d = document.createElement("div");
+            d.textContent = `${s.stnName} (${s.stnCode})`;
+            d.onclick = () => {
+                input.value = d.textContent;
                 dropdown.style.display = "none";
             };
-            dropdown.appendChild(div);
+            dropdown.appendChild(d);
         });
-
         dropdown.style.display = "block";
     });
 
-    // close dropdown on outside click
     document.addEventListener("click", (e) => {
-        if (!dropdown.contains(e.target) && e.target !== input) {
-            dropdown.style.display = "none";
-        }
+        if (!dropdown.contains(e.target) && e.target !== input) dropdown.style.display = "none";
     });
 }
-
-/* Initialize correct autocomplete */
 setupAutocomplete("fromInput", "fromDropdown");
 setupAutocomplete("toInput", "toDropdown");
 
-/* ---------------------------------------------------
-   RECENT SEARCHES
---------------------------------------------------- */
+/* ---------------- Save Recent ---------------- */
+function saveRecent(from, to, date) {
+    let rec = JSON.parse(localStorage.getItem("trainRecent") || "[]");
+    rec = rec.filter(r => !(r.from === from && r.to === to && r.date === date));
+    rec.unshift({ from, to, date });
+    rec = rec.slice(0, 6);
+    localStorage.setItem("trainRecent", JSON.stringify(rec));
+}
+
+/* ---------------- Clear All ---------------- */
+function clearAllRecents() {
+    if (!confirm("Clear all recent searches?")) return;
+    localStorage.removeItem("trainRecent");
+    loadRecent();
+}
+
+/* ---------------- Open Goibibo ---------------- */
+function openLink(fromText, toText, date) {
+    let fc = fromText.match(/\((.*?)\)/)?.[1];
+    let tc = toText.match(/\((.*?)\)/)?.[1];
+
+    if (!fc) {
+        const f = stations.find(s =>
+            fromText.toLowerCase().includes(s.stnName.toLowerCase()) ||
+            fromText.toLowerCase().includes(s.stnCity.toLowerCase()));
+        if (f) fc = f.stnCode;
+    }
+    if (!tc) {
+        const t = stations.find(s =>
+            toText.toLowerCase().includes(s.stnName.toLowerCase()) ||
+            toText.toLowerCase().includes(s.stnCity.toLowerCase()));
+        if (t) tc = t.stnCode;
+    }
+
+    if (!fc || !tc) return alert("Invalid station");
+
+    const fd = date.replace(/-/g, "");
+    window.open(`https://www.goibibo.com/trains/dsrp/${fc}/${tc}/${fd}/GN/?track=normal_srp_calendar`, "_blank");
+}
+
+/* ---------------- Load Recent List ---------------- */
 function loadRecent() {
     const box = document.getElementById("recentList");
     box.innerHTML = "";
-    const recents = JSON.parse(localStorage.getItem("trainRecent") || "[]");
+    let rec = JSON.parse(localStorage.getItem("trainRecent") || "[]");
 
-    recents.forEach(r => {
-        const div = document.createElement("div");
+    rec.forEach(r => {
+        let div = document.createElement("div");
         div.className = "recent-item";
         div.textContent = `${r.from} → ${r.to} (${r.date})`;
-        div.onclick = () => {
-            document.getElementById("fromInput").value = r.from;
-            document.getElementById("toInput").value = r.to;
-            document.getElementById("dateInput").value = r.date;
-        };
+
+        let trash = document.createElement("i");
+        trash.className = "fa-solid fa-trash trash-icon";
+        div.appendChild(trash);
+
+        /* CLICK = OPEN */
+        div.onclick = () => openLink(r.from, r.to, r.date);
+
+        /* LONG PRESS = FULL EDIT */
+        let timer;
+        div.addEventListener("mousedown", () => {
+            timer = setTimeout(() => {
+                const nf = prompt("Edit From", r.from);
+                const nt = prompt("Edit To", r.to);
+                const nd = prompt("Edit Date (YYYY-MM-DD)", r.date);
+                if (nf && nt && nd) {
+                    saveRecent(nf, nt, nd);
+                    loadRecent();
+                }
+            }, 600);
+        });
+        div.addEventListener("mouseup", () => clearTimeout(timer));
+        div.addEventListener("mouseleave", () => clearTimeout(timer));
+
+        /* SWIPE LEFT = TRASH ANIMATION + DELETE */
+        let startX = 0;
+        div.addEventListener("touchstart", e => startX = e.touches[0].clientX);
+        div.addEventListener("touchmove", e => {
+            let diff = startX - e.touches[0].clientX;
+
+            if (diff > 30) {
+                div.style.transform = "translateX(-60px)";
+                trash.style.right = "10px";
+                trash.style.opacity = "1";
+            }
+            if (diff > 90) {
+                div.style.opacity = "0";
+                setTimeout(() => {
+                    let arr = JSON.parse(localStorage.getItem("trainRecent") || "[]");
+                    arr = arr.filter(x => !(x.from === r.from && x.to === r.to && x.date === r.date));
+                    localStorage.setItem("trainRecent", JSON.stringify(arr));
+                    loadRecent();
+                }, 200);
+            }
+        });
+
         box.appendChild(div);
     });
 }
 loadRecent();
 
-function saveRecent(from, to, date) {
-    let recents = JSON.parse(localStorage.getItem("trainRecent") || "[]");
-
-    recents.unshift({ from, to, date });
-    recents = recents.slice(0, 6);
-
-    localStorage.setItem("trainRecent", JSON.stringify(recents));
-}
-
-/* ---------------------------------------------------
-   SEARCH BUTTON CLICK
---------------------------------------------------- */
+/* ---------------- Search Button ---------------- */
 document.getElementById("searchBtn").addEventListener("click", () => {
-    const from = document.getElementById("fromInput").value.trim();
-    const to = document.getElementById("toInput").value.trim();
-    const date = document.getElementById("dateInput").value;
+    const f = document.getElementById("fromInput").value.trim();
+    const t = document.getElementById("toInput").value.trim();
+    const d = document.getElementById("dateInput").value;
 
-    if (!from || !to || !date) {
-        alert("Please fill all fields.");
-        return;
-    }
+    if (!f || !t || !d) return alert("Please fill all fields.");
 
-    saveRecent(from, to, date);
-
-    window.location.href =
-        `train-results.html?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${encodeURIComponent(date)}`;
+    saveRecent(f, t, d);
+    loadRecent();
+    openLink(f, t, d);
 });
+
 </script>
 
 </body>
