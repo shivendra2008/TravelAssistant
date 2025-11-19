@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loading...</title>
 
-    <!-- Same font & color style as login.html -->
     <style>
         body {
             margin: 0;
@@ -20,7 +19,6 @@
         .logo-container {
             display: flex;
             flex-direction: column;
-            align-items: center;
         }
 
         .logo {
@@ -53,34 +51,23 @@
 
 <div class="logo-container">
     <img src="Logo.png" class="logo">
-    
 </div>
 
-<!-- Firebase -->
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+<script>
+    // Smooth splash delay (optional for animation)
+    setTimeout(() => {
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyDtkaHB2ER0RAOpsbW-Eg65wSe7G4Uwrkw",
-        authDomain: "travelassistant-1baed.firebaseapp.com",
-        projectId: "travelassistant-1baed",
-        storageBucket: "travelassistant-1baed.appspot.com",
-        messagingSenderId: "753584655012",
-        appId: "1:753584655012:web:913ec049751e47de5a53db"
-    };
+        const uid = localStorage.getItem("userUid");
+        const email = localStorage.getItem("userEmail");
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-
-    // ⭐ Ultra-fast redirect (within 100ms)
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            window.location.href = "index.html";     // Already logged in
+        // Check your actual login session system
+        if (uid && email) {
+            window.location.href = "index.html";  // User logged in
         } else {
-            window.location.href = "intro.html";     // First-time or signed out
+            window.location.href = "intro.html";  // Not logged in
         }
-    });
+
+    }, 1200); // same as your fade duration
 </script>
 
 </body>
