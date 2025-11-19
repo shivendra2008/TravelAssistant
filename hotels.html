@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Booking</title>
+    <!-- Links assumed to be available in the app environment -->
+    <link rel="stylesheet" href="styles.css"> 
+    <link rel="stylesheet" href="search-styles.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        /* Base Styling for the Hotel Search Page */
+        :root {
+            --primary-color: #f7b949; /* Requested color */
+            --primary-dark: #e0a944; 
+            --background-color: #f4f6f9;
+            --card-background: #ffffff;
+            --text-color: #333;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Bar Styling */
+        .search-header .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background-color: var(--primary-color); /* Uses new primary color */
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .search-header .top-bar i {
+            font-size: 24px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .search-header .top-bar i:active {
+            transform: scale(0.95);
+        }
+
+        .search-header .top-bar h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        /* Search Card Styling for inputs */
+        .search-card {
+            background-color: var(--card-background);
+            padding: 20px;
+            margin: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            z-index: 10; 
+        }
+
+        .search-form-group {
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .search-form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .search-form-group input, .search-form-group select {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        .search-form-group input:focus, .search-form-group select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+        /* Override padding for selects inside guest inputs */
+        .guest-input-group select {
+            padding-right: 15px;
+        }
+
+        .input-icon {
+            position: absolute;
+            top: 38px; 
+            right: 15px;
+            color: #999;
+            pointer-events: none;
+        }
+
+        /* Date inputs are forced side-by-side */
+        .date-input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .date-input-group > div {
+            flex: 1;
+        }
+        /* Prevent horizontal overflow on small screens */
+.date-input-group {
+    width: 100%;
+    overflow: hidden;
+}
+
+.date-input-group > div {
+    min-width: 0; /* Allows flex items to shrink instead of overflowing */
+}
+
+.date-input-group input {
+    width: 100%;
+    min-width: 0; /* Critical fix */
+}
+
+/* Prevent calendar icon overlap on small screens */
+.date-input-group input[type="date"] {
+    padding-right: 12px; /* enough space for calendar icon */
+    box-sizing: border-box;
+}
+
+        
+        /* New Group for Guests/Rooms */
+        .guest-input-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        /* NEW CSS for Age Selectors */
+        .age-selectors-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        /* Adjust for small screens (Mobile Responsiveness) */
+        @media (max-width: 250px) {
+            /* FIX: Decrease gap for date inputs to ensure they fit side-by-side without overflow */
+            .date-input-group {
+                gap: 8px; 
+            }
+
+            /* Stack guest inputs vertically */
+            .guest-input-group {
+                grid-template-columns: 1fr;
+            }
+            /* Adjust age selectors for better fit */
+            .age-selectors-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        .guest-input-group .search-form-group {
+            margin-bottom: 0; /* Remove extra margin */
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+
+        .search-submit-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary-color); /* Uses new primary color */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            box-shadow: 0 4px 8px rgba(247, 185, 73, 0.4); /* Uses shadow for new color */
+        }
+        .search-submit-btn:hover {
+            background-color: var(--primary-dark);
+        }
+        .search-submit-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Results Area - Modified to display status message only */
+        .results-container {
+            margin: 0 20px 20px 20px;
+            flex-grow: 1;
+        }
+
+        /* Info/Error States */
+        .info-message {
+            padding: 40px 20px;
+            text-align: center;
+            color: #777;
+            font-size: 16px;
+        }
+        .info-message i {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="search-header">
+            <div class="top-bar">
+                <i class="fas fa-arrow-left" onclick="window.location.href='index.html'"></i>
+                <h1 id="pageTitle">Find Hotels</h1>
+                <div style="width: 24px;"></div> <!-- Spacer -->
+            </div>
+        </header>
+
+        <div class="search-card">
+            <div class="search-form-group">
+                <label for="locationInput">Location</label>
+                <input type="text" id="locationInput" placeholder="City, landmark, or hotel name">
+                <i class="input-icon fas fa-city"></i>
+            </div>
+
+            <div class="date-input-group">
+                <div class="search-form-group">
+                    <label for="checkInDate">Check-in</label>
+                    <input type="date" id="checkInDate">
+                </div>
+                <div class="search-form-group">
+                    <label for="checkOutDate">Check-out</label>
+                    <input type="date" id="checkOutDate">
+                </div>
+            </div>
+            
+            
+            <!-- GUEST INPUTS -->
+            <label style="display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; color: #555;">Guests & Rooms</label>
+            <div class="guest-input-group">
+                <div class="search-form-group">
+                    <label for="roomsSelect">Rooms (Max 9)</label>
+                    <select id="roomsSelect">
+                        <!-- Options filled by JavaScript (1 to 9) -->
+                    </select>
+                </div>
+                <div class="search-form-group">
+                    <label for="adultsSelect">Adults (Max 12)</label>
+                    <select id="adultsSelect">
+                        <!-- Options filled by JavaScript (1 to 12) -->
+                    </select>
+                </div>
+                <div class="search-form-group">
+                    <label for="childrenSelect">Children (Max 2)</label>
+                    <select id="childrenSelect">
+                        <!-- Options filled by JavaScript (0 to 2) -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- CHILDREN AGE CONTAINER -->
+            <div id="childrenAgeContainer" class="hidden">
+                <label style="display: block; margin-bottom: 10px; font-weight: 500; font-size: 14px; color: #555; border-top: 1px solid #eee; padding-top: 15px;">Child Ages (Max Age 12)</label>
+                <div id="childAgeSelectors" class="age-selectors-grid">
+                    <!-- Dynamic age dropdowns will go here -->
+                </div>
+            </div>
+
+            <button class="search-submit-btn" id="searchHotelBtn">
+                Search Hotel
+            </button>
+        </div>
+
+        <main class="results-container" id="resultsContainer">
+            <div class="info-message">
+                <i class="fas fa-bed"></i>
+                <p>Enter your details and click 'Search' to be redirected to a booking partner.</p>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const locationInput = document.getElementById('locationInput');
+            const checkInDateInput = document.getElementById('checkInDate');
+            const checkOutDateInput = document.getElementById('checkOutDate');
+            const roomsSelect = document.getElementById('roomsSelect');
+            const adultsSelect = document.getElementById('adultsSelect');
+            const childrenSelect = document.getElementById('childrenSelect');
+            const searchHotelBtn = document.getElementById('searchHotelBtn');
+            const resultsContainer = document.getElementById('resultsContainer');
+            
+            const childrenAgeContainer = document.getElementById('childrenAgeContainer');
+            const childAgeSelectorsDiv = document.getElementById('childAgeSelectors');
+
+            // --- Helper to fill dropdown options ---
+            function populateSelect(selectElement, start, end, defaultValue = 1) {
+                selectElement.innerHTML = '';
+                for (let i = start; i <= end; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = i;
+                    if (i === defaultValue) {
+                        option.selected = true;
+                    }
+                    selectElement.appendChild(option);
+                }
+            }
+            
+            // Populate the dropdowns with the requested limits
+            populateSelect(roomsSelect, 1, 9, 1);
+            populateSelect(adultsSelect, 1, 12, 2); 
+            // Children dropdown starts at 0
+            populateSelect(childrenSelect, 0, 2, 0); 
+
+            // --- Date Initialization and Validation ---
+
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
+
+            const todayISO = today.toISOString().split('T')[0];
+            const tomorrowISO = tomorrow.toISOString().split('T')[0];
+
+            checkInDateInput.setAttribute('min', todayISO);
+            checkOutDateInput.setAttribute('min', tomorrowISO);
+
+            // Set default dates
+            checkInDateInput.value = todayISO;
+            checkOutDateInput.value = tomorrowISO;
+
+            checkInDateInput.addEventListener('change', () => {
+                const checkIn = new Date(checkInDateInput.value);
+                const nextDay = new Date(checkIn);
+                nextDay.setDate(checkIn.getDate() + 1);
+                const nextDayISO = nextDay.toISOString().split('T')[0];
+                checkOutDateInput.setAttribute('min', nextDayISO);
+                
+                // If check-out is before or same as new check-in, auto-adjust check-out
+                if (new Date(checkOutDateInput.value) <= checkIn) {
+                    checkOutDateInput.value = nextDayISO;
+                }
+            });
+
+            // --- Function to render child age selectors ---
+            /**
+             * Dynamically generates age dropdowns based on the number of children selected.
+             * @param {number} count - The number of children selected (0 to 2).
+             */
+            function renderChildAgeSelectors(count) {
+                childAgeSelectorsDiv.innerHTML = '';
+
+                if (count > 0) {
+                    childrenAgeContainer.classList.remove('hidden');
+                    for (let i = 1; i <= count; i++) {
+                        const ageGroup = document.createElement('div');
+                        ageGroup.className = 'search-form-group';
+                        
+                        const label = document.createElement('label');
+                        label.textContent = `Child ${i} Age`;
+                        
+                        const select = document.createElement('select');
+                        select.id = `childAge${i}`;
+                        select.className = 'child-age-select'; // Use a class for easier selection later
+
+                        // Populate age options 1 to 12
+                        for (let age = 1; age <= 12; age++) {
+                            const option = document.createElement('option');
+                            option.value = age;
+                            option.textContent = age;
+                            // Set a default age, e.g., 5
+                            if (age === 5) {
+                                option.selected = true;
+                            }
+                            select.appendChild(option);
+                        }
+                        
+                        ageGroup.appendChild(label);
+                        ageGroup.appendChild(select);
+                        childAgeSelectorsDiv.appendChild(ageGroup);
+                    }
+                } else {
+                    childrenAgeContainer.classList.add('hidden');
+                }
+            }
+            
+            // --- Event Listener for Children Select ---
+            childrenSelect.addEventListener('change', (event) => {
+                const numChildren = parseInt(event.target.value, 10);
+                renderChildAgeSelectors(numChildren);
+            });
+
+
+            // --- Custom Alert/Message Box ---
+            window.alert = function(message) {
+                const existingModal = document.getElementById('customAlert');
+                if (existingModal) existingModal.remove();
+
+                const modal = document.createElement('div');
+                modal.id = 'customAlert';
+                modal.style.cssText = `
+                    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                    background: white; padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                    z-index: 1000; text-align: center; max-width: 90%;
+                `;
+                modal.innerHTML = `
+                    <p style="margin-bottom: 20px;">${message}</p>
+                    <button onclick="document.getElementById('customAlert').remove()" style="padding: 10px 20px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer;">OK</button>
+                `;
+                document.body.appendChild(modal);
+            };
+
+            // Utility function to display messages
+            function displayMessage(iconClass, text) {
+                resultsContainer.innerHTML = `
+                    <div class="info-message">
+                        <i class="${iconClass}"></i>
+                        <p>${text}</p>
+                    </div>
+                `;
+            }
+
+            /**
+             * Converts YYYY-MM-DD date format to DD/MM/YYYY
+             * @param {string} dateString - Date in YYYY-MM-DD format.
+             * @returns {string} Date in DD/MM/YYYY format.
+             */
+            function formatDateForExternalLink(dateString) {
+                if (!dateString) return '';
+                const parts = dateString.split('-'); // ["YYYY", "MM", "DD"]
+                // Example: 2025-11-20 -> 20/11/2025
+                return `${parts[2]}/${parts[1]}/${parts[0]}`; 
+            }
+
+            /**
+             * Constructs the PAX string for the external site.
+             * Format: [Total Adults]_[Children Count]_[Child 1 Age]_[Child 2 Age]...
+             * @param {number} adults - Total number of adults.
+             * @param {number} children - Total number of children.
+             * @param {number[]} childAges - Array of ages of the children.
+             * @returns {string} The constructed PAX configuration string.
+             */
+            function constructPaxStringWithAges(adults, children, childAges) {
+                // The structure is AdultCount_ChildCount_Child1Age_Child2Age...
+                let paxConfig = `${adults}_${children}`; 
+                
+                if (children > 0) {
+                    paxConfig += '_' + childAges.join('_');
+                }
+                
+                return paxConfig;
+            }
+
+            // --- Main Search Function ---
+            async function searchHotels() {
+                const location = locationInput.value.trim();
+                const checkInDate = checkInDateInput.value;
+                const checkOutDate = checkOutDateInput.value;
+                
+                // Get values and convert to numbers
+                const rooms = parseInt(roomsSelect.value, 10);
+                const adults = parseInt(adultsSelect.value, 10);
+                const children = parseInt(childrenSelect.value, 10);
+
+                // Collect child ages
+                const childAgeSelectors = document.querySelectorAll('.child-age-select');
+                const childAges = Array.from(childAgeSelectors).map(select => parseInt(select.value, 10));
+
+                if (!location) {
+                    alert('Please enter a location (city or hotel name) to search.');
+                    return;
+                }
+                
+                if (new Date(checkInDate) >= new Date(checkOutDate)) {
+                    alert('Check-out date must be after the check-in date.');
+                    return;
+                }
+
+                // Check if the number of children matches the number of age selectors (validation)
+                if (children > 0 && childAges.length !== children) {
+                    alert('Please ensure all child ages are selected before searching.');
+                    return;
+                }
+                
+                // Convert dates to DD/MM/YYYY format required by the external link
+                const formattedCheckIn = formatDateForExternalLink(checkInDate);
+                const formattedCheckOut = formatDateForExternalLink(checkOutDate);
+
+                // Construct the PAX string using the newly defined function that includes ages
+                const paxConfig = constructPaxStringWithAges(adults, children, childAges);
+
+                // Construct the base URL and parameters
+                const baseUrl = 'https://www.easemytrip.com/hotel-new/search';
+                
+                // Parameters based on the LATEST sample URL:
+                const params = new URLSearchParams({
+                    cityName: location,             
+                    checkinDate: formattedCheckIn,  
+                    checkoutDate: formattedCheckOut,
+                    Rooms: rooms.toString(),        
+                    pax: paxConfig,                 
+                    Hotel: 'NA',
+                    // The _v parameter (timestamp) is often just for cache busting and is omitted
+                });
+                
+                const finalUrl = `${baseUrl}?${params.toString()}`;
+
+                // Show a brief message before redirection
+                searchHotelBtn.disabled = true;
+                searchHotelBtn.innerHTML = '<i class="fas fa-external-link-alt"></i> Redirecting...';
+                displayMessage('fas fa-paper-plane', `Redirecting to external site for hotel search in **${location}**...`);
+
+                // Give the user a moment to see the message (optional delay)
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                // Perform the redirection
+                window.location.href = finalUrl;
+            }
+
+            // --- Event Listeners ---
+            searchHotelBtn.addEventListener('click', searchHotels);
+
+            // Allow 'Enter' key in input fields to trigger search
+            [locationInput, checkInDateInput, checkOutDateInput].forEach(input => {
+                input.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter') {
+                        searchHotels();
+                    }
+                });
+            });
+
+            // Check URL parameters for initial search
+            const params = new URLSearchParams(window.location.search);
+            const initialCity = params.get('city');
+
+            if (initialCity) {
+                locationInput.value = initialCity;
+            }
+
+            // Initial call to set up the child age container visibility on load
+            renderChildAgeSelectors(parseInt(childrenSelect.value, 10));
+
+        });
+    </script>
+</body>
+</html>

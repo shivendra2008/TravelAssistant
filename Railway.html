@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Search Trains</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        background: #f7b949;
+        font-family: 'Inter', sans-serif;
+        overflow-x: hidden;
+    }
+    .container {
+        max-width: 430px;
+        margin: auto;
+        background: white;
+        height: 100vh;
+        overflow-y: auto;
+        border-radius: 0 0 20px 20px;
+    }
+    .header {
+        background: #f7b949;
+        padding: 20px;
+        color: white;
+        text-align: center;
+        border-radius: 0 0 20px 20px;
+        position: relative;
+    }
+    .header i {
+        position: absolute;
+        left: 15px;
+        top: 20px;
+        font-size: 22px;
+        cursor: pointer;
+    }
+    h2 { margin: 10px 0; font-size: 22px; }
+
+    .input-group {
+        padding: 18px;
+    }
+    label { font-weight: 700; color: #555; display: block; margin-bottom: 6px; }
+    input {
+        width: 100%;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid #ddd;
+        font-size: 16px;
+    }
+
+    .dropdown {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        margin-top: 4px;
+        display: none;
+        max-height: 180px;
+        overflow-y: auto;
+        background: white;
+        position: absolute;
+        width: calc(100% - 36px);
+        z-index: 200;
+    }
+    .dropdown div {
+        padding: 10px;
+        border-bottom: 1px solid #f1f1f1;
+        cursor: pointer;
+    }
+    .dropdown div:hover {
+        background: #f7b949;
+        color: white;
+    }
+
+    .search-btn {
+        width: 90%;
+        margin: 25px auto;
+        display: block;
+        padding: 14px;
+        font-size: 18px;
+        background: #222;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .recent-box {
+        background:#fafafa;
+        padding:18px;
+        border-radius:14px;
+        margin:18px;
+    }
+    .recent-item {
+        padding:8px 12px;
+        background:white;
+        border-radius:10px;
+        border:1px solid #eee;
+        margin-bottom:8px;
+        cursor:pointer;
+        font-weight:600;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <i class="fas fa-arrow-left" onclick="history.back()"></i>
+        <h2>Find Trains</h2>
+    </div>
+
+    <div class="input-group">
+        <label>From Station</label>
+        <input id="fromInput" placeholder="Start typing city or station">
+        <div id="fromDropdown" class="dropdown"></div>
+    </div>
+
+    <div class="input-group">
+        <label>To Station</label>
+        <input id="toInput" placeholder="Start typing city or station">
+        <div id="toDropdown" class="dropdown"></div>
+    </div>
+
+    <div class="input-group">
+        <label>Travel Date</label>
+        <input type="date" id="dateInput">
+    </div>
+
+    <button class="search-btn" id="searchBtn">Search Trains</button>
+
+    <div class="recent-box">
+        <h3 style="margin:0 0 10px;">Recent Searches</h3>
+        <div id="recentList"></div>
+    </div>
+
+</div>
+
+<script>
+
+
+/* ---------------------------------------------------
+   LOAD stations.json
+--------------------------------------------------- */
+fetch("IR_Stations.json")
+    .then(res => res.json())
+    .then(data => {
+        stations = data.stations;
+    });
+
+/* ---------------------------------------------------
+   AUTOCOMPLETE HANDLER
+--------------------------------------------------- */
+
+function setupAutocomplete(inputId, dropdownId) {
+    const input = document.getElementById(inputId);
+    const dropdown = document.getElementById(dropdownId);
+
+    input.addEventListener("input", () => {
+        const value = input.value.trim().toLowerCase();
+
+        if (value.length < 2) {
+            dropdown.style.display = "none";
+            return;
+        }
+
+        const results = stations.filter(s =>
+            s.stnName.toLowerCase().includes(value) ||
+            s.stnCity.toLowerCase().includes(value) ||
+            s.stnCode.toLowerCase().includes(value)
+        );
+
+        dropdown.innerHTML = "";
+        results.slice(0, 12).forEach(s => {
+            const div = document.createElement("div");
+            div.textContent = `${s.stnName} (${s.stnCode})`;
+            div.onclick = () => {
+                input.value = div.textContent;
+                dropdown.style.display = "none";
+            };
+            dropdown.appendChild(div);
+        });
+
+        dropdown.style.display = "block";
+    });
+
+    document.addEventListener("click", (e) => {
+        if (!dropdown.contains(e.target) && e.target !== input) {
+            dropdown.style.display = "none";
+        }
+    });
+}
+
+setupAutocomplete("fromInput", "fromDropdown");
+setupAutocomplete("toInput", "toDropdown");
+
+
+
+
+let stations = [];
+
+/* ---------------------------------------------------
+   LOAD IR_Stations.json
+--------------------------------------------------- */
+fetch("IR_Stations.json")
+    .then(res => res.json())
+    .then(data => {
+        stations = data.stations; // correct shape
+        console.log("Stations loaded:", stations.length);
+    });
+
+/* ---------------------------------------------------
+   AUTOCOMPLETE HANDLER
+--------------------------------------------------- */
+function setupAutocomplete(inputId, dropdownId) {
+    const input = document.getElementById(inputId);
+    const dropdown = document.getElementById(dropdownId);
+
+    if (!input || !dropdown) {
+        console.error("Missing input or dropdown:", inputId, dropdownId);
+        return;
+    }
+
+    input.addEventListener("input", () => {
+        const value = input.value.trim().toLowerCase();
+
+        if (value.length < 2) {
+            dropdown.style.display = "none";
+            dropdown.innerHTML = "";
+            return;
+        }
+
+        if (!Array.isArray(stations)) {
+            console.error("Stations is not an array!", stations);
+            return;
+        }
+
+        const results = stations.filter(s =>
+            s.stnName.toLowerCase().includes(value) ||
+            s.stnCity.toLowerCase().includes(value) ||
+            s.stnCode.toLowerCase().startsWith(value)
+        );
+
+        dropdown.innerHTML = "";
+        results.slice(0, 12).forEach(s => {
+            const div = document.createElement("div");
+            div.textContent = `${s.stnName} (${s.stnCode})`;
+            div.onclick = () => {
+                input.value = div.textContent;
+                dropdown.style.display = "none";
+            };
+            dropdown.appendChild(div);
+        });
+
+        dropdown.style.display = "block";
+    });
+
+    // close dropdown on outside click
+    document.addEventListener("click", (e) => {
+        if (!dropdown.contains(e.target) && e.target !== input) {
+            dropdown.style.display = "none";
+        }
+    });
+}
+
+/* Initialize correct autocomplete */
+setupAutocomplete("fromInput", "fromDropdown");
+setupAutocomplete("toInput", "toDropdown");
+
+/* ---------------------------------------------------
+   RECENT SEARCHES
+--------------------------------------------------- */
+function loadRecent() {
+    const box = document.getElementById("recentList");
+    box.innerHTML = "";
+    const recents = JSON.parse(localStorage.getItem("trainRecent") || "[]");
+
+    recents.forEach(r => {
+        const div = document.createElement("div");
+        div.className = "recent-item";
+        div.textContent = `${r.from} → ${r.to} (${r.date})`;
+        div.onclick = () => {
+            document.getElementById("fromInput").value = r.from;
+            document.getElementById("toInput").value = r.to;
+            document.getElementById("dateInput").value = r.date;
+        };
+        box.appendChild(div);
+    });
+}
+loadRecent();
+
+function saveRecent(from, to, date) {
+    let recents = JSON.parse(localStorage.getItem("trainRecent") || "[]");
+
+    recents.unshift({ from, to, date });
+    recents = recents.slice(0, 6);
+
+    localStorage.setItem("trainRecent", JSON.stringify(recents));
+}
+
+/* ---------------------------------------------------
+   SEARCH BUTTON CLICK
+--------------------------------------------------- */
+document.getElementById("searchBtn").addEventListener("click", () => {
+    const from = document.getElementById("fromInput").value.trim();
+    const to = document.getElementById("toInput").value.trim();
+    const date = document.getElementById("dateInput").value;
+
+    if (!from || !to || !date) {
+        alert("Please fill all fields.");
+        return;
+    }
+
+    saveRecent(from, to, date);
+
+    window.location.href =
+        `train-results.html?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${encodeURIComponent(date)}`;
+});
+</script>
+
+</body>
+</html>
