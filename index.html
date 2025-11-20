@@ -1,4 +1,4 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
@@ -13,9 +13,6 @@
                 <div class="header-text">
                     <h1>Welcome,</h1>   
                     <h2 id="userNameDisplay">Loading...</h2>
-                </div>
-                <div class="profile-icon">
-                    <i class="fas fa-user-circle"></i>
                 </div>
 
                 
@@ -73,7 +70,7 @@
                         </button>
                         <button class="check-item settings">
                             <i class="fas fa-cog"></i>
-                            <span>Settings</span>
+                            <span>Account Settings</span>
                         </button>
                     </div>
                 </section>
@@ -169,6 +166,9 @@ document.querySelector('.check-item.category').addEventListener('click', functio
 // Navigate to Category Wise Destinations
 document.querySelector('.check-item.travel').addEventListener('click', function() {
     window.location.href = 'travel-checklist.html';
+});
+document.querySelector('.check-item.settings').addEventListener('click', function() {
+    window.location.href = 'profile.html';
 });
         </script>
     </body>
