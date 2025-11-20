@@ -1,911 +1,1138 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Results</title>
-    <link rel="stylesheet" href="search-styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Destination — Premium</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+  :root{
+    --brand-gold: #f7b949;
+    --brand-teal: #07a2a2;
+    --muted: #6b7280;
+  }
+  html,body{height:100%; margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
+  body{background:linear-gradient(180deg,#fbfbfc 0%, #f6f8f9 100%);}
+  .container{max-width:980px;margin:0 auto;padding:18px;}
+  .hero{
+    background: linear-gradient(135deg,var(--brand-teal) 0%, var(--brand-gold) 100%);
+    border-radius:18px; padding:20px;
+    color:#042028;
+  }
+  .aqi-badge{width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff}
+  .chip{background:rgba(7,162,162,0.08);padding:6px 10px;border-radius:999px;font-weight:600;color:var(--brand-teal);font-size:13px}
+  .gold-underline{border-top:4px solid var(--brand-gold)}
+  .action-btn{border-radius:12px;padding:12px 16px;font-weight:700}
+  
+  /* Top Bar Style - Updated to Center Title and use position:relative for back button */
+  .top-bar {
+    background-color: var(--brand-gold);
+    color: #1f2937; 
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center; 
+    font-weight: 800;
+    font-size: 18px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+
+  .count-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: background 0.15s;
+  }
+  .count-btn:hover {
+    background: #f3f4f6;
+  }
+  
+  /* Autosuggest styles */
+  .suggest-box {
+    position: absolute;
+    z-index: 1000;
+    background: white;
+    border: 1px solid #e6edf0;
+    border-radius: 12px;
+    max-height: 260px;
+    overflow-y: auto;
+    box-shadow: 0 12px 30px rgba(2,6,23,0.12);
+  }
+  .suggest-item {
+    padding: 12px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid #f3f6f7;
+  }
+  .suggest-item:hover { background:#f8fafb }
+  .suggest-item:last-child { border-bottom:none }
+  
+  /* NEW: Transition classes for City Content */
+  #cityDisplayWrapper {
+      transition: max-height 0.5s ease-in-out, opacity 0.4s ease-in-out, margin 0.5s ease-in-out;
+      overflow: hidden;
+      max-height: 1000px; /* Large enough to hold initial content */
+      opacity: 1;
+  }
+  
+  /* Custom style for the Flatpickr footer to ensure it's below the calendar */
+  .flatpickr-calendar.open {
+    padding-bottom: 0; /* Remove default padding to make room for footer */
+  }
+
+  @media (max-width:720px){
+    .hero{padding:16px;border-radius:12px}
+    .container{padding:12px}
+    .aqi-badge{width:72px;height:72px}
+    .action-btn{padding:14px;font-size:15px}
+    input,button{font-size:16px}
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </head>
 <body>
-    <div class="container">
-        <header class="search-header">
-            <div class="top-bar">
-                <i class="fas fa-arrow-left" onclick="window.history.back()"></i>
-                <h1 id="cityNameHeader">Search</h1>
+  
+  <div id="topBar" class="top-bar">
+    <a href="index.html" class="text-gray-800 hover:text-black transition-colors" style="position: absolute; left: 16px;">
+      <i class="fas fa-arrow-left text-xl"></i>
+    </a>
+    
+    <span id="topBarTitle">Loading...</span>
+  </div>
+
+  <div class="container">
+    
+    <div id="cityDisplayWrapper" class="mb-6">
+        <section id="heroSection" class="hero gold-underline mb-6 shadow-md">
+          <div class="flex items-start justify-between gap-4 flex-wrap">
+            <div style="flex:1;min-width:220px">
+              <h1 id="cityTitle" class="text-3xl md:text-4xl font-extrabold leading-tight">Loading...</h1>
+              <p id="citySubtitle" class="text-sm text-gray-800 mt-1">Destination overview & quick actions</p>
+
+              <div class="mt-4 flex flex-wrap items-center gap-3">
+                <div class="flex items-center gap-3 bg-white p-3 rounded-xl shadow-sm min-h-[64px]">
+                  <div class="text-3xl font-bold text-gray-800" id="tempNow">--°C</div>
+                  <div style="min-width:130px">
+                    <div id="conditionText" class="font-semibold text-gray-700">--</div>
+                    <div class="text-xs text-gray-600" id="tempHighLow">H: -- L: --</div>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3 bg-white p-3 rounded-xl shadow-sm">
+                  <div id="aqiContainer" class="aqi-badge bg-gray-400">--</div>
+                  <div>
+                    <div class="text-sm font-semibold" id="aqiLabel">AQI</div>
+                    <div class="text-xs text-gray-800" id="aqiStation">Station</div>
+                  </div>
+                </div>
+
+                <div class="ml-0 flex items-center gap-4">
+                  <div class="text-xs text-gray-800">
+                    <div class="font-semibold" id="humidityVal">--%</div>
+                    <div class="text-[12px] text-gray-600">Humidity</div>
+                  </div>
+                  <div class="text-xs text-gray-800">
+                    <div class="font-semibold" id="windVal">-- m/s</div>
+                    <div class="text-[12px] text-gray-600">Wind</div>
+                  </div>
+                </div>
+              </div>
             </div>
-            
-            <nav class="nav-tabs">
-                <button class="nav-btn active" id="infoTabBtn" data-target="infoView">
-                    <i class="fas fa-info"></i>
-                    <span>Info</span>
-                </button>
-                <button class="nav-btn" id="weatherTabBtn" data-target="weatherView">
-                    <i class="fas fa-sun"></i>
-                    <span>temp</span>
-                </button>
-                <button class="nav-btn" data-target="hotelView">
-                    <i class="fas fa-hotel"></i>
-                    <span>Hotel</span>
-                </button>
-                <button class="nav-btn" data-target="flightView">
-                    <i class="fas fa-plane"></i>
-                    <span>Flight</span>
-                </button>
-                <button class="nav-btn" data-target="busView">
-                    <i class="fas fa-bus"></i>
-                    <span>Bus</span>
-                    </button>
-                <button class="nav-btn" data-target="trainView">
-                    <i class="fas fa-train"></i>
-                    <span>Train</span>
-                </button>
-            </nav>
-        </header>
 
-        <main class="content-viewer">
-            <div id="tabContent">
-                <section id="infoView" class="tab-view active">
-                    <div id="infoContentContainer" class="info-content-wrapper">
-                        <p class="loading-text" style="padding: 20px;">Loading information...</p>
-                    </div>
-                </section>
+            <div style="width:140px; text-align:right; min-width:120px;">
+              <div id="weatherIcon" class="text-6xl">☁️</div>
+            </div>
+          </div>
+        </section>
 
-                <section id="weatherView" class="tab-view hidden">
-                    <div class="weather-card">
-                        <h2 id="weatherCity">City Name</h2>
-                        
-                        <div class="current-temp">
-                            <i class="fas fa-cloud-sun weather-icon"></i>
-                            <span id="currentTemp">--°C</span>
-                        </div>
+        <section id="cityInfoSection" class="bg-white rounded-xl p-5 shadow-sm">
+          <h2 class="text-lg font-bold text-gray-800 mb-2">About <span id="aboutCityName"></span></h2>
+          <p id="cityDescription" class="text-gray-600 leading-relaxed">Loading description...</p>
+          <div id="highlightsRow" class="mt-4 flex flex-wrap gap-2"></div>
+        </section>
+    </div>
+    <section id="flightForm" class="hidden bg-white p-5 rounded-xl shadow-md mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-xl font-bold">✈ Flight Search</h3>
+        <button id="closeFlightForm" class="text-gray-500">&times;</button>
+      </div>
 
-                        <p id="weatherDesc">Loading...</p>
-                        
-                        <div class="high-low-bar">
-                            <p>High: <span id="tempHigh">--°C</span></p>
-                            <p>Low: <span id="tempLow">--°C</span></p>
-                        </div>
-                        
-                        <hr>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div style="position:relative">
+          <label class="text-sm text-gray-600">Origin</label>
+          <input id="flightOrigin" class="p-3 border rounded-lg w-full" placeholder="Origin (type city or airport)" autocorrect="off" autocomplete="off" spellcheck="false">
+        </div>
+        <div style="position:relative">
+          <label class="text-sm text-gray-600">Destination</label>
+          <input id="flightDestination" class="p-3 border rounded-lg w-full" placeholder="Destination (type city or airport)" autocorrect="off" autocomplete="off" spellcheck="false">
+        </div>
 
-                        <div class="details-grid">
-                            <div>
-                                <i class="fas fa-wind"></i>
-                                <p>Wind Speed</p>
-                                <span id="windSpeed">-- km/h</span>
-                            </div>
-                            <div>
-                                <i class="fas fa-water"></i>
-                                <p>Humidity</p>
-                                <span id="humidity">--%</span>
-                            </div>
-                            <div>
-                                <i class="fas fa-tachometer-alt"></i>
-                                <p>Pressure</p>
-                                <span id="pressure">-- hPa</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <section class="forecast-section">
-                        <h3>3-Day Outlook</h3>
-                        <div class="forecast-list" id="forecastList">
-                            <p class="loading-text">Fetching forecast...</p>
-                        </div>
-                    </section>
-
-                    <section class="environment-section">
-                        <h3>Today's Environment</h3>
-                        <div class="details-grid">
-                            <div class="env-item">
-                                <i class="fas fa-lungs"></i>
-                                <p>AQI</p>
-                                <span id="aqiValue">--</span>
-                            </div>
-                            <div class="env-item">
-                                <i class="fas fa-sun"></i>
-                                <p>UV Index</p>
-                                <span id="uvValue">--</span>
-                            </div>
-                            <div class="env-item">
-                                <i class="fas fa-eye"></i>
-                                <p>Visibility</p>
-                                <span id="visibilityValue">-- km</span>
-                            </div>
-                        </div>
-                    </section>
-                </section>
-                
-                <section id="hotelView" class="tab-view hidden">
-                    <div class="hotel-controls">
-                        <input type="date" id="checkInDate" title="Check-in Date">
-                        <input type="date" id="checkOutDate" title="Check-out Date">
-                        
-                        <select id="adultsCount" title="Number of Adults">
-                            <option value="1" selected>1 Adult</option>
-                            <option value="2">2 Adults</option>
-                            <option value="3">3 Adults</option>
-                            <option value="4">4 Adults</option>
-                            <option value="5">5 Adults</option>
-                            <option value="6">6 Adults</option>
-                            <option value="7">7 Adults</option>
-                            <option value="8">8 Adults</option>
-                            <option value="9">9 Adults</option>
-                            <option value="10">10 Adults</option>
-                            <option value="11">11 Adults</option>
-                            <option value="12">12 Adults</option>
-                        </select>
-                         <select id="childrenCount" title="Number of Children">
-                            <option value="0" selected>0 Children</option>
-                            <option value="1">1 Child</option>
-                            <option value="2">2 Children</option>
-                        </select>
-                         <select id="roomsCount" title="Number of Rooms">
-                            <option value="1" selected>1 Room</option>
-                            <option value="2">2 Rooms</option>
-                        </select>
-
-                        <button id="searchHotelsBtn" class="search-action-btn">Search Hotels</button>
-                    </div>
-                    <div id="hotelResultsContainer" class="results-list">
-                        <p class="loading-text" style="padding: 20px;">Select your travel details and tap 'Search Hotels' to find rooms in <span id="hotelCityNamePlaceholder">City</span>.</p>
-                    </div>
-                </section>
-                
-                <section class="tab-view hidden" id="flightView">
-    <div class="flight-controls">
-        <div class="flight-route-inputs">
-            <input type="text" id="originCity" placeholder="From (e.g., Delhi)">
-            <div class="swap-icon-container"><i class="fas fa-exchange-alt swap-icon"></i></div>
-            <input type="text" id="destinationCity" placeholder="To (e.g., Mumbai)">
+        <div>
+          <label class="text-sm text-gray-600">Departure</label>
+          <input id="flightDepart" type="date" class="p-3 border rounded-lg w-full">
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">Return (optional)</label>
+          <input id="flightReturn" type="date" class="p-3 border rounded-lg w-full">
         </div>
         
-        <div class="date-pax-inputs">
-    <label for="departureDate">Departure Date:</label>
-    <input type="date" id="departureDate" required>
-    
-    <label for="returnDate">Return Date (Optional):</label>
-    <input type="date" id="returnDate">
-    
-    <label for="flightAdultsCount">Adults (Max 9):</label>
-    <select id="flightAdultsCount" required>
-        <option value="1" selected>1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-        <option value="6">6</option>
-        <option value="7">7</option>
-        <option value="8">8</option>
-        <option value="9">9</option>
-    </select>
-    
-    <label for="flightChildrenCount">Children (Max 9):</label>
-    <select id="flightChildrenCount">
-        <option value="0" selected>0</option>
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-        <option value="6">6</option>
-        <option value="7">7</option>
-        <option value="8">8</option>
-        <option value="9">9</option>
-    </select>
-    
-    <label for="flightInfantCount">Infants (Max 1):</label>
-    <select id="flightInfantCount">
-        <option value="0" selected>0</option>
-        <option value="1">1</option>
-    </select>
-</div>
-        
-        <button id="searchFlightsBtn" class="search-button full-width-btn">Search Flights</button>
-    </div>
-    <div class="flight-results-container" id="flightResultsContainer">
-        </div>
-</section>
-                
-                <section class="tab-view hidden" id="busView">
-    
-    <div class="flight-results-container" id="busResultsContainer">
-        <iframe id="busIframe" 
-                src="https://www.goibibo.com/bus/" 
-                title="Bus Search Results (Goibibo)" 
-                class="external-search-iframe"></iframe>
-        
-    </div>
-</section>
-                <section class="tab-view hidden" id="trainView">
-    
-    <div class="flight-results-container" id="trainResultsContainer">
-        <iframe id="trainIframe" 
-                src="https://www.goibibo.com/trains/" 
-                title="Train Search Results (Goibibo)" 
-                class="external-search-iframe"></iframe>
-        
-    </div>
-</section>
+        <div class="md:col-span-2">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-sm text-gray-600">Adults</label>
+                    <select id="flightAdults" class="p-3 border rounded-lg w-full">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-sm text-gray-600">Children (2-12)</label>
+                    <select id="flightChildren" class="p-3 border rounded-lg w-full">
+                        <option value="0">0</option>
+                    </select>
+                </div>
             </div>
-            
-        </main>
-    </div>
+        </div>
+        
+        <div class="md:col-span-2 flex justify-center">
+            <div class="w-full sm:max-w-[48%]">
+                <label class="text-sm text-gray-600 block mb-1">Infants (0-2)</label>
+                <select id="flightInfants" class="p-3 border rounded-lg w-full mb-3">
+                    <option value="0">0</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="md:col-span-2">
+          <label class="text-sm text-gray-600">Class</label>
+          <select id="flightClass" class="p-3 border rounded-lg w-full">
+            <option value="Economy">Economy</option>
+            <option value="Premium">Premium Economy</option>
+            <option value="Business">Business</option>
+            <option value="First">First Class</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="launchFlightFinal" class="mt-4 w-full p-3 bg-[var(--brand-teal)] text-white rounded-lg font-bold">Search Flights</button>
+    </section>
+
+    <section id="hotelForm" class="hidden bg-white p-5 rounded-xl shadow-md mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-xl font-bold">🏨 Hotel Search</h3>
+        <button id="closeHotelForm" class="text-gray-500">&times;</button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="md:col-span-2"> <label class="text-sm text-gray-600">City</label>
+          <input id="hotelCity" class="p-3 border rounded-lg w-full" placeholder="City name">
+        </div>
+        
+        <div class="md:col-span-2" style="position:relative">
+            <label class="text-sm text-gray-600 block">Check-in / Check-out</label>
+            <input id="dateRangeDisplay" type="text" class="p-3 border rounded-lg w-full bg-white" placeholder="Select Check-in and Check-out Dates" readonly>
+            <input id="checkIn" type="hidden">
+            <input id="checkOut" type="hidden">
+        </div>
+        <div class="md:col-span-2">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-sm text-gray-600">Adults (1 - 12)</label>
+                  <div class="flex items-center justify-between p-1 border rounded-lg w-full h-[46px]">
+                    <button type="button" class="count-btn text-xl font-bold text-gray-700 p-2" data-target="hotelAdults" data-action="decrement" data-min="1" data-max="12">-</button>
+                    <span id="hotelAdults" class="text-lg font-bold w-12 text-center">2</span>
+                    <button type="button" class="count-btn text-xl font-bold text-gray-700 p-2" data-target="hotelAdults" data-action="increment" data-min="1" data-max="12">+</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="text-sm text-gray-600">Children (0 - 2)</label>
+                  <div class="flex items-center justify-between p-1 border rounded-lg w-full h-[46px]">
+                    <button type="button" class="count-btn text-xl font-bold text-gray-700 p-2" data-target="hotelChildren" data-action="decrement" data-min="0" data-max="2">-</button>
+                    <span id="hotelChildren" class="text-lg font-bold w-12 text-center">0</span>
+                    <button type="button" class="count-btn text-xl font-bold text-gray-700 p-2" data-target="hotelChildren" data-action="increment" data-min="0" data-max="2">+</button>
+                  </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="md:col-span-2" id="childAgeContainer">
+          </div>
+
+      </div>
+
+      <button id="launchHotelFinal" class="mt-4 w-full p-3 bg-[var(--brand-gold)] text-gray-900 rounded-lg font-bold">Search Hotels</button>
+    </section>
+
+    <section id="actionButtons" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+      <button id="openFlight" class="action-btn flex items-center justify-between bg-[var(--brand-teal)] text-white shadow-md">
+        <div class="flex items-center gap-3 pl-3">
+          <i class="fas fa-plane fa-lg"></i>
+          <div class="text-left">
+            <div class="font-semibold">Search Flights</div>
+            <div class="text-xs">Tap to enter details</div>
+          </div>
+        </div>
+        <div class="pr-3"><i class="fas fa-arrow-right"></i></div>
+      </button>
+
+      <button id="openHotel" class="action-btn flex items-center justify-between bg-[var(--brand-gold)] text-gray-900 shadow-md">
+        <div class="flex items-center gap-3 pl-3">
+          <i class="fas fa-hotel fa-lg"></i>
+          <div class="text-left">
+            <div class="font-semibold">Search Hotels</div>
+            <div class="text-xs">Tap to enter details</div>
+          </div>
+        </div>
+        <div class="pr-3"><i class="fas fa-arrow-right"></i></div>
+      </button>
+
+      <button id="searchBus" class="action-btn flex items-center justify-between bg-white border border-gray-200 shadow-sm">
+        <div class="flex items-center gap-3 pl-3 text-[var(--brand-teal)]">
+          <i class="fas fa-bus fa-lg"></i>
+          <div class="text-left">
+            <div class="font-semibold">Search Buses</div>
+            <div class="text-xs">Search for routes</div>
+          </div>
+        </div>
+        <div class="pr-3 text-gray-600"><i class="fas fa-arrow-right"></i></div>
+      </button>
+
+      <button id="searchTrains" class="action-btn flex items-center justify-between bg-white border border-gray-200 shadow-sm">
+        <div class="flex items-center gap-3 pl-3 text-[var(--brand-gold)]">
+          <i class="fas fa-train fa-lg"></i>
+          <div class="text-left">
+            <div class="font-semibold">Search Trains</div>
+            <div class="text-xs">Search for routes</div>
+          </div>
+        </div>
+        <div class="pr-3 text-gray-600"><i class="fas fa-arrow-right"></i></div>
+      </button>
+    </section>
+
+    <footer class="text-xs text-gray-400 text-center">Links open externally. No payments handled here.</footer>
+  </div>
+
+<script type="module">
+/*
+  NOTE: airports.json expected in keyed format.
+*/
+
+const OPENWEATHER_KEY = '12db7ebac03cd13b7543b7fbb8f65fb0';
+const WAQI_TOKEN = '690ab88701041a6b41ce8d5fb4ce85d15414e9e6';
+
+// --- AMADEUS API CONFIGURATION ---
+// !! WARNING: Exposing credentials client-side is a security risk. Use a backend proxy.
+const AMADEUS_CLIENT_ID = 'WybaRGUnYSc4mIhgOBYDukWKMyUwUA0F';
+const AMADEUS_CLIENT_SECRET = '5fAba2snyf6KUmWi';
+
+let amadeusAccessToken = null;
+let amadeusTokenExpiry = 0;
+
+/**
+ * Handles Amadeus OAuth 2.0 Authorization and caches the token.
+ */
+async function authorizeAmadeus() {
+    if (amadeusAccessToken && Date.now() < amadeusTokenExpiry) {
+        return amadeusAccessToken;
+    }
     
-<script>
-    // --- API KEY CONFIGURATION ---
-    const openWeatherApiKey = '12db7ebac03cd13b7543b7fbb8f65fb0'; 
-    const waqiToken = '690ab88701041a6b41ce8d5fb4ce85d15414e9e6'; 
+    if (AMADEUS_CLIENT_ID.includes('YOUR') || AMADEUS_CLIENT_SECRET.includes('YOUR')) {
+        console.error("Amadeus Error: Client ID or Secret is not configured.");
+        return null;
+    }
+
+    try {
+        const authResponse = await fetch("https://test.api.amadeus.com/v1/security/oauth2/token", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `grant_type=client_credentials&client_id=${AMADEUS_CLIENT_ID}&client_secret=${AMADEUS_CLIENT_SECRET}`
+        });
+        
+        if (!authResponse.ok) {
+            const errorBody = await authResponse.text();
+            throw new Error(`Auth failed with status ${authResponse.status}: ${errorBody}`);
+        }
+
+        const authData = await authResponse.json();
+        amadeusAccessToken = authData.access_token;
+        // Set expiry 10 seconds before actual expiry
+        amadeusTokenExpiry = Date.now() + (authData.expires_in - 10) * 1000;
+        console.log('Amadeus Token refreshed successfully.');
+        return amadeusAccessToken;
+    } catch (error) {
+        console.error('Amadeus Authorization Error:', error);
+        return null;
+    }
+}
+// --- END AMADEUS API CONFIGURATION ---
+
+let airports = [];           // full DB (loaded from airports.json)
+
+// Firestore init (optional)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+let db = null;
+async function tryInitFirebase(){
+  try{
+    if (Object.keys(firebaseConfig).length){
+      const app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+      const auth = getAuth(app);
+      await signInAnonymously(auth);
+    }
+  }catch(e){ db=null; console.warn('firebase init failed', e.message); }
+}
+
+// fetch airports.json (keyed object -> array)
+async function loadAirports(){
+  try {
+    const res = await fetch('./airports.json');
+    if (!res.ok) throw new Error('airports.json not found');
+    const raw = await res.json();
+    airports = Object.values(raw).map(a=>({
+      city: (a.city||'').trim(),
+      iata: (a.iata||'').trim().toUpperCase(),
+      name: (a.name||'').trim(),
+      country: (a.country||'').trim(),
+      lat: a.lat||null,
+      lon: a.lon||null
+    })).filter(a=>a.iata && a.city);
+    console.log('Loaded airports:', airports.length);
+  } catch (e) {
+    console.error('Failed to load airports.json:', e);
+    airports = [];
+  }
+}
+
+// Helper to search local data (unchanged)
+function normalize(text){ return (text||'').toLowerCase(); }
+function filterAirports(query){
+  const q = normalize(query);
+  if (!q) return [];
+  // score: exact iata, city startswith, name startswith, includes
+  const exact = [], starts = [], includes = [];
+  for (const a of airports){
+    const ci = normalize(a.city);
+    const na = normalize(a.name);
+    const ia = normalize(a.iata);
+    if (ia === q) { exact.push(a); continue; }
+    if (ci.startsWith(q) || na.startsWith(q)) starts.push(a);
+    else if ((ci + ' ' + na + ' ' + ia).includes(q)) includes.push(a);
+  }
+  const results = exact.concat(starts, includes).slice(0,12);
+  // Returns placeholder if no results
+  if (!results.length) return [{ city: 'No airports in this city', name: '', country: '', iata: '' }];
+  return results;
+}
+
+// ** API FALLBACK IMPLEMENTATION AREA - NOW USING AMADEUS **
+async function fetchAirportsFromExternalApi(query) {
+    console.log(`Attempting External API Fallback Search for: ${query}`);
     
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // !!! CRITICAL: REPLACE THESE WITH YOUR ACTUAL AMADEUS KEYS !!!
-    // This is NOT secure. This code may fail due to CORS.
-    const AMADEUS_CLIENT_ID = 'qbJNRbp8DJDio3RmR7mRJWBXyzh8gbMA'; 
-    const AMADEUS_CLIENT_SECRET = '6dY3obO9bkbD4sW6'; 
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-async function loadAirportData() {
+    try {
+        // 1. Get the access token
+        const token = await authorizeAmadeus();
+        if (!token) {
+            console.error('Could not get Amadeus access token.');
+            return [];
+        }
+
+        // 2. Make the API call
+        // Using subType=AIRPORT,CITY for broader results
+        const url = `https://test.api.amadeus.com/v1/reference-data/locations?keyword=${encodeURIComponent(query)}&subType=AIRPORT,CITY&view=FULL`;
+
+        const response = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            console.error('Amadeus API failed with status:', response.status, await response.text());
+            return [];
+        }
+
+        const data = await response.json();
+        
+        // 3. Map Amadeus response to the required format and **DEDUPLICATE BY IATA CODE**
+        const seenIatas = new Set();
+        const externalAirports = data.data
+            .filter(item => item.iataCode) // 1. Ensure it has an IATA code
+            .reduce((acc, item) => {
+                // 2. Deduplicate: Skip if we've already processed this IATA code
+                if (seenIatas.has(item.iataCode)) {
+                    return acc;
+                }
+                seenIatas.add(item.iataCode);
+
+                // 3. Map the unique item
+                acc.push({
+                    // Use cityName from address if available, otherwise use item.name
+                    city: item.address?.cityName || item.name,
+                    iata: item.iataCode,
+                    // Use item.name (which is either Airport Name or City Name)
+                    name: item.name, 
+                    country: item.address?.countryName || item.address?.countryCode || 'N/A',
+                    lat: item.geoCode?.latitude,
+                    lon: item.geoCode?.longitude,
+                    source: 'External API'
+                });
+                return acc;
+            }, []);
+        
+        console.log(`Amadeus search successful. Found ${externalAirports.length} results after deduplication.`);
+        return externalAirports;
+
+    } catch (e) {
+        console.error('Error fetching from external API:', e);
         return [];
     }
-    
-    // --- AMADEUS API INTEGRATION (Two-Step Process) ---
-    // Now returns the full City and Country name as provided by Amadeus
-    async function getIataCodeFromCity(city) {
-        const lowerCity = city.toLowerCase().trim();
-        
-        if (AMADEUS_CLIENT_ID.includes('YOUR') || AMADEUS_CLIENT_SECRET.includes('YOUR')) {
-             console.error("Amadeus Error: Client ID or Secret is not configured.");
-             return { code: null, city: null, country: null, isInternational: false };
-        }
-        
-        let accessToken = null;
-
-        // STEP 1: Authorization (Getting the access_token)
-        try {
-            console.log("Amadeus: Starting Authorization step...");
-            const authResponse = await fetch("https://test.api.amadeus.com/v1/security/oauth2/token", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: `grant_type=client_credentials&client_id=${AMADEUS_CLIENT_ID}&client_secret=${AMADEUS_CLIENT_SECRET}`
-            });
-            
-            if (!authResponse.ok) {
-                 const errorText = await authResponse.text();
-                 throw new Error(`Auth failed with status ${authResponse.status}: ${errorText}`);
-            }
-
-            const authData = await authResponse.json();
-            accessToken = authData.access_token;
-            console.log("Amadeus: Access token successfully obtained.");
-            
-        } catch (error) {
-            console.error('Amadeus Authorization Error:', error);
-            return { code: null, city: null, country: null, isInternational: false };
-        }
-
-        // STEP 2: Location Lookup (Getting the IATA code and full location details)
-        try {
-            const amadeusUrl = `https://test.api.amadeus.com/v1/reference-data/locations?subType=CITY&keyword=${encodeURIComponent(lowerCity)}&page%5Blimit%5D=1&sort=analytics.travelers.score&view=FULL`;
-            
-            const response = await fetch(amadeusUrl, {
-                method: 'GET',
-                headers: {
-                    'accept': 'application/vnd.amadeus+json',
-                    'Authorization': `Bearer ${accessToken}`
-                }
-            });
-
-            const data = await response.json();
-
-            if (data.data && data.data.length > 0) {
-                const topResult = data.data[0]; 
-                
-                const iataCode = topResult.iataCode; 
-                const countryCode = topResult.address ? topResult.address.countryCode : null;
-                // Use Amadeus names for search URL construction
-                const resultCityName = topResult.address ? topResult.address.cityName : city; 
-                const resultCountryName = topResult.address ? topResult.address.countryName : 'India'; // Default to India for domestic context
-
-                // Simplified International check: not IN, US, or CA
-                const isInternational = !['IN', 'US', 'CA'].includes(countryCode); 
-                
-                return { 
-                    code: iataCode, 
-                    city: resultCityName,
-                    country: resultCountryName,
-                    isInternational: isInternational 
-                };
-            }
-
-            console.warn(`Amadeus: No IATA code found for city: ${city}`);
-            return { code: null, city: null, country: null, isInternational: false };
-            
-        } catch (error) {
-            console.error('Amadeus Location Lookup Error:', error);
-            return { code: null, city: null, country: null, isInternational: false };
-        }
-    }
-
-
-    // --- UTILITY FUNCTIONS ---
-    
-    // Helper function to update a single element's content
-    function updateWeatherDetail(id, value, suffix = '') {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value + suffix;
-        }
-    }
-
-    function getFaIconClass(iconCode) {
-        // Mapping the OpenWeatherMap icon codes to Font Awesome classes
-        const mapping = {
-            '01d': 'fas fa-sun', '01n': 'fas fa-moon', '02d': 'fas fa-cloud-sun', 
-            '02n': 'fas fa-cloud-moon', '03d': 'fas fa-cloud', '03n': 'fas fa-cloud',
-            '04d': 'fas fa-cloud-meatball', '04n': 'fas fa-cloud-meatball',  
-            '09d': 'fas fa-cloud-showers-heavy', '09n': 'fas fa-cloud-showers-heavy',
-            '10d': 'fas fa-cloud-sun-rain', '10n': 'fas fa-cloud-moon-rain', 
-            '11d': 'fas fa-bolt', '11n': 'fas fa-bolt', '13d': 'fas fa-snowflake', 
-            '13n': 'fas fa-snowflake', '50d': 'fas fa-smog', '50n': 'fas fa-smog'
-        };
-        return mapping[iconCode] || 'fas fa-question-circle';
-    }
-
-    function getAqiCategory(aqi) {
-        if (aqi <= 50) return { category: 'Good', color: '#00cc66' };
-        if (aqi <= 100) return { category: 'Moderate', color: '#ffcc00' };
-        if (aqi <= 150) return { category: 'Unhealthy for Sensitive Groups', color: '#ff6600' };
-        if (aqi <= 200) return { category: 'Unhealthy', color: '#cc0033' };
-        if (aqi <= 300) return { category: 'Very Unhealthy', color: '#660099' };
-        return { category: 'Hazardous', color: '#7e0023' };
-    }
-
-
-    // --- INFO TAB LOGIC (MediaWiki) ---
-    
-    async function fetchCityInfo(city) {
-        const container = document.getElementById('infoContentContainer');
-        container.innerHTML = '<p class="loading-text" style="padding: 20px;">Loading information from Wikipedia...</p>';
-
-        const url = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro&titles=${encodeURIComponent(city)}&format=json&origin=*`;
-
-        try {
-            const response = await fetch(url);
-            const data = await response.json();
-            const pages = data.query.pages;
-            const pageId = Object.keys(pages)[0];
-            const page = pages[pageId];
-
-            if (pageId === '-1' || !page.extract) {
-                container.innerHTML = `
-                    <div class="info-content-card">
-                        <h2>Information Unavailable</h2>
-                        <p style="color:red;">No detailed Wikipedia article found for "${city}".</p>
-                    </div>
-                `;
-            } else {
-                const extract = page.extract.replace(/<\/?[^>]+(>|$)/g, "");
-                container.innerHTML = `
-                    <div class="info-content-card">
-                        <h2>${page.title}</h2>
-                        <p>${extract}</p>
-                        <p style="font-size: 12px; margin-top: 20px;">Source: Wikipedia</p>
-                    </div>
-                `;
-            }
-
-        } catch (error) {
-            console.error('MediaWiki API Error:', error);
-            container.innerHTML = `
-                <div class="info-content-card">
-                    <h2>Information Error</h2>
-                    <p style="color:red;">Failed to connect to the information source.</p>
-                </div>
-            `;
-        }
-    }
-    
-    // --- CORE GEOGRAPHICAL DATA (OpenStreetMap for Hotel) ---
-
-    async function getFormattedCityName(city) {
-        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1&addressdetails=1`;
-        
-        try {
-            const response = await fetch(url, { headers: { 'User-Agent': 'TravelApp v1.0' } });
-            const data = await response.json();
-
-            if (data && data.length > 0) {
-                const address = data[0].address;
-                let cityComponent = address.city || address.town || address.village || data[0].name;
-                let stateComponent = address.state || '';
-                let countryComponent = address.country || '';
-
-                let parts = [cityComponent];
-                if (stateComponent && stateComponent !== cityComponent) {
-                    parts.push(stateComponent);
-                }
-                if (countryComponent) {
-                    parts.push(countryComponent);
-                }
-                
-                const uniqueParts = parts.filter((value, index, self) => value && self.indexOf(value) === index);
-                
-                return uniqueParts.join(', '); 
-            }
-            return city; 
-        } catch (error) {
-            console.error('OSM Geocoding Error:', error);
-            return city;
-        }
-    }
-
-    // --- HOTEL SEARCH LOGIC (EaseMyTrip) ---
-
-    async function searchHotelsUrl(city) {
-        const checkInDate = document.getElementById('checkInDate').value;
-        const checkOutDate = document.getElementById('checkOutDate').value;
-        const adults = parseInt(document.getElementById('adultsCount').value);
-        const children = parseInt(document.getElementById('childrenCount').value);
-        const rooms = parseInt(document.getElementById('roomsCount').value);
-        const container = document.getElementById('hotelResultsContainer');
-        const controls = document.querySelector('#hotelView .hotel-controls'); 
-
-        if (!checkInDate || !checkOutDate) {
-             container.innerHTML = '<p class="error-text" style="padding: 20px; color:red;">Please select both check-in and check-out dates.</p>';
-             return;
-        }
-        
-        container.innerHTML = '<p class="loading-text" style="padding: 20px;">Resolving full address and preparing search...</p>';
-        
-        const fullCityName = await getFormattedCityName(city);
-        
-        const [inYear, inMonth, inDay] = checkInDate.split('-');
-        const [outYear, outMonth, outDay] = checkOutDate.split('-');
-        
-        const formattedCheckIn = `${inDay}/${inMonth}/${inYear}`; 
-        const formattedCheckOut = `${outDay}/${outMonth}/${outYear}`; 
-        
-        const totalPax = adults + children;
-        
-        const baseUrl = 'https://www.easemytrip.com/hotel-new/search';
-        const url = `${baseUrl}?cityName=${encodeURIComponent(fullCityName)}&checkinDate=${encodeURIComponent(formattedCheckIn)}&checkoutDate=${encodeURIComponent(formattedCheckOut)}&Rooms=${rooms}&pax=${totalPax}&_v=${Date.now()}`;
-
-        // Hide controls and insert iframe
-        controls.classList.add('hidden');
-        container.innerHTML = `<iframe id="hotelIframe" src="${url}" title="Hotel Search Results" class="external-search-iframe"></iframe>`;
-        
-        // Call resize function immediately after iframe insertion
-        resizeIframe();
-    }
-    
-    // --- FLIGHT SEARCH LOGIC (EaseMyTrip Implementation - Now using IFRAME) ---
-    // --- FLIGHT SEARCH LOGIC (EaseMyTrip Implementation - Now correctly handles Round Trip) ---
-async function searchFlights() {
-    const origin = document.getElementById('originCity').value.trim();
-    const destination = document.getElementById('destinationCity').value.trim();
-    const departureDate = document.getElementById('departureDate').value;
-    const returnDate = document.getElementById('returnDate').value; // This is the key
-    const adults = document.getElementById('flightAdultsCount').value;
-    const container = document.getElementById('flightResultsContainer');
-    const controls = document.querySelector('#flightView .flight-controls');
-    
-    if (!origin || !destination || !departureDate) {
-        container.innerHTML = '<p class="error-text" style="padding: 20px; color:red;">Please fill in Origin, Destination, and Departure Date.</p>';
-        return;
-    }
-
-    container.innerHTML = '<p class="loading-text" style="padding: 20px;">Converting city names to airport codes via Amadeus API...</p>';
-    
-    // --- CALLING AMADEUS API FOR IATA CODE AND LOCATION DETAILS ---
-    // (Assuming getIataCodeFromCity function handles API keys correctly)
-    const originResult = await getIataCodeFromCity(origin);
-    const destinationResult = await getIataCodeFromCity(destination);
-    
-    const originCode = originResult.code;
-    const destinationCode = destinationResult.code;
-    
-    // Use the Amadeus provided City and Country names for the search URL
-    const originName = originResult.city || origin; 
-    const destinationName = destinationResult.city || destination; 
-    const originCountry = originResult.country || 'India'; 
-    const destinationCountry = destinationResult.country || 'India'; 
-    
-    if (!originCode || !destinationCode) {
-         container.innerHTML = `<p class="error-text" style="padding: 20px; color:red;">Could not find Airport Code for Origin: **${origin || 'N/A'}** or Destination: **${destination || 'N/A'}**.</p>`;
-         return;
-    }
-    
-    // Helper function: EaseMyTrip expects DD/MM/YYYY format
-    const format = (dateStr) => {
-        if (!dateStr) return '';
-        const [year, month, day] = dateStr.split('-');
-        return `${day}/${month}/${year}`;
-    };
-
-    const formattedDeparture = format(departureDate);
-    const formattedReturn = returnDate ? format(returnDate) : '';
-    
-    // --- CORE LOGIC CHANGE FOR ROUND TRIP VS ONE WAY ---
-    
-    let isOneWay = 'true'; // Default to One-Way
-    let baseUrl = 'https://flight.easemytrip.com/FlightList/Index';
-    let dateComponent = formattedDeparture; // Default date component for one-way
-
-    if (formattedReturn) {
-        // Round Trip Logic
-        isOneWay = 'false'; 
-        baseUrl = 'https://flight.easemytrip.com/FlightListRT/Index'; // Use the RT endpoint
-        dateComponent = `${formattedDeparture}-${formattedReturn}`; // Format: DEP_DATE-RET_DATE
-    }
-    
-    // SRCH format: SRC_CODE-SRC_CITY-SRC_COUNTRY|DEST_CODE-DEST_CITY-DEST_COUNTRY|DATE_COMPONENT
-    const srchParam = `${originCode}-${originName}-${originCountry}|${destinationCode}-${destinationName}-${destinationCountry}|${dateComponent}`;
-    
-    // Assemble the final URL 
-    const url = `${baseUrl}?srch=${encodeURIComponent(srchParam)}&px=${adults}-0-0&cbn=0&ar=undefined&isow=${isOneWay}&isdm=true&lang=en-us&v=aasd22367&ompAff=&IsDoubleSeat=false&CCODE=IN&curr=INR&apptype=B2C`;
-
-    // -----------------------------------------------------------
-    // ACTION: Load link into the iframe as requested
-    // -----------------------------------------------------------
-    console.log("Final EaseMyTrip Search URL (loading into iframe):", url);
-    
-    // Hide controls and insert iframe
-    controls.classList.add('hidden');
-    container.innerHTML = `
-        <iframe id="flightIframe" src="${url}" title="Flight Search Results (EaseMyTrip)" class="external-search-iframe"></iframe>
-        
-        `;
-    
-    // Call resize function immediately after iframe insertion
-    resizeIframe();
 }
-    
-    
-    // --- WEATHER AND FORECAST LOGIC ---
 
-    async function fetchWeatherData(city) {
-        const weatherContainer = document.getElementById('weatherView');
-        document.getElementById('weatherCity').textContent = city.toUpperCase();
-        
-        if (!openWeatherApiKey || openWeatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY') {
-            weatherContainer.innerHTML = '<p class="error-text" style="padding: 20px; color:red; text-align: center;">🛑 **Weather Error:** Please set a valid `openWeatherApiKey` to load data.</p>';
-            return;
-        }
-        
-        try {
-            // --- STEP 1: GEOCODING (City Name -> Lat/Lon) ---
-            const geoUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${openWeatherApiKey}`;
-            const geoResponse = await fetch(geoUrl);
-            
-            if (!geoResponse.ok) {
-                console.error("Geocoding API HTTP Error:", geoResponse.status);
-                weatherContainer.innerHTML = `<p class="error-text" style="padding: 20px; color:red; text-align: center;">Geocoding Error: Check your OpenWeatherMap API key validity.</p>`;
-                return;
-            }
-            
-            const geoData = await geoResponse.json();
 
-            if (!geoData || geoData.length === 0) {
-                weatherContainer.innerHTML = `<p class="error-text" style="padding: 20px; color:red; text-align: center;">City not found or Geocoding failed for: ${city}</p>`;
-                return;
-            }
+function removeSuggestBox(){ const old = document.getElementById('suggestBox'); if (old) old.remove(); }
 
-            const { lat, lon } = geoData[0];
-            
-            // --- STEP 2: CURRENT WEATHER (using Lat/Lon) ---
-            const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${openWeatherApiKey}&units=metric`;
-            const weatherResponse = await fetch(weatherUrl);
-            const weatherData = await weatherResponse.json();
+function showSuggestions(inputEl, list){
+  removeSuggestBox();
+  if (!list || list.length===0) return;
+  const box = document.createElement('div');
+  box.id = 'suggestBox';
+  box.className = 'suggest-box rounded-xl';
 
-            if (weatherData.cod !== 200) {
-                 weatherContainer.innerHTML = `<p class="error-text" style="padding: 20px; color:red; text-align: center;">Weather API Error: ${weatherData.message || 'Failed to fetch weather data'}</p>`;
-                 return;
-            }
-
-            // Parse and Display Data
-            const current = weatherData.main;
-            const wind = weatherData.wind;
-            const weatherInfo = weatherData.weather[0];
-
-            document.getElementById('currentTemp').innerHTML = `${Math.round(current.temp)}°C`;
-            document.querySelector('.current-temp i').className = getFaIconClass(weatherInfo.icon);
-            document.getElementById('weatherDesc').textContent = weatherInfo.description.charAt(0).toUpperCase() + weatherInfo.description.slice(1);
-            
-            updateWeatherDetail('tempHigh', Math.round(current.temp_max), '°C');
-            updateWeatherDetail('tempLow', Math.round(current.temp_min), '°C');
-            updateWeatherDetail('windSpeed', wind.speed ? (wind.speed * 3.6).toFixed(1) : '--', ' km/h');
-            updateWeatherDetail('humidity', current.humidity, '%');
-            updateWeatherDetail('pressure', current.pressure, ' hPa');
-            updateWeatherDetail('visibilityValue', weatherData.visibility ? (weatherData.visibility / 1000).toFixed(0) : '--', ' km');
-
-            
-            // --- STEP 3: AIR QUALITY (AQI) & FORECAST ---
-            fetchDedicatedAqiData(lat, lon);
-            fetchForecastData(lat, lon);
-            
-        } catch (error) {
-            console.error('Weather data fetch error:', error);
-            weatherContainer.innerHTML = '<p class="error-text" style="padding: 20px; color:red; text-align: center;">An unexpected error occurred during API call.</p>';
-        }
+  list.forEach(a=>{
+    const item = document.createElement('div');
+    item.className = 'suggest-item';
+    // handle placeholder entry (no airports)
+    if (!a.iata){
+      item.innerHTML = `<div style="font-weight:700">${escapeHtml(a.city)}</div>`;
+      item.style.cursor = 'default';
+    } else {
+      // Display suggestion
+      item.innerHTML = `<div style="font-weight:700">${escapeHtml(a.city)} — ${escapeHtml(a.name)}</div><div style="font-size:12px;color:#6b7280">${escapeHtml(a.country)} • <strong>${escapeHtml(a.iata)}</strong></div>`;
+      item.addEventListener('click', ()=>{
+        inputEl.value = `${a.city} (${a.iata})`;
+        inputEl.dataset.iata = a.iata;
+        inputEl.dataset.city = a.city;
+        removeSuggestBox();
+      });
     }
+    box.appendChild(item);
+  });
 
-    async function fetchDedicatedAqiData(lat, lon) { 
-        const aqiContainer = document.getElementById('aqiValue');
-        const aqiColorBox = aqiContainer.closest('.env-item'); 
-        
-        // 1. AQI Fetch
-        if (!waqiToken || waqiToken === 'YOUR_WAQI_API_TOKEN') {
-             aqiContainer.textContent = 'API Key Required';
-             aqiColorBox.style.backgroundColor = 'var(--bg-color)';
-        } else {
-            try {
-                const aqiUrl = `https://api.waqi.info/feed/geo:${lat};${lon}/?token=${waqiToken}`;
-                const aqiResponse = await fetch(aqiUrl);
-                const aqiData = await aqiResponse.json();
+  // prevent closing when interacting inside the box (touch/scroll)
+  box.addEventListener('pointerdown', (e)=>{ e.stopPropagation(); });
+  box.addEventListener('touchstart', (e)=>{ e.stopPropagation(); });
+  box.addEventListener('wheel', (e)=>{ e.stopPropagation(); });
 
-                if (aqiData.status === 'ok' && aqiData.data.aqi) {
-                    const aqiValue = aqiData.data.aqi;
-                    const { category, color } = getAqiCategory(aqiValue);
-                    
-                    aqiContainer.textContent = `${aqiValue} (${category})`;
-                    aqiColorBox.style.backgroundColor = color;
-                } else {
-                     aqiContainer.textContent = 'N/A';
-                     aqiColorBox.style.backgroundColor = 'var(--bg-color)';
-                }
-            } catch (error) {
-                console.error('AQI data fetch error:', error);
-                aqiContainer.textContent = 'Error';
-                aqiColorBox.style.backgroundColor = 'var(--bg-color)';
-            }
-        }
+  // position box
+  document.body.appendChild(box);
+  const rect = inputEl.getBoundingClientRect();
+  const gap = 6; 
+  box.style.left = (rect.left + window.scrollX) + 'px';
+  box.style.top = (rect.bottom + window.scrollY + gap) + 'px';
+  box.style.width = rect.width + 'px';
+}
 
-        // 2. UV Index (Placeholder until dedicated API is implemented)
-        updateWeatherDetail('uvValue', '--');
+function escapeHtml(s){ return (s||'').replace(/[&<>\"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+// buildEaseMyTripFlightUrl
+function buildEaseMyTripFlightUrl(originIata, originCity, destIata, destCity, departStr, returnStr, adults, children, infants, cabinClass){
+  
+  // CABIN CLASS MAPPING
+  // Economy = 0, Premium = 4, Business = 2, First = 1
+  let cbn = 0;
+  if (cabinClass === 'Premium') cbn = 4;
+  else if (cabinClass === 'Business') cbn = 2;
+  else if (cabinClass === 'First') cbn = 1;
+
+  const format = (isoDate) => { if (!isoDate) return ''; const [y,m,d] = isoDate.split('-'); return `${d}/${m}/${y}`; };
+  const dep = format(departStr);
+  const ret = returnStr ? format(returnStr) : '';
+  
+  let base = 'https://flight.easemytrip.com/FlightList/Index';
+  
+  let srch = `${originIata}-${originCity}-India|${destIata}-${destCity}-India|${dep}`;
+  
+  if (ret){
+    base = 'https://flight.easemytrip.com/FlightListRT/Index';
+    srch = `${originIata}-${originCity}-India|${destIata}-${destCity}-India|${dep}-${ret}`;
+  }
+  
+  const px = `${adults}-${children}-${infants}`;
+  
+  const url = `${base}?srch=${encodeURIComponent(srch)}&px=${px}&cbn=${cbn}&ar=undefined&isow=${ret? 'false' : 'true'}&isdm=true&lang=en-us&IsDoubleSeat=false&CCODE=IN&curr=INR&apptype=B2C`;
+  return url;
+}
+
+// build hotels URL
+function buildEaseMyTripHotelUrl(city, checkin, checkout, adults, childAges){ 
+  const format = (isoDate) => { 
+    if (!isoDate) return ''; 
+    const [y,m,d] = isoDate.split('-'); 
+    return `${d}/${m}/${y}`; 
+  };
+
+  // Generate timestamp 'e' (YYYYMMDDHHMMSS)
+  const now = new Date();
+  const pad = (n) => n.toString().padStart(2, '0');
+  const e = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+  const cin = format(checkin);
+  const cOut = format(checkout);
+  
+  // Append ", India" to match the sample format (assuming local context)
+  const cityParam = encodeURIComponent(`${city}, India`);
+
+  // pax parameter format: Adults_Children_Age1_Age2...
+  const childrenCount = childAges.length;
+  const agesString = childrenCount > 0 ? "_" + childAges.join('_') : ""; 
+  
+  // Final Pax parameter: {Adults}_{Children}{_Age1_Age2...}
+  const pax = `${adults}_${childrenCount}${agesString}`;
+
+  // Hardcoded Rooms=1
+  return `https://www.easemytrip.com/hotel-new/search?e=${e}&city=${cityParam}&cin=${cin}&cOut=${cOut}&Hotel=NA&Rooms=1&pax=${pax}`;
+}
+
+// fetch weather & aqi (unchanged)
+async function fetchWeather(lat, lon){
+  try{
+    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_KEY}&units=metric`);
+    if (!res.ok) return null;
+    return await res.json();
+  }catch(e){ console.warn(e); return null; }
+}
+async function fetchAqi(lat, lon){
+  try{
+    const res = await fetch(`https://api.waqi.info/feed/geo:${lat};${lon}/?token=${WAQI_TOKEN}`);
+    if (!res.ok) return null;
+    const d = await res.json(); if (d.status !== 'ok') return null; return d.data;
+  }catch(e){ console.warn(e); return null; }
+}
+
+// load city content
+let wikiFallback = null;
+async function loadCityFromQuery(){
+  const params = new URLSearchParams(window.location.search);
+  const city = params.get('city') || 'Mumbai';
+  const displayCity = city.charAt(0).toUpperCase() + city.slice(1);
+  
+  // Update Titles including new Top Bar
+  document.getElementById('cityTitle').textContent = displayCity;
+  document.getElementById('aboutCityName').textContent = city;
+  document.getElementById('topBarTitle').textContent = displayCity; 
+
+  // Try firestore
+  let info = null;
+  try{
+    if (!db) await tryInitFirebase();
+    if (db){
+      const ref = doc(db, `/artifacts/default-app-id/public/data/cities`, city.toLowerCase());
+      const snap = await getDoc(ref);
+      if (snap && snap.exists()) info = snap.data();
     }
+  }catch(e){ console.warn(e); }
 
-    async function fetchForecastData(lat, lon) { 
-        const forecastList = document.getElementById('forecastList');
-        forecastList.innerHTML = '<p class="loading-text" style="padding: 20px;">Fetching 3-Day forecast data...</p>';
+  let lat = info && info.lat, lon = info && info.lon;
+  if (!lat || !lon){
+    try{
+      const g = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${OPENWEATHER_KEY}&units=metric`);
+      if (g.ok){
+        const gj = await g.json();
+        lat = gj.coord.lat; lon = gj.coord.lon;
+      }
+    }catch(e){ console.warn(e); }
+  }
 
-        if (!openWeatherApiKey || openWeatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY') {
-            forecastList.innerHTML = '<p class="error-text" style="padding: 20px; color:red; text-align: center; font-size: 14px;">Forecast Error: API key missing.</p>';
-            return;
-        }
+  let weather=null, aqi=null;
+  if (lat && lon){
+    [weather, aqi] = await Promise.all([fetchWeather(lat,lon), fetchAqi(lat,lon)]);
+  }
 
-        try {
-            const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${openWeatherApiKey}&units=metric`;
-            const response = await fetch(forecastUrl);
+  try{
+    const w = await fetch(`https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro=true&explaintext=true&origin=*&titles=${encodeURIComponent(city)}`);
+    if (w.ok){
+      const jw = await w.json();
+      const pages = jw.query && jw.query.pages;
+      if (pages){
+        const first = Object.values(pages)[0];
+        if (first && first.extract) wikiFallback = first.extract;
+      }
+    }
+  }catch(e){ console.warn(e); }
+
+  document.getElementById('cityDescription').textContent = (info && (info.description || info.summary)) || wikiFallback || 'No description available.';
+  const highlights = (info && info.highlights) || (wikiFallback ? wikiFallback.split('.').slice(0,3).map(s=>s.trim()).filter(Boolean) : []);
+  const row = document.getElementById('highlightsRow'); row.innerHTML='';
+  highlights.slice(0,6).forEach(h=>{ const d=document.createElement('div'); d.className='chip'; d.textContent = h; row.appendChild(d); });
+
+  if (weather){
+    document.getElementById('tempNow').textContent = Math.round(weather.main.temp) + '°C';
+    document.getElementById('conditionText').textContent = `${weather.weather[0].main} — ${weather.weather[0].description}`;
+    document.getElementById('tempHighLow').textContent = `H: ${Math.round(weather.main.temp_max)}°  L: ${Math.round(weather.main.temp_min)}°`;
+    document.getElementById('humidityVal').textContent = weather.main.humidity + '%';
+    document.getElementById('windVal').textContent = (weather.wind && weather.wind.speed) ? `${weather.wind.speed} m/s` : '--';
+    document.getElementById('weatherIcon').innerHTML = `<img src="https://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png" alt="" style="width:64px;height:64px"/>`;
+  }
+  if (aqi){
+    const aqiVal = aqi.aqi;
+    const badge = document.getElementById('aqiContainer');
+    let color = 'bg-gray-400'; let label = 'AQI';
+    if (aqiVal <=50){ color = 'background:var(--brand-teal)'; label='Good'; }
+    else if (aqiVal<=100){ color='background:goldenrod'; label='Moderate'; }
+    else if (aqiVal<=150){ color='background:orange'; label='Unhealthy for Sensitive'; }
+    else if (aqiVal<=200){ color='background:red'; label='Unhealthy'; }
+    else { color='background:purple'; label='Hazardous'; }
+    badge.style = `${color}; width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff`;
+    badge.textContent = aqiVal;
+    document.getElementById('aqiLabel').textContent = label;
+    document.getElementById('aqiStation').textContent = 'AQI';
+  }
+}
+
+// ** NEW FUNCTION FOR ORIGIN SEARCH (LOCAL + API FALLBACK) **
+const attachOriginSuggest = (el) => {
+    let debounce = null;
+    el.addEventListener('input', (e)=>{
+        el.dataset.iata = '';
+        el.dataset.city = '';
+        clearTimeout(debounce);
+        const q = el.value.trim();
+        if (q.length < 2){ removeSuggestBox(); return; }
+        
+        debounce = setTimeout(async ()=>{ 
+            // 1. Search in local JSON first
+            let localResults = filterAirports(q).filter(a => a.iata); // Filter out the 'No airports' placeholder if it exists
+
+            let finalResults = localResults;
             
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error("Forecast HTTP Error:", response.status, errorText);
-                forecastList.innerHTML = `<p class="error-text" style="padding: 20px; color:red; text-align: center; font-size: 14px;">Forecast HTTP Error ${response.status}. See console for details.</p>`;
-                return;
-            }
-            
-            const data = await response.json();
-
-            if (data.cod !== '200') {
-                console.error("Forecast API Error:", data.message);
-                forecastList.innerHTML = `<p class="error-text" style="padding: 20px; color:red; text-align: center; font-size: 14px;">Forecast API Error: ${data.message || 'Failed to fetch data.'}</p>`;
-                return;
-            }
-
-            const dailyData = {};
-            const nowDay = new Date().getDate();
-
-            for (const item of data.list) {
-                const date = new Date(item.dt * 1000);
-                const dayKey = date.getDate();
-
-                if (dayKey === nowDay) continue;
-
-                const dayString = date.toLocaleDateString('en-US', { weekday: 'long' });
-                const itemIcon = item.weather[0].icon;
-
-                if (!dailyData[dayKey]) {
-                    dailyData[dayKey] = {
-                        day: dayString,
-                        min: item.main.temp_min,
-                        max: item.main.temp_max,
-                        icon: itemIcon
-                    };
-                } else {
-                    dailyData[dayKey].min = Math.min(dailyData[dayKey].min, item.main.temp_min);
-                    dailyData[dayKey].max = Math.max(dailyData[dayKey].max, item.main.temp_max);
-                    
-                    if (date.getHours() >= 11 && date.getHours() <= 14) {
-                        dailyData[dayKey].icon = itemIcon;
-                    }
+            // 2. If no local results found, search via External API (fallback)
+            if (localResults.length === 0) { 
+                const externalResults = await fetchAirportsFromExternalApi(q);
+                
+                // If External API found results, filter out duplicates and combine
+                if (externalResults.length > 0) {
+                    // Simple check to prevent showing an airport twice if it exists in local & external
+                    const localIatas = new Set(localResults.map(a => a.iata));
+                    const newExternal = externalResults.filter(a => !localIatas.has(a.iata));
+                    finalResults = localResults.concat(newExternal);
                 }
             }
-            
-            const dailyForecasts = Object.values(dailyData).slice(0, 3);
-            
-            let html = '';
-            if (dailyForecasts.length === 0) {
-                html = '<p class="loading-text" style="padding: 20px;">Forecast data is unavailable for the upcoming days.</p>';
+
+            // If no results after all searches, provide a feedback message
+            if (finalResults.length === 0) {
+                finalResults = [{ city: 'No airports found (searched local & external)', name: '', country: '', iata: '' }];
+            }
+
+            // 3. Show suggestions
+            if (finalResults && finalResults.length) {
+                showSuggestions(el, finalResults);
             } else {
-                dailyForecasts.forEach(forecast => {
-                    html += `
-                        <div class="forecast-day">
-                            <i class="${getFaIconClass(forecast.icon)}"></i>
-                            <p>${forecast.day}</p>
-                            <span>${Math.round(forecast.max)}°C / ${Math.round(forecast.min)}°C</span>
-                        </div>
-                    `;
-                });
+                removeSuggestBox();
             }
-            forecastList.innerHTML = html;
+        }, 160);
+    });
 
-        } catch (error) {
-            console.error('Forecast data processing error:', error);
-            forecastList.innerHTML = '<p class="error-text" style="padding: 20px; color:red; text-align: center; font-size: 14px;">An unexpected error occurred during the data processing.</p>';
+    el.addEventListener('keydown', (ev)=>{
+        if (ev.key === 'Enter'){
+            const box = document.getElementById('suggestBox');
+            if (box && box.firstChild){ box.firstChild.click(); ev.preventDefault(); }
+        }
+        if (ev.key === 'Escape') removeSuggestBox();
+    });
+};
+
+// ** EXISTING FUNCTION FOR DESTINATION SEARCH (LOCAL ONLY) **
+const attachAirportSuggest = (el) => { 
+    let debounce = null;
+    el.addEventListener('input', (e)=>{
+        el.dataset.iata = '';
+        el.dataset.city = '';
+        clearTimeout(debounce);
+        const q = el.value.trim();
+        if (q.length < 2){ removeSuggestBox(); return; }
+        debounce = setTimeout(()=>{
+            const results = filterAirports(q);
+            if (results && results.length) showSuggestions(el, results);
+            else removeSuggestBox();
+        }, 160);
+    });
+
+    el.addEventListener('keydown', (ev)=>{
+        if (ev.key === 'Enter'){
+            const box = document.getElementById('suggestBox');
+            if (box && box.firstChild){ box.firstChild.click(); ev.preventDefault(); }
+        }
+        if (ev.key === 'Escape') removeSuggestBox();
+    });
+};
+
+
+// init handlers
+window.addEventListener('DOMContentLoaded', async()=>{
+  await tryInitFirebase();
+  await loadAirports(); 
+  await loadCityFromQuery();
+
+  // DYNAMIC FLIGHT PASSENGER LOGIC (Max 9 total pax, Max Infants <= Adults)
+  const adSel = document.getElementById('flightAdults');
+  const chSel = document.getElementById('flightChildren');
+  const inSel = document.getElementById('flightInfants');
+
+  function updatePassengerDropdowns(){
+    const adults = parseInt(adSel.value) || 1;
+    const currentChild = parseInt(chSel.value) || 0;
+    const currentInfant = parseInt(inSel.value) || 0;
+
+    // 1. Calc max children (Total pax usually 9, so children <= 9 - adults)
+    const maxChildren = 9 - adults;
+    chSel.innerHTML = '';
+    for(let i=0; i<=maxChildren; i++){
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = i;
+      chSel.appendChild(opt);
+    }
+    // Restore child selection if valid
+    if(currentChild <= maxChildren) chSel.value = currentChild;
+    else chSel.value = 0;
+
+    // 2. Calc max infants (Cannot exceed adults)
+    const maxInfants = adults;
+    inSel.innerHTML = '';
+    for(let i=0; i<=maxInfants; i++){
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = i;
+      inSel.appendChild(opt);
+    }
+    // Restore infant selection if valid
+    if(currentInfant <= maxInfants) inSel.value = currentInfant;
+    else inSel.value = 0;
+  }
+
+  // Listen for adult changes
+  adSel.addEventListener('change', updatePassengerDropdowns);
+  // Init once
+  updatePassengerDropdowns();
+
+  
+  // DYNAMIC HOTEL PASSENGER LOGIC
+  const hotelAdCounter = document.getElementById('hotelAdults');
+  const hotelChCounter = document.getElementById('hotelChildren');
+  const ageContainer = document.getElementById('childAgeContainer');
+
+  function updateChildAgeDropdowns(){
+    // Read count from the <span> element
+    const childrenCount = parseInt(hotelChCounter.textContent) || 0;
+    ageContainer.innerHTML = '';
+    
+    if (childrenCount > 0) {
+      const label = document.createElement('label');
+      label.className = 'text-sm text-gray-600 block mb-2 font-semibold';
+      label.textContent = 'Age of Children (Max Age 10)';
+      ageContainer.appendChild(label);
+    }
+
+    for(let i=1; i<=childrenCount; i++){
+      const ageDiv = document.createElement('div');
+      ageDiv.className = 'mb-2';
+      const ageLabel = document.createElement('label');
+      ageLabel.className = 'text-xs text-gray-700 block mb-1';
+      ageLabel.textContent = `Child ${i} Age:`;
+      
+      const ageSelect = document.createElement('select');
+      ageSelect.id = `childAge${i}`;
+      ageSelect.className = 'p-3 border rounded-lg w-full text-sm';
+
+      // Options for age 1 to 10
+      for(let age=1; age<=10; age++){
+        const opt = document.createElement('option');
+        opt.value = age;
+        opt.textContent = age;
+        ageSelect.appendChild(opt);
+      }
+      // Default to age 1
+      ageSelect.value = 1;
+
+      ageDiv.appendChild(ageLabel);
+      ageDiv.appendChild(ageSelect);
+      ageContainer.appendChild(ageDiv);
+    }
+  }
+
+  // New handler for increment/decrement buttons
+  function handleCounterClick(event) {
+    const button = event.target.closest('.count-btn');
+    if (!button) return;
+
+    const targetId = button.dataset.target;
+    const action = button.dataset.action;
+    const min = parseInt(button.dataset.min);
+    const max = parseInt(button.dataset.max);
+    
+    const targetEl = document.getElementById(targetId);
+    let currentValue = parseInt(targetEl.textContent);
+
+    if (action === 'increment' && currentValue < max) {
+      currentValue++;
+    } else if (action === 'decrement' && currentValue > min) {
+      currentValue--;
+    } else {
+      return; // Do nothing if max/min hit
+    }
+
+    targetEl.textContent = currentValue;
+
+    // If changing hotelChildren, update the age dropdowns
+    if (targetId === 'hotelChildren') {
+      updateChildAgeDropdowns();
+    }
+  }
+
+  // Attach listener to the hotel form to catch all counter clicks
+  document.getElementById('hotelForm').addEventListener('click', handleCounterClick);
+
+  // Init once (to show default 0 children dropdowns)
+  updateChildAgeDropdowns(); 
+  
+  // DATE PICKER LOGIC WITH CONFIRM BUTTON
+  const checkInHidden = document.getElementById('checkIn');
+  const checkOutHidden = document.getElementById('checkOut');
+  const dateRangeDisplay = document.getElementById('dateRangeDisplay');
+
+  flatpickr(dateRangeDisplay, {
+      mode: "range",
+      dateFormat: "Y-m-d", // Date format for the underlying data
+      altInput: true,
+      altFormat: "M j, Y", // User-friendly display format
+      minDate: "today",
+      // Important: Keep the calendar open after selecting two dates
+      closeOnSelect: false,
+      
+      onOpen: function(selectedDates, dateStr, instance) {
+          // Check if the confirm button already exists
+          let confirmButton = instance.calendarContainer.querySelector('.confirm-date-btn');
+
+          if (!confirmButton) {
+              // 1. Create the button container/footer
+              let footer = document.createElement('div');
+              // Tailwind classes for styling (p-2, border-t, border-gray-200)
+              footer.className = 'flatpickr-footer p-2 border-t border-gray-200';
+              
+              // 2. Create the button
+              confirmButton = document.createElement('button');
+              confirmButton.type = 'button'; // Prevent form submission
+              // Tailwind classes for styling (w-full, p-2, bg-[var(--brand-gold)], text-gray-900, rounded-lg, font-bold)
+              confirmButton.className = 'confirm-date-btn w-full p-2 bg-[var(--brand-gold)] text-gray-900 rounded-lg font-bold hover:opacity-90 transition-opacity';
+              confirmButton.textContent = 'Confirm Dates';
+              
+              // 3. Attach click handler
+              confirmButton.addEventListener('click', () => {
+                  if (instance.selectedDates.length === 2) {
+                      // Get formatted dates for hidden inputs (Y-m-d)
+                      const checkInDate = instance.formatDate(instance.selectedDates[0], "Y-m-d");
+                      const checkOutDate = instance.formatDate(instance.selectedDates[1], "Y-m-d");
+                      
+                      // Update hidden inputs for search URL logic
+                      checkInHidden.value = checkInDate;
+                      checkOutHidden.value = checkOutDate;
+                      
+                      // Update visible input for user feedback (M j - M j, Y)
+                      const displayStr = `${instance.formatDate(instance.selectedDates[0], "M j")} - ${instance.formatDate(instance.selectedDates[1], "M j, Y")}`;
+                      dateRangeDisplay.value = displayStr;
+                      
+                      instance.close(); // Close the calendar
+                  } else {
+                      alert('Please select both a Check-in and Check-out date.');
+                  }
+              });
+
+              // 4. Append button to footer, and footer to calendar
+              footer.appendChild(confirmButton);
+              instance.calendarContainer.appendChild(footer);
+          }
+      },
+      // onChange is used only to give the user a preview of the selection in the input field
+      onChange: function(selectedDates, dateStr, instance) {
+          if (selectedDates.length === 2) {
+             // Preview: M j - M j
+             dateRangeDisplay.value = `${instance.formatDate(selectedDates[0], "M j")} - ${instance.formatDate(selectedDates[1], "M j")}`;
+          } else if (selectedDates.length === 1) {
+              // Preview: M j -
+              dateRangeDisplay.value = `${instance.formatDate(selectedDates[0], "M j")} -`;
+          } else {
+              dateRangeDisplay.value = '';
+          }
+          // IMPORTANT: Hidden inputs are NOT updated here, only on Confirm button click.
+      }
+  });
+
+
+  // NEW FUNCTIONS FOR SMOOTH ANIMATION
+  const cityDisplayWrapper = document.getElementById('cityDisplayWrapper');
+  const actionButtons = document.getElementById('actionButtons');
+
+  function openForm(formId) {
+    const formEl = document.getElementById(formId);
+    
+    // 1. Collapse City Content
+    cityDisplayWrapper.style.maxHeight = '0px';
+    cityDisplayWrapper.style.opacity = '0';
+    cityDisplayWrapper.style.marginBottom = '0px'; 
+    
+    // 2. Hide Action Buttons
+    actionButtons.classList.add('hidden');
+    
+    // 3. Show the Form
+    formEl.classList.remove('hidden');
+    
+    // 4. Smoothly scroll to the top of the form (top of page)
+    // Use setTimeout to ensure the DOM change takes effect before scrolling
+    setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 10); 
+
+    // Pre-fill City for Hotel Search
+    if (formId === 'hotelForm'){
+      document.getElementById('hotelCity').value = document.getElementById('aboutCityName').textContent;
+    }
+    
+    // Pre-fill City for Flight Destination
+    if (formId === 'flightForm'){
+        const city = (document.getElementById('aboutCityName').textContent || '').trim();
+        const destEl = document.getElementById('flightDestination');
+        const matches = airports.filter(a => a.city && a.city.toLowerCase() === city.toLowerCase());
+        if (matches.length === 1){
+            const a = matches[0];
+            destEl.value = `${a.city} (${a.iata})`;
+            destEl.dataset.city = a.city;
+            destEl.dataset.iata = a.iata;
+        } else {
+            destEl.value = city;
+            destEl.dataset.city = city;
+            destEl.dataset.iata = '';
+        }
+    }
+  }
+
+  function closeForm(formId) {
+    const formEl = document.getElementById(formId);
+    
+    // 1. Hide the Form
+    formEl.classList.add('hidden');
+    
+    // 2. Restore City Content (Restore large height/opacity, CSS handles transition)
+    cityDisplayWrapper.style.maxHeight = '1000px'; 
+    cityDisplayWrapper.style.opacity = '1';
+    cityDisplayWrapper.style.marginBottom = '1.5rem'; // Restore mb-6
+    
+    // 3. Show Action Buttons
+    actionButtons.classList.remove('hidden');
+    
+    // 4. Scroll to the top of the content
+    window.scrollTo({ top: 0, behavior: 'smooth' }); 
+  }
+  
+  // Update button handlers to use the new functions
+  document.getElementById('openFlight').addEventListener('click', ()=>{ openForm('flightForm'); });
+  document.getElementById('openHotel').addEventListener('click', ()=>{ openForm('hotelForm'); });
+  document.getElementById('closeFlightForm').addEventListener('click', ()=>{ closeForm('flightForm'); });
+  document.getElementById('closeHotelForm').addEventListener('click', ()=>{ closeForm('hotelForm'); });
+  // END NEW FUNCTIONS FOR SMOOTH ANIMATION
+
+
+  const flightOrigin = document.getElementById('flightOrigin');
+  const flightDestination = document.getElementById('flightDestination');
+
+  // ** APPLY NEW ORIGIN SEARCH LOGIC (JSON + API FALLBACK) **
+  attachOriginSuggest(flightOrigin);
+  // ** APPLY OLD DESTINATION SEARCH LOGIC (JSON ONLY) **
+  attachAirportSuggest(flightDestination);
+
+  window.addEventListener('resize', removeSuggestBox);
+  document.addEventListener('click', (e)=>{ if (!e.target.closest('.suggest-box') && !e.target.closest('#flightOrigin') && !e.target.closest('#flightDestination')) removeSuggestBox(); });
+
+  document.getElementById('launchFlightFinal').addEventListener('click', ()=>{
+    const originEl = document.getElementById('flightOrigin');
+    const destEl = document.getElementById('flightDestination');
+    const oIata = originEl.dataset.iata;
+    const dIata = destEl.dataset.iata;
+    // Fallback: Use full value if dataset missing, but prefer just city name for "city" param
+    const oCity = originEl.dataset.city || (originEl.value.split(' (')[0] || originEl.value);
+    const dCity = destEl.dataset.city || (destEl.value.split(' (')[0] || destEl.value);
+    
+    const depart = document.getElementById('flightDepart').value;
+    const ret = document.getElementById('flightReturn').value;
+    const adults = document.getElementById('flightAdults').value || 1;
+    const children = document.getElementById('flightChildren').value || 0;
+    const infants = document.getElementById('flightInfants').value || 0;
+    const flightClass = document.getElementById('flightClass').value || 'Economy';
+
+    if (!oIata || !dIata){
+      alert('Select both origin and destination from the suggestion list.');
+      return;
+    }
+    if (!depart){ alert('Select departure date.'); return; }
+
+    const url = buildEaseMyTripFlightUrl(oIata, oCity, dIata, dCity, depart, ret, adults, children, infants, flightClass);
+    window.open(url, '_blank', 'noopener');
+  });
+
+  // Hotel search final handler
+  document.getElementById('launchHotelFinal').addEventListener('click', ()=>{
+    const city = document.getElementById('hotelCity').value || (document.getElementById('aboutCityName').textContent || '');
+    // Fetch values from the hidden inputs, which are only set on "Confirm Dates"
+    const checkIn = document.getElementById('checkIn').value; 
+    const checkOut = document.getElementById('checkOut').value;
+    
+    // Get Adults and Children Counts from <span>
+    const adults = document.getElementById('hotelAdults').textContent || 1;
+    const childrenCount = parseInt(document.getElementById('hotelChildren').textContent) || 0;
+    
+    const childAges = [];
+    for(let i=1; i<=childrenCount; i++){
+        const ageSelect = document.getElementById(`childAge${i}`);
+        if(ageSelect) {
+            childAges.push(ageSelect.value);
+        } else {
+            childAges.push(1); 
         }
     }
 
-    // --- INITIAL PAGE LOAD & EVENT LISTENERS ---
-    function loadCityContent() {
-        const params = new URLSearchParams(window.location.search);
-        const city = params.get('city');
+    if (!city || !checkIn || !checkOut){ alert('Please enter city and confirm your Check-in/Check-out dates.'); return; }
+    
+    // Pass adults and array of child ages to the URL builder (Rooms is assumed to be 1 inside the function)
+    const url = buildEaseMyTripHotelUrl(city, checkIn, checkOut, adults, childAges);
+    window.open(url, '_blank', 'noopener');
+  });
+  
+  // Bus search handler
+  document.getElementById('searchBus').addEventListener('click', ()=>{
+    window.open('https://www.goibibo.com/bus/', '_blank', 'noopener');
+  });
 
-        if (city) {
-            const formattedCity = city.charAt(0).toUpperCase() + city.slice(1).toLowerCase();
-            
-            document.getElementById('cityNameHeader').textContent = formattedCity;
-            document.getElementById('hotelCityNamePlaceholder').textContent = formattedCity; 
-            document.getElementById('destinationCity').value = formattedCity; 
-            
-            const today = new Date();
-            const defaultCheckIn = new Date(today);
-            defaultCheckIn.setDate(today.getDate() + 1);
-            const defaultCheckOut = new Date(defaultCheckIn);
-            defaultCheckOut.setDate(defaultCheckIn.getDate() + 2); // Two days after check-in
+  // Train search handler
+  document.getElementById('searchTrains').addEventListener('click', ()=>{
+    window.open('https://www.goibibo.com/trains/', '_blank', 'noopener');
+  });
 
-            document.getElementById('checkInDate').value = defaultCheckIn.toISOString().split('T')[0];
-            document.getElementById('checkOutDate').value = defaultCheckOut.toISOString().split('T')[0];
-            document.getElementById('departureDate').value = defaultCheckIn.toISOString().split('T')[0]; // Flight departure same as check-in
-            
-            fetchCityInfo(city); 
-            fetchWeatherData(city); 
-            switchTab('infoView'); // Ensure initial tab styling is applied
-        }
-    }
-
-function switchTab(newTabId) {
-        const allButtons = document.querySelectorAll('.nav-btn');
-        const allViews = document.querySelectorAll('.tab-view');
-        const weatherBtn = document.getElementById('weatherTabBtn');
-        const infoBtn = document.getElementById('infoTabBtn');
-
-        allButtons.forEach(btn => {
-            btn.classList.remove('active');
-            
-            // Reset Bolding Classes (For Weather and Info)
-            btn.querySelector('i').classList.remove('bold-icon');
-            btn.querySelector('span').classList.remove('bold-text');
-        });
-
-        allViews.forEach(view => view.classList.add('hidden'));
-
-        const newButton = document.querySelector(`[data-target="${newTabId}"]`);
-        const newView = document.getElementById(newTabId);
-
-        if (newButton) newButton.classList.add('active');
-        if (newView) newView.classList.remove('hidden');
-        
-        // Logic to re-show hotel/flight controls when switching back
-        const hotelControls = document.querySelector('#hotelView .hotel-controls');
-        const flightControls = document.querySelector('#flightView .flight-controls');
-        
-        if (newTabId === 'hotelView' && hotelControls) {
-            hotelControls.classList.remove('hidden');
-        }
-        if (newTabId === 'flightView' && flightControls) {
-            flightControls.classList.remove('hidden');
-        }
-
-        // Apply Saved Instruction: Weather/Info Bolding
-        if (newTabId === 'weatherView') {
-            // Apply bold style to Weather tab
-            weatherBtn.querySelector('i').classList.add('bold-icon');
-            weatherBtn.querySelector('span').classList.add('bold-text');
-            
-            // Reset info tab styling
-            if(infoBtn) {
-                 infoBtn.querySelector('i').classList.remove('bold-icon');
-                 infoBtn.querySelector('span').classList.remove('bold-text');
-            }
-            
-        } else if (newTabId === 'infoView') {
-            // Apply bold style to Info tab (default)
-            infoBtn.querySelector('i').classList.add('bold-icon');
-            infoBtn.querySelector('span').classList.add('bold-text');
-            
-            // Reset weather tab styling
-            if(weatherBtn) {
-                weatherBtn.querySelector('i').classList.remove('bold-icon');
-                weatherBtn.querySelector('span').classList.remove('bold-text');
-            }
-        }
-        
-        // --- Run resize logic for all views containing an iframe ---
-        if (['hotelView', 'flightView', 'busView', 'trainView'].includes(newTabId)) {
-             resizeIframe();
-        }
-    }
-    /**
-     * @returns {string|boolean} Returns the ID of the iframe to navigate, or false to navigate main window.
-     */
-    function shouldIframeHandleBack() {
-        const activeView = document.querySelector('.tab-view:not(.hidden)');
-        const activeViewId = activeView ? activeView.id : null;
-        
-        // Views that contain a navigable external iframe
-        const iframeViews = ['hotelView', 'flightView', 'busView', 'trainView'];
-
-        if (iframeViews.includes(activeViewId)) {
-            const iframeId = activeViewId.replace('View', 'Iframe');
-            const iframe = document.getElementById(iframeId);
-            
-            // Check if the iframe is present. 
-            // We cannot check iframe.contentWindow.history.length due to CORS, 
-            // so we return the iframe ID and let the native code handle the call.
-            if (iframe) {
-                return iframeId;
-            }
-        }
-        
-        // If it's an Info/Weather tab or no iframe is visible, let the main window handle back.
-        return false;
-    }
-
-    // Standard function provided in the original code for iframe resizing
-    function resizeIframe() {
-        const topBar = document.querySelector('.top-bar');
-        const navTabs = document.querySelector('.nav-tabs');
-        const iframe = document.querySelector('.external-search-iframe');
-        
-        if (!topBar || !navTabs || !iframe) {
-            return;
-        }
-
-        const totalHeaderHeight = topBar.offsetHeight + navTabs.offsetHeight;
-        iframe.style.height = (window.innerHeight - totalHeaderHeight) + "px";
-    }
-
-    window.onload = function() {
-        loadCityContent();
-        
-        document.querySelectorAll('.nav-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const targetId = this.getAttribute('data-target');
-                switchTab(targetId);
-            });
-        });
-        
-        document.getElementById('searchHotelsBtn').addEventListener('click', () => {
-            const city = new URLSearchParams(window.location.search).get('city');
-            searchHotelsUrl(city);
-        });
-        
-        document.getElementById('searchFlightsBtn').addEventListener('click', searchFlights);
-        
-        document.querySelector('.swap-icon-container').addEventListener('click', () => {
-            const originInput = document.getElementById('originCity');
-            const destinationInput = document.getElementById('destinationCity');
-            
-            const temp = originInput.value;
-            originInput.value = destinationInput.value;
-            destinationInput.value = temp;
-        });
-
-        // Event listeners for iframe resizing
-        window.addEventListener("resize", resizeIframe);
-    };
+});
 </script>
 </body>
 </html>
