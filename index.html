@@ -60,7 +60,15 @@
                             <i class="fas fa-clipboard-list"></i>
                             <span>Travel Checklist</span>
                         </button>
-<button class="check-item settings">
+                        <button class="check-item category">
+                            <i class="fas fa-th-large"></i>
+                            <span>Category Wise Destinations</span>
+                        </button>
+                        <button class="check-item faqs">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>FAQs</span>
+                        </button>
+                        <button class="check-item settings">
                             <i class="fas fa-cog"></i>
                             <span>Account Settings</span>
                         </button>
@@ -69,15 +77,6 @@
             </main>
         </div>
 
-                        <button class="check-item category">
-                            <i class="fas fa-th-large"></i>
-                            <span>Category Wise Destinations</span>
-                        </button>
-                        <button class="check-item explore">
-                            <i class="fas fa-plus-circle"></i>
-                            <span>FAQs</span>
-                        </button>
-                        
         <script type="module">
 
             /* ------------------- FIREBASE IMPORTS ------------------- */
@@ -169,6 +168,7 @@ document.querySelector('.check-item.travel').addEventListener('click', function(
 document.querySelector('.check-item.settings').addEventListener('click', function() {
     window.location.href = 'profile.html';
 });
+//
 document.querySelector('.check-item.faqs').addEventListener('click', function() {
     window.location.href = 'faqs.html';
 });
