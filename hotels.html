@@ -4,16 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hotel Booking</title>
-    <!-- Links assumed to be available in the app environment -->
-    <link rel="stylesheet" href="styles.css"> 
-    <link rel="stylesheet" href="search-styles.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        /* Base Styling for the Hotel Search Page */
+        /* --- Base Variables --- */
         :root {
-            --primary-color: #f7b949; /* Requested color */
-            --primary-dark: #e0a944; 
+            --primary-color: #f7b949;
+            --primary-dark: #e0a944;
+            --primary-light: #fef6e2;
             --background-color: #f4f6f9;
             --card-background: #ffffff;
             --text-color: #333;
@@ -36,55 +34,33 @@
             flex-direction: column;
         }
 
-        /* Top Bar Styling */
+        /* --- Header --- */
         .search-header .top-bar {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 15px;
-            background-color: var(--primary-color); /* Uses new primary color */
+            background-color: var(--primary-color);
             color: white;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        
-        .search-header .top-bar i {
-            font-size: 24px;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-        .search-header .top-bar i:active {
-            transform: scale(0.95);
-        }
+        .search-header .top-bar i { font-size: 24px; cursor: pointer; }
+        .search-header .top-bar h1 { font-size: 18px; font-weight: 600; margin: 0; }
 
-        .search-header .top-bar h1 {
-            font-size: 18px;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        /* Search Card Styling for inputs */
+        /* --- Search Card --- */
         .search-card {
             background-color: var(--card-background);
             padding: 20px;
             margin: 20px;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
-            z-index: 10; 
-        }
-
-        .search-form-group {
-            margin-bottom: 15px;
             position: relative;
         }
 
+        .search-form-group { margin-bottom: 15px; position: relative; }
         .search-form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            font-size: 14px;
-            color: #555;
+            display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; color: #555;
         }
-
         .search-form-group input, .search-form-group select {
             width: 100%;
             padding: 12px 40px 12px 15px;
@@ -92,474 +68,554 @@
             border-radius: 8px;
             box-sizing: border-box;
             font-size: 16px;
-            transition: border-color 0.2s;
-        }
-        .search-form-group input:focus, .search-form-group select:focus {
-            border-color: var(--primary-color);
             outline: none;
         }
-        /* Override padding for selects inside guest inputs */
-        .guest-input-group select {
-            padding-right: 15px;
-        }
+        .search-form-group input:focus { border-color: var(--primary-color); }
+        .input-icon { position: absolute; top: 38px; right: 15px; color: #999; pointer-events: none; }
 
-        .input-icon {
+        .hidden-native-inputs { display: none !important; }
+        #dateRangeTrigger { cursor: pointer; background-color: #fff; caret-color: transparent; }
+
+        /* --- SINGLE MONTH Datepicker CSS --- */
+        #custom-datepicker {
+            display: none;
             position: absolute;
-            top: 38px; 
-            right: 15px;
-            color: #999;
-            pointer-events: none;
+            top: 100%;
+            left: 0;
+            margin-top: 10px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 1000;
+            padding: 16px;
+            border: 1px solid #eee;
+            width: 340px; /* Fixed width for single month */
+            max-width: 90vw;
         }
-
-        /* Date inputs are forced side-by-side */
-        .date-input-group {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        .date-input-group > div {
-            flex: 1;
-        }
-        /* Prevent horizontal overflow on small screens */
-.date-input-group {
-    width: 100%;
-    overflow: hidden;
-}
-
-.date-input-group > div {
-    min-width: 0; /* Allows flex items to shrink instead of overflowing */
-}
-
-.date-input-group input {
-    width: 100%;
-    min-width: 0; /* Critical fix */
-}
-
-/* Prevent calendar icon overlap on small screens */
-.date-input-group input[type="date"] {
-    padding-right: 12px; /* enough space for calendar icon */
-    box-sizing: border-box;
-}
-
         
-        /* New Group for Guests/Rooms */
+        /* Mobile adjustment */
+        @media (max-width: 400px) {
+            #custom-datepicker { width: 100%; left: 0; right: 0; padding: 10px; box-sizing: border-box; }
+        }
+
+        .month-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .calendar-nav-btn {
+            background: #f9f9f9; border: 1px solid #eee; 
+            cursor: pointer; font-size: 14px; color: #555; 
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .calendar-nav-btn:hover { background: #eee; color: #000; }
+
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px; /* Increased gap slightly */
+        }
+
+        .day-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+        
+        .day-cell:hover:not(.disabled):not(.selected) { background-color: #f0f0f0; }
+        .day-cell.disabled { color: #ccc; cursor: not-allowed; }
+        .day-cell.empty { cursor: default; }
+
+        /* Selection Styling */
+        .day-cell.selected {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+        }
+        
+        /* Range Styling (Middle) */
+        .day-cell.in-range {
+            background-color: var(--primary-light);
+            border-radius: 0; 
+        }
+        
+        /* Start/End Caps */
+        .day-cell.start-range {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50% 0 0 50%;
+        }
+        .day-cell.end-range {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 0 50% 50% 0;
+        }
+        /* Single Day Selection (Start == End or just Start) */
+        .day-cell.circle-only {
+            border-radius: 50% !important;
+        }
+
+        .datepicker-footer {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between; /* Changed to separate clear/confirm */
+            align-items: center;
+        }
+
+        .dp-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            font-weight: 600;
+        }
+        .dp-btn-cancel { background: transparent; color: #777; font-weight: normal; padding: 8px 0; }
+        .dp-btn-confirm { background: var(--primary-color); color: white; }
+
+        /* --- Guest & Button Styles --- */
         .guest-input-group {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
             margin-bottom: 15px;
         }
-        
-        /* NEW CSS for Age Selectors */
         .age-selectors-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
         }
-
-        /* Adjust for small screens (Mobile Responsiveness) */
-        @media (max-width: 250px) {
-            /* FIX: Decrease gap for date inputs to ensure they fit side-by-side without overflow */
-            .date-input-group {
-                gap: 8px; 
-            }
-
-            /* Stack guest inputs vertically */
-            .guest-input-group {
-                grid-template-columns: 1fr;
-            }
-            /* Adjust age selectors for better fit */
-            .age-selectors-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        
-        .guest-input-group .search-form-group {
-            margin-bottom: 0; /* Remove extra margin */
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-
         .search-submit-btn {
             width: 100%;
             padding: 15px;
-            background-color: var(--primary-color); /* Uses new primary color */
+            background-color: var(--primary-color);
             color: white;
             border: none;
             border-radius: 8px;
             font-size: 18px;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s;
-            box-shadow: 0 4px 8px rgba(247, 185, 73, 0.4); /* Uses shadow for new color */
+            box-shadow: 0 4px 8px rgba(247, 185, 73, 0.4);
         }
-        .search-submit-btn:hover {
-            background-color: var(--primary-dark);
-        }
-        .search-submit-btn:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
+        .search-submit-btn:hover { background-color: var(--primary-dark); }
 
-        /* Results Area - Modified to display status message only */
-        .results-container {
-            margin: 0 20px 20px 20px;
-            flex-grow: 1;
-        }
+        .results-container { margin: 20px; text-align: center; color: #777; }
+        .info-message i { font-size: 32px; margin-bottom: 10px; color: #ccc; }
+        .hidden { display: none !important; }
 
-        /* Info/Error States */
-        .info-message {
-            padding: 40px 20px;
-            text-align: center;
-            color: #777;
-            font-size: 16px;
+        /* Suggestions */
+        #locationSuggestions {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: #fff; border: 1px solid #ddd; border-radius: 8px;
+            max-height: 200px; overflow-y: auto; z-index: 2000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        .info-message i {
-            font-size: 32px;
-            margin-bottom: 10px;
-            color: #ccc;
-        }
+        .suggestion-item { padding: 10px; cursor: pointer; display: flex; justify-content: space-between; }
+        .suggestion-item:hover { background: #f3f3f3; }
+
     </style>
 </head>
 <body>
-    <div class="container">
-        <header class="search-header">
-            <div class="top-bar">
-                <i class="fas fa-arrow-left" onclick="window.location.href='index.html'"></i>
-                <h1 id="pageTitle">Find Hotels</h1>
-                <div style="width: 24px;"></div> <!-- Spacer -->
-            </div>
-        </header>
 
-        <div class="search-card">
-            <div class="search-form-group">
-                <label for="locationInput">Location</label>
-                <input type="text" id="locationInput" placeholder="City, landmark, or hotel name">
-                <i class="input-icon fas fa-city"></i>
-            </div>
+<div class="container">
+    <header class="search-header">
+        <div class="top-bar">
+            <i class="fas fa-arrow-left" onclick="window.location.href='index.html'"></i>
+            <h1 id="pageTitle">Find Hotels</h1>
+            <div style="width: 24px;"></div>
+        </div>
+    </header>
 
-            <div class="date-input-group">
-                <div class="search-form-group">
-                    <label for="checkInDate">Check-in</label>
-                    <input type="date" id="checkInDate">
-                </div>
-                <div class="search-form-group">
-                    <label for="checkOutDate">Check-out</label>
-                    <input type="date" id="checkOutDate">
-                </div>
-            </div>
-            
-            
-            <!-- GUEST INPUTS -->
-            <label style="display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; color: #555;">Guests & Rooms</label>
-            <div class="guest-input-group">
-                <div class="search-form-group">
-                    <label for="roomsSelect">Rooms (Max 9)</label>
-                    <select id="roomsSelect">
-                        <!-- Options filled by JavaScript (1 to 9) -->
-                    </select>
-                </div>
-                <div class="search-form-group">
-                    <label for="adultsSelect">Adults (Max 12)</label>
-                    <select id="adultsSelect">
-                        <!-- Options filled by JavaScript (1 to 12) -->
-                    </select>
-                </div>
-                <div class="search-form-group">
-                    <label for="childrenSelect">Children (Max 2)</label>
-                    <select id="childrenSelect">
-                        <!-- Options filled by JavaScript (0 to 2) -->
-                    </select>
-                </div>
-            </div>
-
-            <!-- CHILDREN AGE CONTAINER -->
-            <div id="childrenAgeContainer" class="hidden">
-                <label style="display: block; margin-bottom: 10px; font-weight: 500; font-size: 14px; color: #555; border-top: 1px solid #eee; padding-top: 15px;">Child Ages (Max Age 12)</label>
-                <div id="childAgeSelectors" class="age-selectors-grid">
-                    <!-- Dynamic age dropdowns will go here -->
-                </div>
-            </div>
-
-            <button class="search-submit-btn" id="searchHotelBtn">
-                Search Hotel
-            </button>
+    <div class="search-card">
+        <div class="search-form-group">
+            <label for="locationInput">Location</label>
+            <input type="text" id="locationInput" placeholder="City, landmark, or hotel name" autocomplete="off">
+            <i class="input-icon fas fa-city"></i>
+            <div id="locationSuggestions" class="hidden"></div>
         </div>
 
-        <main class="results-container" id="resultsContainer">
-            <div class="info-message">
-                <i class="fas fa-bed"></i>
-                <p>Enter your details and click 'Search' to be redirected to a booking partner.</p>
+        <div class="search-form-group">
+            <label>Check-in & Check-out</label>
+            <input type="text" id="dateRangeTrigger" placeholder="Select Dates" readonly>
+            <i class="input-icon fas fa-calendar-alt"></i>
+            
+            <input type="date" id="checkInDate" class="hidden-native-inputs">
+            <input type="date" id="checkOutDate" class="hidden-native-inputs">
+
+            <div id="custom-datepicker">
+                <div id="singleMonthContainer"></div>
+                
+                <div class="datepicker-footer">
+                    <button class="dp-btn dp-btn-cancel" id="dpClear">Clear</button>
+                    <button class="dp-btn dp-btn-confirm" id="dpConfirm">Done</button>
+                </div>
             </div>
-        </main>
+        </div>
+        
+        <label style="display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; color: #555;">Guests & Rooms</label>
+        <div class="guest-input-group">
+            <div class="search-form-group">
+                <label>Rooms</label>
+                <select id="roomsSelect"></select>
+            </div>
+            <div class="search-form-group">
+                <label>Adults</label>
+                <select id="adultsSelect"></select>
+            </div>
+            <div class="search-form-group">
+                <label>Children</label>
+                <select id="childrenSelect"></select>
+            </div>
+        </div>
+
+        <div id="childrenAgeContainer" class="hidden">
+            <label style="display: block; margin-bottom: 10px; font-weight: 500; font-size: 14px; color: #555; border-top: 1px solid #eee; padding-top: 15px;">Child Ages (Max 12)</label>
+            <div id="childAgeSelectors" class="age-selectors-grid"></div>
+        </div>
+
+        <button class="search-submit-btn" id="searchHotelBtn">Search Hotel</button>
     </div>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const locationInput = document.getElementById('locationInput');
-            const checkInDateInput = document.getElementById('checkInDate');
-            const checkOutDateInput = document.getElementById('checkOutDate');
-            const roomsSelect = document.getElementById('roomsSelect');
-            const adultsSelect = document.getElementById('adultsSelect');
-            const childrenSelect = document.getElementById('childrenSelect');
-            const searchHotelBtn = document.getElementById('searchHotelBtn');
-            const resultsContainer = document.getElementById('resultsContainer');
-            
-            const childrenAgeContainer = document.getElementById('childrenAgeContainer');
-            const childAgeSelectorsDiv = document.getElementById('childAgeSelectors');
 
-            // --- Helper to fill dropdown options ---
-            function populateSelect(selectElement, start, end, defaultValue = 1) {
-                selectElement.innerHTML = '';
-                for (let i = start; i <= end; i++) {
-                    const option = document.createElement('option');
-                    option.value = i;
-                    option.textContent = i;
-                    if (i === defaultValue) {
-                        option.selected = true;
-                    }
-                    selectElement.appendChild(option);
-                }
+    <main class="results-container" id="resultsContainer">
+        <div class="info-message">
+            <i class="fas fa-bed"></i>
+            <p>Enter your details and click 'Search' to be redirected to a booking partner.</p>
+        </div>
+    </main>
+</div>
+
+<script>
+    // --- 1. Initialization & Dropdowns ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const roomsSelect = document.getElementById('roomsSelect');
+        const adultsSelect = document.getElementById('adultsSelect');
+        const childrenSelect = document.getElementById('childrenSelect');
+        const childAgeSelectorsDiv = document.getElementById('childAgeSelectors');
+        const childrenAgeContainer = document.getElementById('childrenAgeContainer');
+
+        function populate(el, min, max, def) {
+            el.innerHTML = '';
+            for(let i=min; i<=max; i++){
+                const opt = document.createElement('option');
+                opt.value = i; opt.textContent = i;
+                if(i===def) opt.selected = true;
+                el.appendChild(opt);
             }
-            
-            // Populate the dropdowns with the requested limits
-            populateSelect(roomsSelect, 1, 9, 1);
-            populateSelect(adultsSelect, 1, 12, 2); 
-            // Children dropdown starts at 0
-            populateSelect(childrenSelect, 0, 2, 0); 
+        }
 
-            // --- Date Initialization and Validation ---
+        populate(roomsSelect, 1, 9, 1);
+        populate(adultsSelect, 1, 12, 2);
+        populate(childrenSelect, 0, 2, 0);
 
-            const today = new Date();
-            const tomorrow = new Date(today);
-            tomorrow.setDate(today.getDate() + 1);
-
-            const todayISO = today.toISOString().split('T')[0];
-            const tomorrowISO = tomorrow.toISOString().split('T')[0];
-
-            checkInDateInput.setAttribute('min', todayISO);
-            checkOutDateInput.setAttribute('min', tomorrowISO);
-
-            // Set default dates
-            checkInDateInput.value = todayISO;
-            checkOutDateInput.value = tomorrowISO;
-
-            checkInDateInput.addEventListener('change', () => {
-                const checkIn = new Date(checkInDateInput.value);
-                const nextDay = new Date(checkIn);
-                nextDay.setDate(checkIn.getDate() + 1);
-                const nextDayISO = nextDay.toISOString().split('T')[0];
-                checkOutDateInput.setAttribute('min', nextDayISO);
-                
-                // If check-out is before or same as new check-in, auto-adjust check-out
-                if (new Date(checkOutDateInput.value) <= checkIn) {
-                    checkOutDateInput.value = nextDayISO;
+        childrenSelect.addEventListener('change', (e) => {
+            const count = parseInt(e.target.value);
+            childAgeSelectorsDiv.innerHTML = '';
+            if (count > 0) {
+                childrenAgeContainer.classList.remove('hidden');
+                for (let i = 1; i <= count; i++) {
+                    const div = document.createElement('div');
+                    div.className = 'search-form-group';
+                    div.innerHTML = `<label>Child ${i} Age</label><select class="child-age-select"></select>`;
+                    populate(div.querySelector('select'), 1, 12, 5);
+                    childAgeSelectorsDiv.appendChild(div);
                 }
-            });
-
-            // --- Function to render child age selectors ---
-            /**
-             * Dynamically generates age dropdowns based on the number of children selected.
-             * @param {number} count - The number of children selected (0 to 2).
-             */
-            function renderChildAgeSelectors(count) {
-                childAgeSelectorsDiv.innerHTML = '';
-
-                if (count > 0) {
-                    childrenAgeContainer.classList.remove('hidden');
-                    for (let i = 1; i <= count; i++) {
-                        const ageGroup = document.createElement('div');
-                        ageGroup.className = 'search-form-group';
-                        
-                        const label = document.createElement('label');
-                        label.textContent = `Child ${i} Age`;
-                        
-                        const select = document.createElement('select');
-                        select.id = `childAge${i}`;
-                        select.className = 'child-age-select'; // Use a class for easier selection later
-
-                        // Populate age options 1 to 12
-                        for (let age = 1; age <= 12; age++) {
-                            const option = document.createElement('option');
-                            option.value = age;
-                            option.textContent = age;
-                            // Set a default age, e.g., 5
-                            if (age === 5) {
-                                option.selected = true;
-                            }
-                            select.appendChild(option);
-                        }
-                        
-                        ageGroup.appendChild(label);
-                        ageGroup.appendChild(select);
-                        childAgeSelectorsDiv.appendChild(ageGroup);
-                    }
-                } else {
-                    childrenAgeContainer.classList.add('hidden');
-                }
+            } else {
+                childrenAgeContainer.classList.add('hidden');
             }
-            
-            // --- Event Listener for Children Select ---
-            childrenSelect.addEventListener('change', (event) => {
-                const numChildren = parseInt(event.target.value, 10);
-                renderChildAgeSelectors(numChildren);
-            });
-
-
-            // --- Custom Alert/Message Box ---
-            window.alert = function(message) {
-                const existingModal = document.getElementById('customAlert');
-                if (existingModal) existingModal.remove();
-
-                const modal = document.createElement('div');
-                modal.id = 'customAlert';
-                modal.style.cssText = `
-                    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                    background: white; padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-                    z-index: 1000; text-align: center; max-width: 90%;
-                `;
-                modal.innerHTML = `
-                    <p style="margin-bottom: 20px;">${message}</p>
-                    <button onclick="document.getElementById('customAlert').remove()" style="padding: 10px 20px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer;">OK</button>
-                `;
-                document.body.appendChild(modal);
-            };
-
-            // Utility function to display messages
-            function displayMessage(iconClass, text) {
-                resultsContainer.innerHTML = `
-                    <div class="info-message">
-                        <i class="${iconClass}"></i>
-                        <p>${text}</p>
-                    </div>
-                `;
-            }
-
-            /**
-             * Converts YYYY-MM-DD date format to DD/MM/YYYY
-             * @param {string} dateString - Date in YYYY-MM-DD format.
-             * @returns {string} Date in DD/MM/YYYY format.
-             */
-            function formatDateForExternalLink(dateString) {
-                if (!dateString) return '';
-                const parts = dateString.split('-'); // ["YYYY", "MM", "DD"]
-                // Example: 2025-11-20 -> 20/11/2025
-                return `${parts[2]}/${parts[1]}/${parts[0]}`; 
-            }
-
-            /**
-             * Constructs the PAX string for the external site.
-             * Format: [Total Adults]_[Children Count]_[Child 1 Age]_[Child 2 Age]...
-             * @param {number} adults - Total number of adults.
-             * @param {number} children - Total number of children.
-             * @param {number[]} childAges - Array of ages of the children.
-             * @returns {string} The constructed PAX configuration string.
-             */
-            function constructPaxStringWithAges(adults, children, childAges) {
-                // The structure is AdultCount_ChildCount_Child1Age_Child2Age...
-                let paxConfig = `${adults}_${children}`; 
-                
-                if (children > 0) {
-                    paxConfig += '_' + childAges.join('_');
-                }
-                
-                return paxConfig;
-            }
-
-            // --- Main Search Function ---
-            async function searchHotels() {
-                const location = locationInput.value.trim();
-                const checkInDate = checkInDateInput.value;
-                const checkOutDate = checkOutDateInput.value;
-                
-                // Get values and convert to numbers
-                const rooms = parseInt(roomsSelect.value, 10);
-                const adults = parseInt(adultsSelect.value, 10);
-                const children = parseInt(childrenSelect.value, 10);
-
-                // Collect child ages
-                const childAgeSelectors = document.querySelectorAll('.child-age-select');
-                const childAges = Array.from(childAgeSelectors).map(select => parseInt(select.value, 10));
-
-                if (!location) {
-                    alert('Please enter a location (city or hotel name) to search.');
-                    return;
-                }
-                
-                if (new Date(checkInDate) >= new Date(checkOutDate)) {
-                    alert('Check-out date must be after the check-in date.');
-                    return;
-                }
-
-                // Check if the number of children matches the number of age selectors (validation)
-                if (children > 0 && childAges.length !== children) {
-                    alert('Please ensure all child ages are selected before searching.');
-                    return;
-                }
-                
-                // Convert dates to DD/MM/YYYY format required by the external link
-                const formattedCheckIn = formatDateForExternalLink(checkInDate);
-                const formattedCheckOut = formatDateForExternalLink(checkOutDate);
-
-                // Construct the PAX string using the newly defined function that includes ages
-                const paxConfig = constructPaxStringWithAges(adults, children, childAges);
-
-                // Construct the base URL and parameters
-                const baseUrl = 'https://www.easemytrip.com/hotel-new/search';
-                
-                // Parameters based on the LATEST sample URL:
-                const params = new URLSearchParams({
-                    cityName: location,             
-                    checkinDate: formattedCheckIn,  
-                    checkoutDate: formattedCheckOut,
-                    Rooms: rooms.toString(),        
-                    pax: paxConfig,                 
-                    Hotel: 'NA',
-                    // The _v parameter (timestamp) is often just for cache busting and is omitted
-                });
-                
-                const finalUrl = `${baseUrl}?${params.toString()}`;
-
-                // Show a brief message before redirection
-                searchHotelBtn.disabled = true;
-                searchHotelBtn.innerHTML = '<i class="fas fa-external-link-alt"></i> Redirecting...';
-                displayMessage('fas fa-paper-plane', `Redirecting to external site for hotel search in **${location}**...`);
-
-                // Give the user a moment to see the message (optional delay)
-                await new Promise(resolve => setTimeout(resolve, 800));
-
-                // Perform the redirection
-                window.location.href = finalUrl;
-            }
-
-            // --- Event Listeners ---
-            searchHotelBtn.addEventListener('click', searchHotels);
-
-            // Allow 'Enter' key in input fields to trigger search
-            [locationInput, checkInDateInput, checkOutDateInput].forEach(input => {
-                input.addEventListener('keydown', (event) => {
-                    if (event.key === 'Enter') {
-                        searchHotels();
-                    }
-                });
-            });
-
-            // Check URL parameters for initial search
-            const params = new URLSearchParams(window.location.search);
-            const initialCity = params.get('city');
-
-            if (initialCity) {
-                locationInput.value = initialCity;
-            }
-
-            // Initial call to set up the child age container visibility on load
-            renderChildAgeSelectors(parseInt(childrenSelect.value, 10));
-
         });
-    </script>
+    });
+
+    // --- 2. Date Picker Logic (Robust Version) ---
+    (function() {
+        const trigger = document.getElementById('dateRangeTrigger');
+        const picker = document.getElementById('custom-datepicker');
+        const nativeCheckIn = document.getElementById('checkInDate');
+        const nativeCheckOut = document.getElementById('checkOutDate');
+        const container = document.getElementById('singleMonthContainer');
+        
+        let today = new Date();
+        today.setHours(0,0,0,0);
+        let currentMonth = new Date(today); 
+        let selectedStart = null;
+        let selectedEnd = null;
+        let isSelectingCheckout = false; 
+
+        const formatDisplay = (d) => d ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+        
+        const formatValue = (d) => {
+            if (!d) return '';
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        };
+
+        function render() {
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const monthName = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+            let html = `
+                <div class="month-header">
+                    <button class="calendar-nav-btn" id="prevMonth"><i class="fas fa-chevron-left"></i></button>
+                    <span>${monthName}</span>
+                    <button class="calendar-nav-btn" id="nextMonth"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="weekdays">
+                    <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+                </div>
+                <div class="days-grid">
+            `;
+
+            for (let i = 0; i < firstDay; i++) html += `<div class="day-cell empty"></div>`;
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const cellDate = new Date(year, month, d);
+                const cellTs = cellDate.getTime();
+                const todayTs = today.getTime();
+                
+                let classes = 'day-cell';
+                if (cellTs < todayTs) classes += ' disabled';
+                
+                const startTs = selectedStart ? selectedStart.getTime() : 0;
+                const endTs = selectedEnd ? selectedEnd.getTime() : 0;
+
+                if (selectedStart && cellTs === startTs) classes += ' selected start-range';
+                if (selectedEnd && cellTs === endTs) classes += ' selected end-range';
+                if (selectedStart && selectedEnd && cellTs > startTs && cellTs < endTs) classes += ' in-range';
+                
+                if (selectedStart && !selectedEnd && cellTs === startTs) {
+                    classes = classes.replace('start-range', '') + ' circle-only';
+                }
+                if (selectedStart && selectedEnd && startTs === endTs && cellTs === startTs) {
+                     classes = classes.replace('start-range', '').replace('end-range', '') + ' circle-only';
+                }
+
+                html += `<div class="${classes}" data-ts="${cellTs}">${d}</div>`;
+            }
+            html += `</div>`;
+            container.innerHTML = html;
+            attachListeners();
+        }
+
+        function attachListeners() {
+            document.getElementById('prevMonth').onclick = (e) => { e.stopPropagation(); currentMonth.setMonth(currentMonth.getMonth() - 1); render(); };
+            document.getElementById('nextMonth').onclick = (e) => { e.stopPropagation(); currentMonth.setMonth(currentMonth.getMonth() + 1); render(); };
+
+            document.querySelectorAll('.day-cell:not(.disabled):not(.empty)').forEach(cell => {
+                cell.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const ts = parseInt(cell.getAttribute('data-ts'));
+                    const clicked = new Date(ts);
+
+                    if (!isSelectingCheckout) {
+                        selectedStart = clicked;
+                        selectedEnd = null;
+                        isSelectingCheckout = true;
+                    } else {
+                        if (clicked < selectedStart) {
+                            selectedStart = clicked;
+                            selectedEnd = null;
+                            isSelectingCheckout = true;
+                        } else {
+                            selectedEnd = clicked;
+                            isSelectingCheckout = false;
+                        }
+                    }
+                    updateHiddenInputs();
+                    render();
+                });
+            });
+        }
+
+        function updateHiddenInputs() {
+            if (selectedStart && selectedEnd) {
+                trigger.value = `${formatDisplay(selectedStart)} - ${formatDisplay(selectedEnd)}`;
+                nativeCheckIn.value = formatValue(selectedStart);
+                nativeCheckOut.value = formatValue(selectedEnd);
+            } else if (selectedStart) {
+                trigger.value = `${formatDisplay(selectedStart)} - Select End Date`;
+                nativeCheckIn.value = formatValue(selectedStart);
+                nativeCheckOut.value = ''; 
+            } else {
+                trigger.value = '';
+                nativeCheckIn.value = '';
+                nativeCheckOut.value = '';
+            }
+        }
+
+        document.getElementById('dpClear').onclick = (e) => {
+            e.stopPropagation();
+            selectedStart = null; selectedEnd = null; isSelectingCheckout = false;
+            updateHiddenInputs(); render();
+        };
+        document.getElementById('dpConfirm').onclick = (e) => { e.stopPropagation(); picker.style.display = 'none'; };
+        trigger.onclick = () => { picker.style.display = 'block'; render(); };
+        
+        document.addEventListener('click', (e) => {
+            if (!picker.contains(e.target) && e.target !== trigger) {
+                picker.style.display = 'none';
+            }
+        });
+        
+        if(nativeCheckIn.value) selectedStart = new Date(nativeCheckIn.value);
+        if(nativeCheckOut.value) selectedEnd = new Date(nativeCheckOut.value);
+        if(selectedStart && selectedEnd) updateHiddenInputs();
+
+    })();
+
+    // --- 3. Location Suggestions (INDIA PRIORITY) ---
+    (function () {
+        const input = document.getElementById("locationInput");
+        const box = document.getElementById("locationSuggestions");
+        const LOCATION_JSON = "names.json"; 
+
+        input.addEventListener('input', async () => {
+            const q = input.value.toLowerCase();
+            if (q.length < 2) { box.classList.add('hidden'); return; }
+
+            try {
+                const res = await fetch(LOCATION_JSON);
+                if(!res.ok) throw new Error();
+                const data = await res.json();
+                
+                // 1. Flatten Data
+                let cities = [];
+                const countries = Array.isArray(data) ? data : [data];
+                
+                countries.forEach(c => {
+                    if(c.states) c.states.forEach(s => {
+                        if(s.cities) s.cities.forEach(city => {
+                            cities.push({
+                                name: city.name,
+                                sub: `${s.name}, ${c.name}`,
+                                cc: c.code || c.iso2 // Capture Country Code
+                            });
+                        });
+                    });
+                });
+
+                // 2. Filter by input
+                let matches = cities.filter(c => c.name.toLowerCase().startsWith(q));
+
+                // 3. SORTING LOGIC: India First, then Alphabetical
+                matches.sort((a, b) => {
+                    const isAIndia = (a.cc === 'IN');
+                    const isBIndia = (b.cc === 'IN');
+
+                    // If A is India and B is not, A comes first (-1)
+                    if (isAIndia && !isBIndia) return -1;
+                    // If B is India and A is not, B comes first (1)
+                    if (!isAIndia && isBIndia) return 1;
+                    
+                    // If both are India or neither are India, sort alphabetically
+                    return a.name.localeCompare(b.name);
+                });
+
+                // 4. Slice and Render
+                matches = matches.slice(0, 10);
+
+                if(matches.length === 0) { box.classList.add('hidden'); return; }
+
+                box.innerHTML = matches.map(m => `
+                    <div class="suggestion-item">
+                        <div>
+                            <b>${m.name}</b>, ${m.sub}
+                        </div>
+                    </div>
+                `).join('');
+                
+                box.classList.remove('hidden');
+
+                box.querySelectorAll('.suggestion-item').forEach((item, idx) => {
+                    item.addEventListener('click', () => {
+                        input.value = matches[idx].name + ", " + matches[idx].sub;
+                        box.classList.add('hidden');
+                    });
+                });
+
+            } catch (e) { console.log("Suggestion error", e); }
+        });
+
+        document.addEventListener('click', (e) => {
+            if(e.target !== input) box.classList.add('hidden');
+        });
+    })();
+
+    // --- 4. Search Action (Auto-Checkout Fix Included) ---
+    document.getElementById('searchHotelBtn').addEventListener('click', () => {
+        const loc = document.getElementById('locationInput').value;
+        let d1 = document.getElementById('checkInDate').value;
+        let d2 = document.getElementById('checkOutDate').value;
+        
+        if(!loc) { alert("Please enter a location."); return; }
+        
+        // Auto-set Checkout to +1 day if missing
+        if (d1 && !d2) {
+            const start = new Date(d1);
+            const nextDay = new Date(start);
+            nextDay.setDate(start.getDate() + 1);
+            const y = nextDay.getFullYear();
+            const m = String(nextDay.getMonth() + 1).padStart(2, '0');
+            const day = String(nextDay.getDate()).padStart(2, '0');
+            d2 = `${y}-${m}-${day}`;
+        }
+
+        if(!d1) { alert("Please select a check-in date."); return; }
+        
+        const formatDateUrl = (iso) => { const p = iso.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; };
+
+        const rooms = document.getElementById('roomsSelect').value;
+        const adults = document.getElementById('adultsSelect').value;
+        const children = document.getElementById('childrenSelect').value;
+        
+        const ageSelects = document.querySelectorAll('.child-age-select');
+        let ages = [];
+        ageSelects.forEach(s => ages.push(s.value));
+        
+        let pax = `${adults}_${children}`;
+        if(ages.length) pax += '_' + ages.join('_');
+
+        const params = new URLSearchParams({
+            cityName: loc,
+            checkinDate: formatDateUrl(d1),
+            checkoutDate: formatDateUrl(d2),
+            Rooms: rooms, pax: pax, Hotel: 'NA'
+        });
+
+        const btn = document.getElementById('searchHotelBtn');
+        const oldText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecting...';
+        
+        setTimeout(() => {
+             window.location.href = `https://www.easemytrip.com/hotel-new/search?${params.toString()}`;
+             setTimeout(() => { btn.innerHTML = oldText; }, 2000);
+        }, 500);
+    });
+</script>
 </body>
 </html>
