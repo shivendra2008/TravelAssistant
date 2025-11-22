@@ -362,8 +362,8 @@
         const confirmBtn = document.getElementById('confirmBtn');
 
         const url1 = "https://mybookings.easemytrip.com/MyBooking/";
-        // UPDATED: Now points directly to the Google Play Store page for Goibibo
-        const url2 = "https://play.google.com/store/apps/details?id=com.goibibo";
+        const url2 = "https://www.goibibo.com/support/mytrips/?noapp=1";
+
 
         // Function to open the confirmation modal and handle navigation
         function handleBookingClick(e, type) {
@@ -383,14 +383,14 @@
                     window.location.href = url1; 
                 }
             } else {
-                // UPDATED MESSAGE: Reflects the redirection to the app store
-                modalMessage.innerHTML = "<strong>Please note:</strong> This action will redirect you to the Google Play Store page for the Goibibo app, where you can manage your Train and Bus bookings.";
+                modalMessage.innerHTML = "<strong>Please note:</strong> This section will take you to the Goibibo login page to view your Bus and Train bookings.";
                 
-                // UPDATED ACTION: Redirects to the Play Store link
-                confirmBtn.onclick = () => {
-                    closeModal();
-                    window.location.href = url2; 
-                }
+                // Open link in new tab to bypass native app redirects, especially for Goibibo
+               confirmBtn.onclick = () => {
+    closeModal();
+    window.location.href = "https://www.goibibo.com/support/mytrips/?noapp=1";
+}
+
             }
             
             modal.classList.add('active');
