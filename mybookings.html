@@ -351,15 +351,23 @@
         const confirmBtn = document.getElementById('confirmBtn');
 
         const url1 = "https://mybookings.easemytrip.com/MyBooking/";
+        // NOTE: URL for Goibibo is updated to open in a new tab/window to bypass native app redirect issues in webview.
         const url2 = "https://www.goibibo.com/mysupport/trips/";
 
         function handleBookingClick(type) {
+            // Check if vibration is supported and execute a short pattern (50ms)
+            if (window.navigator && window.navigator.vibrate) {
+                window.navigator.vibrate(50);
+            }
+
             if (type === 1) {
                 modalMessage.innerHTML = "<strong>Please note:</strong> This section only displays Hotel and Flight bookings. For Bus and Train bookings, please use the other option.";
                 confirmBtn.onclick = () => window.location.href = url1;
             } else {
                 modalMessage.innerHTML = "<strong>Please note:</strong> This section only displays Bus and Train bookings. For Hotel and Flight bookings, please use the other option.";
-                confirmBtn.onclick = () => window.location.href = url2;
+                
+                // --- FIX APPLIED HERE: Open link in new tab to bypass native app redirects ---
+                confirmBtn.onclick = () => window.open(url2, '_blank'); 
             }
             
             modal.classList.add('active');
