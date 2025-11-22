@@ -118,7 +118,9 @@ window.addEventListener("load", () => {
   }
 
   .otp {
-    width:48px; height:52px;
+    width: 100%; /* Fluid width */
+    max-width: 48px; /* Max limit for desktop */
+    height:52px;
     box-sizing:border-box;
     font-size:20px;
     text-align:center;
@@ -127,6 +129,7 @@ window.addEventListener("load", () => {
     border:1px solid var(--thin-border);
     outline:none;
     font-family: ui-monospace, monospace;
+    padding: 0; /* Remove padding to prevent sizing issues */
   }
 
   .otp:focus {
@@ -175,6 +178,22 @@ window.addEventListener("load", () => {
   }
 
   @keyframes spin { to { transform:translate(-50%, -50%) rotate(360deg);} }
+
+  /* Media Query for Mobile Responsiveness */
+  @media (max-width: 400px) {
+    .content {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+    .otp-row {
+        gap: 4px; /* Reduce gap on small screens */
+    }
+    .otp {
+        height: 45px; /* Slightly shorter */
+        font-size: 18px; /* Slightly smaller text */
+        border-radius: 8px;
+    }
+  }
 </style>
 </head>
 
@@ -190,7 +209,9 @@ window.addEventListener("load", () => {
       </div>
 
       <div class="logo">
-        <img src="Logo.png" style="width:102px" >
+        <img src="Logo.png" style="width:102px" onerror="this.style.display='none'">
+        <!-- Fallback icon if image fails -->
+        <i class="fa-solid fa-plane-departure" style="font-size:30px; color:#333; display:none" onload="if(!this.previousElementSibling.complete) this.style.display='block'"></i>
       </div>
     </div>
     <div class="wave"></div>
@@ -393,8 +414,25 @@ sendOtpBtn.addEventListener("click", async ()=>{
       correctUserName = enteredName;
     }
 
-    const otp = await storeOtp(email); 
-    await sendOtpEmail(email, otp); 
+    // --- HARDCODED CREDENTIALS CHECK ---
+    if (email === "xyz@travelassist.com") {
+        // Hardcoded flow for Verification
+        const hardcodedOtp = "123456";
+        const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours expiry for safety
+        otpExpiresAt = expiresAt;
+        
+        // Write to Firestore so the verify logic works
+        await setDoc(doc(db, "otp", email), { code: hardcodedOtp, expiresAt });
+        
+        // Bypass EmailJS
+        console.log("Verification User: Skipping EmailJS. OTP is 123456");
+
+    } else {
+        // Standard flow for all other users
+        const otp = await storeOtp(email); 
+        await sendOtpEmail(email, otp); 
+    }
+    // --- END HARDCODED CHECK ---
 
     statusMsg.textContent = "OTP sent!";
     statusMsg.style.color = "green";
@@ -414,6 +452,7 @@ resendBtn.addEventListener("click", async ()=>{
   if(!currentEmail) return;
 
   try {
+    // Standard logic for resend (could also hardcode if strictness needed, but rarely tested on resend)
     const otp = await storeOtp(currentEmail);
     await sendOtpEmail(currentEmail, otp);
     statusMsg.textContent = "OTP resent!";
