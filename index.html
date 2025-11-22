@@ -262,6 +262,13 @@
             margin-right: 15px;
             color: var(--text-color-dark);
         }
+         @keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
+}
     </style>
 </head>
 <body>
@@ -332,13 +339,13 @@
                         <i class="fas fa-th-large"></i>
                         <span>Category Wise Destinations</span>
                     </button>
+                    <button class="check-item settings">
+                        <i class="fas fa-suitcase-rolling"></i>
+                        <span>My Bookings</span>
+                    </button>
                     <button class="check-item faqs">
                         <i class="fas fa-plus-circle"></i>
                         <span>FAQs</span>
-                    </button>
-                    <button class="check-item settings">
-                        <i class="fas fa-cog"></i>
-                        <span>Account Settings</span>
                     </button>
                 </div>
             </section>
@@ -598,16 +605,39 @@
 
         /* ------------------- EXISTING NAVIGATION ------------------- */
 
-        document.getElementById("searchBtn").addEventListener("click", function() {
-            const city = document.getElementById("cityInput").value;
+       document.getElementById("searchBtn").addEventListener("click", function() {
+    const cityInput = document.getElementById("cityInput");
+    const city = cityInput.value;
 
-            if (city.trim() !== "") {
-                // IMPORTANT: The city passed is the clean city name from the input field
-                window.location.href = `search.html?city=${encodeURIComponent(city.trim())}`;
-            } else {
-                alert("Please enter a city name to search.");
-            }
-        });
+    if (city.trim() !== "") {
+        // IMPORTANT: The city passed is the clean city name from the input field
+        window.location.href = `search.html?city=${encodeURIComponent(city.trim())}`;
+    } else {
+        // 1. Highlight border red
+        cityInput.style.border = "2px solid #ff4757"; 
+        
+        // 2. Change placeholder text
+        cityInput.value = ""; // Clear any empty spaces
+        cityInput.placeholder = "Enter city to continue";
+        
+        // 3. Shake animation (Optional, looks nice)
+        cityInput.style.animation = "shake 0.3s";
+        setTimeout(() => cityInput.style.animation = "", 300);
+
+        // 4. Reset style when user starts typing
+        cityInput.addEventListener('input', function() {
+            this.style.border = ""; // Reset border
+            this.placeholder = "City, landmark, or hotel name"; // Restore original placeholder
+        }, { once: true });
+    }
+    if (window.navigator && window.navigator.vibrate) {
+            window.navigator.vibrate(50);
+        }
+});
+
+// Add this CSS to your <style> block for the shake effect if you want it:
+
+
 
         document.querySelectorAll(".links-grid .link-item").forEach(item => {
             item.addEventListener("click", function() {
@@ -627,7 +657,7 @@
             window.location.href = 'faqs.html';
         });
         document.querySelector('.check-item.settings').addEventListener('click', function() {
-            window.location.href = 'profile.html';
+            window.location.href = 'mybookings.html';
         });
         document.getElementById("cityInput").addEventListener("keydown", function(event) {
             if (event.key === "Enter") {
