@@ -7,6 +7,36 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
+        /* --- History & Icon Styles --- */
+.history-header {
+    padding: 8px 15px;
+    font-size: 12px;
+    color: #888;
+    background: #f9f9f9;
+    border-bottom: 1px solid #eee;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.suggest-content-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Icon inside the suggestion list */
+.suggest-icon {
+    color: #aaa;
+    font-size: 14px;
+    width: 20px;
+    text-align: center;
+}
+
+/* Highlight history icon differently */
+.suggest-item.history-item .suggest-icon {
+    color: var(--secondary-color); /* Use your teal color */
+}
         /* Variables for easy color adjustments */
         :root {
             --primary-color: #f7b949; /* The orange/yellow color */
@@ -53,8 +83,9 @@
         }
 
         .header-text {
-            margin-bottom: 20px;
-        }
+    margin-bottom: 20px;
+    padding-top: 0; 
+}
 
         .header h1 {
             font-size: 28px;
@@ -70,23 +101,36 @@
         }
 
         /* Profile Icon */
-        .profile-icon {
-            position: absolute;
-            top: 30px;
-            right: 20px;
-            background-color: rgba(0, 0, 0, 0.15); 
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+      /* Profile Icon - Top Right */
+.profile-icon {
+    position: absolute;
+    top: 30px;      /* Vertical spacing */
+    right: 20px;    /* MOVED TO RIGHT */
+    left: auto;     /* Ensure left is unset */
+    background-color: rgba(0, 0, 0, 0.1); 
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none; /* No underline */
+    z-index: 10;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
 
-        .profile-icon i {
-            font-size: 20px;
-            color: var(--text-color-dark);
-        }
+.profile-icon:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.profile-icon i {
+    font-size: 18px;
+    color: var(--text-color-dark);
+}
+
+/* Reset Header Text (No extra padding needed for right-aligned icon) */
+
 
         /* Search Area */
         .search-prompt {
@@ -268,38 +312,41 @@
   50% { transform: translateX(5px); }
   75% { transform: translateX(-5px); }
   100% { transform: translateX(0); }
+  
 }
     </style>
 </head>
 <body>
     <div class="container">
-        <header class="header">
-            <div class="header-text">
-                <h1>Welcome,</h1>   
-                <h2 id="userNameDisplay">Loading...</h2>
-            </div>
-            
+       <header class="header">
+    <a href="profile.html" class="profile-icon">
+        <i class="fas fa-user"></i>
+    </a>
 
-            <p class="search-prompt">Search for your favourite place</p>
-            
-            <div class="search-bar-wrapper"> 
-                <div class="search-bar">
-                    <input 
-                        type="text" 
-                        id="cityInput" 
-                        placeholder="Search here"
-                        autocomplete="off" 
-                        autocorrect="off" 
-                        spellcheck="false"
-                    >
-                    <button class="search-button" id="searchBtn">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-                <div id="citySuggestions" class="suggest-box hidden">
-                    </div>
-            </div>
-            </header>
+    <div class="header-text">
+        <h1>Welcome,</h1>   
+        <h2 id="userNameDisplay">Loading...</h2>
+    </div>
+    
+    <p class="search-prompt">Search for your favourite place</p>
+    
+    <div class="search-bar-wrapper"> 
+        <div class="search-bar">
+            <input 
+                type="text" 
+                id="cityInput" 
+                placeholder="Search here"
+                autocomplete="off" 
+                autocorrect="off" 
+                spellcheck="false"
+            >
+            <button class="search-button" id="searchBtn">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+        <div id="citySuggestions" class="suggest-box hidden"></div>
+    </div>
+</header>
 
         <main class="main-content">
             <section class="quick-links">
@@ -354,327 +401,364 @@
 
     <script type="module">
 
-        /* ------------------- FIREBASE IMPORTS ------------------- */
-        // Only importing necessary Firestore modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    /* ------------------- FIREBASE IMPORTS ------------------- */
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        /* ------------------- CONFIG ------------------- */
-        const hardcodedFirebaseConfig = {
-            apiKey: "AIzaSyDtkaHB2ER0RAOpsbW-Eg65wSe7G4Uwrkw",
-            authDomain: "travelassistant-1baed.firebaseapp.com",
-            projectId: "travelassistant-1baed",
-            storageBucket: "travelassistant-1baed.firebasestorage.app",
-            messagingSenderId: "67570490262",
-            appId: "1:67570490262:web:7164a2d838b5517a325bb7"
-        };
-        const appId = "travelassistant-1baed";
-        const firebaseConfig = hardcodedFirebaseConfig;
+    /* ------------------- CONFIG ------------------- */
+    const hardcodedFirebaseConfig = {
+        apiKey: "AIzaSyDtkaHB2ER0RAOpsbW-Eg65wSe7G4Uwrkw",
+        authDomain: "travelassistant-1baed.firebaseapp.com",
+        projectId: "travelassistant-1baed",
+        storageBucket: "travelassistant-1baed.firebasestorage.app",
+        messagingSenderId: "67570490262",
+        appId: "1:67570490262:web:7164a2d838b5517a325bb7"
+    };
+    const appId = "travelassistant-1baed";
+    const firebaseConfig = hardcodedFirebaseConfig;
 
-        /* ------------------- INITIALIZE FIREBASE ------------------- */
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    /* ------------------- INITIALIZE FIREBASE ------------------- */
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-        /* ------------------- USER NAME DISPLAY LOGIC ------------------- */
-        const nameEl = document.getElementById("userNameDisplay"); 
+    /* ------------------- USER NAME DISPLAY LOGIC ------------------- */
+    const nameEl = document.getElementById("userNameDisplay"); 
 
-        function loadUserName() {
-            const userUid = localStorage.getItem('userUid');
-            const userEmail = localStorage.getItem('userEmail');
+    function loadUserName() {
+        const userUid = localStorage.getItem('userUid');
+        const userEmail = localStorage.getItem('userEmail');
 
-            if (!userUid || !userEmail) {
-                nameEl.textContent = "Guest";
-                return;
-            }
-
-            const profileRef = doc(db, "artifacts", appId, "users", userUid, "profile", "data");
-            
-            getDoc(profileRef)
-                .then(snap => {
-                    let displayedName = userEmail.split("@")[0]; // Default to email prefix
-                    if (snap.exists()) {
-                        const fetchedName = snap.data().name; 
-                        displayedName = fetchedName || userEmail.split("@")[0];
-                    }
-                    nameEl.textContent = displayedName;
-                })
-                .catch(e => {
-                    console.error("Error loading profile:", e);
-                    nameEl.textContent = "Traveler";
-                });
+        if (!userUid || !userEmail) {
+            nameEl.textContent = "Guest";
+            return;
         }
+
+        const profileRef = doc(db, "artifacts", appId, "users", userUid, "profile", "data");
         
-        /* ------------------- CITY AUTOSUGGEST LOGIC ------------------- */
-
-        let allCities = [];
-
-        /**
-         * Fetches city data from JSON files and combines/normalizes them.
-         */
-        async function loadCityData() {
-            try {
-                // Fetch both files concurrently. These files must be accessible at the root.
-                const [res1, res2] = await Promise.all([
-                    fetch('./cities1.json'),
-                    fetch('./cities2.json')
-                ]);
-
-                if (!res1.ok || !res2.ok) {
-                    // Throw error if files are not found (404) or failed (500)
-                    throw new Error('One or both city data files failed to load. Ensure cities1.json and cities2.json are in the same directory.');
+        getDoc(profileRef)
+            .then(snap => {
+                let displayedName = userEmail.split("@")[0]; 
+                if (snap.exists()) {
+                    const fetchedName = snap.data().name; 
+                    displayedName = fetchedName || userEmail.split("@")[0];
                 }
+                nameEl.textContent = displayedName;
+            })
+            .catch(e => {
+                console.error("Error loading profile:", e);
+                nameEl.textContent = "Traveler";
+            });
+    }
+    
+    /* ------------------- CITY AUTOSUGGEST & HISTORY LOGIC ------------------- */
 
-                const cities1Data = await res1.json();
-                const cities2Data = await res2.json();
+    let allCities = [];
+    const HISTORY_KEY = 'travel_search_history';
+    const MAX_HISTORY = 5; // How many recent searches to show
 
-                const citySet = new Set();
-                const results = [];
+    /**
+     * Fetches city data from JSON files.
+     */
+    async function loadCityData() {
+        try {
+            const [res1, res2] = await Promise.all([
+                fetch('./cities1.json'),
+                fetch('./cities2.json')
+            ]);
 
-                // 1. Process cities1.json (Priority 1)
-                for (const state in cities1Data) {
-                    if (cities1Data.hasOwnProperty(state)) {
-                        cities1Data[state].forEach(city => {
-                            const normalizedCity = city.toLowerCase().trim();
-                            if (!citySet.has(normalizedCity)) {
-                                citySet.add(normalizedCity);
-                                results.push({
-                                    city: city.trim(),
-                                    state: state.trim(),
-                                    display: `${city.trim()}, ${state.trim()}`
-                                });
-                            }
-                        });
-                    }
-                }
+            if (!res1.ok || !res2.ok) throw new Error('City data load failed');
 
-                // 2. Process cities2.json (Priority 2 - skip duplicates)
-                cities2Data.forEach(item => {
-                    const city = item.name;
-                    const subcountry = item.subcountry;
-                    
-                    if (city && subcountry) {
+            const cities1Data = await res1.json();
+            const cities2Data = await res2.json();
+
+            const citySet = new Set();
+            const results = [];
+
+            // 1. Process cities1.json
+            for (const state in cities1Data) {
+                if (cities1Data.hasOwnProperty(state)) {
+                    cities1Data[state].forEach(city => {
                         const normalizedCity = city.toLowerCase().trim();
-                        // Only add if not already added by cities1Data (ensures priority)
                         if (!citySet.has(normalizedCity)) {
                             citySet.add(normalizedCity);
                             results.push({
                                 city: city.trim(),
-                                state: subcountry.trim(),
-                                display: `${city.trim()}, ${subcountry.trim()}`
+                                state: state.trim(),
+                                type: 'suggestion' // Mark as prediction
                             });
                         }
+                    });
+                }
+            }
+
+            // 2. Process cities2.json
+            cities2Data.forEach(item => {
+                const city = item.name;
+                const subcountry = item.subcountry;
+                if (city && subcountry) {
+                    const normalizedCity = city.toLowerCase().trim();
+                    if (!citySet.has(normalizedCity)) {
+                        citySet.add(normalizedCity);
+                        results.push({
+                            city: city.trim(),
+                            state: subcountry.trim(),
+                            type: 'suggestion'
+                        });
                     }
-                });
-
-                allCities = results;
-                console.log(`Loaded and combined ${allCities.length} unique cities for search.`);
-
-            } catch (error) {
-                console.error('Error loading city data:', error);
-                const cityInputEl = document.getElementById('cityInput');
-                cityInputEl.placeholder = "Search (Data load failed)";
-            }
-        }
-
-        /**
-         * Filters the combined city list based on user input (must start with query).
-         * @param {string} query The user's input string.
-         */
-        function filterCities(query) {
-            const q = query.trim().toLowerCase();
-            if (q.length === 0) return [];
-
-            return allCities.filter(cityObj => {
-                // City name MUST START with the query string (case-insensitive)
-                return cityObj.city.toLowerCase().startsWith(q);
-            }).slice(0, 10); // Limit results to max 10
-        }
-
-        const cityInputEl = document.getElementById('cityInput');
-        const suggestionsBox = document.getElementById('citySuggestions');
-
-        function escapeHtml(s) {
-            return (s || '').replace(/[&<>\"']/g, function(c) {
-                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+                }
             });
+
+            allCities = results;
+            console.log(`Loaded ${allCities.length} cities.`);
+
+        } catch (error) {
+            console.error('Error loading city data:', error);
         }
-
-        function removeSuggestBox() {
-            suggestionsBox.classList.add('hidden');
-            suggestionsBox.innerHTML = '';
-        }
-
-        function showSuggestions(list) {
-            removeSuggestBox(); 
-            if (!list || list.length === 0) return;
-
-            suggestionsBox.innerHTML = '';
-            suggestionsBox.classList.remove('hidden');
-
-            list.forEach((cityObj, index) => {
-                const item = document.createElement('div');
-                item.className = 'suggest-item';
-                item.dataset.cityname = cityObj.city; // Store the city name for selection
-                item.dataset.index = index; 
-
-                // Display Format: City Name, State/Subcountry Name
-                item.innerHTML = `
-                    <div class="suggest-text">${escapeHtml(cityObj.city)}</div>
-                    <div class="suggest-subtext">${escapeHtml(cityObj.state)}</div>
-                `;
-
-                item.addEventListener('click', () => {
-                    cityInputEl.value = cityObj.city;
-                    removeSuggestBox();
-                    document.getElementById('searchBtn').focus();
-                });
-                suggestionsBox.appendChild(item);
-            });
-        }
-
-        let debounceTimer = null;
-
-        cityInputEl.addEventListener('input', () => {
-            clearTimeout(debounceTimer);
-            const query = cityInputEl.value.trim();
-            if (query.length < 1) { 
-                removeSuggestBox();
-                return;
-            }
-
-            debounceTimer = setTimeout(() => {
-                const results = filterCities(query);
-                showSuggestions(results);
-            }, 180); // Debounce
-        });
-
-        // Close suggestions when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.search-bar-wrapper') && !suggestionsBox.classList.contains('hidden')) {
-                removeSuggestBox();
-            }
-        });
-
-        // Keyboard navigation (Up/Down/Enter)
-        cityInputEl.addEventListener("keydown", function(event) {
-            const items = suggestionsBox.querySelectorAll('.suggest-item');
-            if (suggestionsBox.classList.contains('hidden') || items.length === 0) {
-                if (event.key === "Enter") {
-                    document.getElementById("searchBtn").click();
-                }
-                return;
-            }
-
-            let activeItem = suggestionsBox.querySelector('.suggest-item.active');
-            let nextActive = null;
-
-            if (event.key === "ArrowDown") {
-                event.preventDefault(); // Prevent cursor movement
-                if (!activeItem) {
-                    nextActive = items[0];
-                } else {
-                    activeItem.classList.remove('active');
-                    nextActive = activeItem.nextElementSibling || items[0];
-                }
-            } else if (event.key === "ArrowUp") {
-                event.preventDefault(); // Prevent cursor movement
-                if (!activeItem) {
-                    nextActive = items[items.length - 1];
-                } else {
-                    activeItem.classList.remove('active');
-                    nextActive = activeItem.previousElementSibling || items[items.length - 1];
-                }
-            } else if (event.key === "Enter") {
-                if (activeItem) {
-                    event.preventDefault(); 
-                    activeItem.click(); // Select the city
-                    return;
-                }
-            } else if (event.key === "Escape") {
-                removeSuggestBox();
-            }
-
-            if (nextActive) {
-                if (activeItem) activeItem.classList.remove('active'); 
-                nextActive.classList.add('active');
-                cityInputEl.value = nextActive.dataset.cityname; // Update input value
-                nextActive.scrollIntoView({ block: 'nearest' });
-            }
-        });
-
-
-        /* ------------------- EXISTING NAVIGATION ------------------- */
-
-       document.getElementById("searchBtn").addEventListener("click", function() {
-    const cityInput = document.getElementById("cityInput");
-    const city = cityInput.value;
-
-    if (city.trim() !== "") {
-        // IMPORTANT: The city passed is the clean city name from the input field
-        window.location.href = `search.html?city=${encodeURIComponent(city.trim())}`;
-    } else {
-        // 1. Highlight border red
-        cityInput.style.border = "2px solid #ff4757"; 
-        
-        // 2. Change placeholder text
-        cityInput.value = ""; // Clear any empty spaces
-        cityInput.placeholder = "Enter city to continue";
-        
-        // 3. Shake animation (Optional, looks nice)
-        cityInput.style.animation = "shake 0.3s";
-        setTimeout(() => cityInput.style.animation = "", 300);
-
-        // 4. Reset style when user starts typing
-        cityInput.addEventListener('input', function() {
-            this.style.border = ""; // Reset border
-            this.placeholder = "City, landmark, or hotel name"; // Restore original placeholder
-        }, { once: true });
     }
-    if (window.navigator && window.navigator.vibrate) {
-            window.navigator.vibrate(50);
+
+    /**
+     * HISTORY MANAGER
+     */
+    function getSearchHistory() {
+        const stored = localStorage.getItem(HISTORY_KEY);
+        return stored ? JSON.parse(stored) : [];
+    }
+
+    function saveToHistory(cityName) {
+        if (!cityName) return;
+        let history = getSearchHistory();
+        
+        // Remove duplicates (case insensitive)
+        history = history.filter(item => item.toLowerCase() !== cityName.toLowerCase());
+        
+        // Add to beginning
+        history.unshift(cityName);
+        
+        // Limit size
+        if (history.length > MAX_HISTORY) history.pop();
+        
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    }
+
+    /**
+     * FILTERING
+     */
+    function filterCities(query) {
+        const q = query.trim().toLowerCase();
+        if (q.length === 0) return [];
+
+        return allCities.filter(cityObj => {
+            return cityObj.city.toLowerCase().startsWith(q);
+        }).slice(0, 10); 
+    }
+
+    const cityInputEl = document.getElementById('cityInput');
+    const suggestionsBox = document.getElementById('citySuggestions');
+
+    function escapeHtml(s) {
+        return (s || '').replace(/[&<>\"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function removeSuggestBox() {
+        suggestionsBox.classList.add('hidden');
+        suggestionsBox.innerHTML = '';
+    }
+
+    /**
+     * Renders suggestions. 
+     * @param {Array} list - Array of objects.
+     * @param {Boolean} isHistoryMode - If true, adds a header and specific styling.
+     */
+    function showSuggestions(list, isHistoryMode = false) {
+        removeSuggestBox(); 
+        if (!list || list.length === 0) return;
+
+        suggestionsBox.classList.remove('hidden');
+
+        // Add "Recent Searches" header if in history mode
+        if (isHistoryMode) {
+            const header = document.createElement('div');
+            header.className = 'history-header';
+            header.textContent = 'Recent Searches';
+            suggestionsBox.appendChild(header);
         }
-});
 
-// Add this CSS to your <style> block for the shake effect if you want it:
+        list.forEach((itemData, index) => {
+            const item = document.createElement('div');
+            item.className = isHistoryMode ? 'suggest-item history-item' : 'suggest-item';
+            
+            // If it's history, itemData is just a string (city name). 
+            // If it's prediction, itemData is an object {city, state}.
+            const cityName = isHistoryMode ? itemData : itemData.city;
+            const subText = isHistoryMode ? 'History' : itemData.state;
+            const iconClass = isHistoryMode ? 'fa-clock' : 'fa-location-dot';
 
+            item.dataset.cityname = cityName;
+            item.dataset.index = index; 
 
+            item.innerHTML = `
+                <div class="suggest-content-wrapper">
+                    <i class="fas ${iconClass} suggest-icon"></i>
+                    <div>
+                        <div class="suggest-text">${escapeHtml(cityName)}</div>
+                        <div class="suggest-subtext">${escapeHtml(subText)}</div>
+                    </div>
+                </div>
+            `;
 
-        document.querySelectorAll(".links-grid .link-item").forEach(item => {
-            item.addEventListener("click", function() {
-                const file = this.getAttribute("data-file");
-                if (file) window.location.href = file;
+            item.addEventListener('click', () => {
+                cityInputEl.value = cityName;
+                saveToHistory(cityName); // Refresh timestamp/order in history
+                removeSuggestBox();
+                // Trigger search immediately on click
+                performSearch(cityName);
             });
+            suggestionsBox.appendChild(item);
         });
-        
-        
-        document.querySelector('.check-item.category').addEventListener('click', function() {
-            window.location.href = 'destinations.html';
-        });
-        document.querySelector('.check-item.travel').addEventListener('click', function() {
-            window.location.href = 'travel-checklist.html';
-        });
-        document.querySelector('.check-item.faqs').addEventListener('click', function() {
-            window.location.href = 'faqs.html';
-        });
-        document.querySelector('.check-item.settings').addEventListener('click', function() {
-            window.location.href = 'mybookings.html';
-        });
-        document.getElementById("cityInput").addEventListener("keydown", function(event) {
-            if (event.key === "Enter") {
-                // If enter is pressed without selecting an item, the search button is clicked
-                if (!suggestionsBox.querySelector('.suggest-item.active')) {
-                    document.getElementById("searchBtn").click();
-                }
+    }
+
+    let debounceTimer = null;
+
+    // 1. INPUT EVENT: Typing logic
+    cityInputEl.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        const query = cityInputEl.value.trim();
+
+        if (query.length < 1) { 
+            // If user clears input, show history again
+            const history = getSearchHistory();
+            if (history.length > 0) showSuggestions(history, true);
+            else removeSuggestBox();
+            return;
+        }
+
+        debounceTimer = setTimeout(() => {
+            const results = filterCities(query);
+            showSuggestions(results, false); // false = Prediction mode
+        }, 180); 
+    });
+
+    // 2. FOCUS EVENT: Show history on click
+    cityInputEl.addEventListener('focus', () => {
+        const query = cityInputEl.value.trim();
+        if (query.length === 0) {
+            const history = getSearchHistory();
+            if (history.length > 0) {
+                showSuggestions(history, true); // true = History mode
             }
+        }
+    });
+
+    // Close suggestions when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-bar-wrapper') && !suggestionsBox.classList.contains('hidden')) {
+            removeSuggestBox();
+        }
+    });
+
+    // Keyboard navigation
+    cityInputEl.addEventListener("keydown", function(event) {
+        const items = suggestionsBox.querySelectorAll('.suggest-item');
+        if (suggestionsBox.classList.contains('hidden') || items.length === 0) {
+            if (event.key === "Enter") {
+                document.getElementById("searchBtn").click();
+            }
+            return;
+        }
+
+        let activeItem = suggestionsBox.querySelector('.suggest-item.active');
+        let nextActive = null;
+
+        if (event.key === "ArrowDown") {
+            event.preventDefault();
+            if (!activeItem) nextActive = items[0];
+            else {
+                activeItem.classList.remove('active');
+                nextActive = activeItem.nextElementSibling;
+                // Skip header if it exists
+                if (nextActive && nextActive.classList.contains('history-header')) {
+                    nextActive = nextActive.nextElementSibling;
+                }
+                if (!nextActive) nextActive = items[0]; // Loop back
+            }
+        } else if (event.key === "ArrowUp") {
+            event.preventDefault();
+            if (!activeItem) nextActive = items[items.length - 1];
+            else {
+                activeItem.classList.remove('active');
+                nextActive = activeItem.previousElementSibling;
+                if (nextActive && nextActive.classList.contains('history-header')) {
+                     // Skip header going up
+                    nextActive = null; 
+                }
+                if (!nextActive) nextActive = items[items.length - 1];
+            }
+        } else if (event.key === "Enter") {
+            if (activeItem) {
+                event.preventDefault(); 
+                activeItem.click(); 
+                return;
+            }
+        } else if (event.key === "Escape") {
+            removeSuggestBox();
+        }
+
+        if (nextActive) {
+            if (activeItem) activeItem.classList.remove('active'); 
+            nextActive.classList.add('active');
+            cityInputEl.value = nextActive.dataset.cityname; 
+            nextActive.scrollIntoView({ block: 'nearest' });
+        }
+    });
+
+
+    /* ------------------- SEARCH & NAVIGATION ------------------- */
+
+    function performSearch(city) {
+        if (city && city.trim() !== "") {
+            saveToHistory(city.trim()); // Save to local storage
+            window.location.href = `search.html?city=${encodeURIComponent(city.trim())}`;
+        } else {
+            // UI Feedback for empty search
+            cityInputEl.style.border = "2px solid #ff4757"; 
+            cityInputEl.placeholder = "Enter city to continue";
+            cityInputEl.style.animation = "shake 0.3s";
+            setTimeout(() => cityInputEl.style.animation = "", 300);
+            
+            if (window.navigator && window.navigator.vibrate) {
+                window.navigator.vibrate(50);
+            }
+
+            cityInputEl.addEventListener('input', function() {
+                this.style.border = ""; 
+                this.placeholder = "Search here"; 
+            }, { once: true });
+        }
+    }
+
+    document.getElementById("searchBtn").addEventListener("click", function() {
+        performSearch(document.getElementById("cityInput").value);
+    });
+
+    // Link Handling
+    document.querySelectorAll(".links-grid .link-item").forEach(item => {
+        item.addEventListener("click", function() {
+            const file = this.getAttribute("data-file");
+            if (file) window.location.href = file;
         });
+    });
+    
+    document.querySelector('.check-item.category').addEventListener('click', () => window.location.href = 'destinations.html');
+    document.querySelector('.check-item.travel').addEventListener('click', () => window.location.href = 'travel-checklist.html');
+    document.querySelector('.check-item.faqs').addEventListener('click', () => window.location.href = 'faqs.html');
+    document.querySelector('.check-item.settings').addEventListener('click', () => window.location.href = 'mybookings.html');
 
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+        loadUserName();
+        loadCityData(); 
+    });
 
-        // Initialize user name and city data once the script loads
-        window.addEventListener('DOMContentLoaded', () => {
-            loadUserName();
-            loadCityData(); 
-        });
-
-    </script>
+</script>
 </body>
 </html>
