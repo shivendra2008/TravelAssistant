@@ -24,6 +24,7 @@
             background-color: var(--background-color);
             margin: 0;
             color: var(--text-color);
+            overflow-x: hidden; /* Prevent horizontal scroll */
         }
 
         .container {
@@ -32,6 +33,24 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            width: 100%;
+        }
+
+        /* --- Shake Animation for Errors (NEW) --- */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-5px); }
+            40% { transform: translateX(5px); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
+            100% { transform: translateX(0); }
+        }
+
+        .shake {
+            animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+            transform: translate3d(0, 0, 0);
+            backface-visibility: hidden;
+            perspective: 1000px;
         }
 
         /* --- Header --- */
@@ -91,6 +110,7 @@
             border: 1px solid #eee;
             width: 340px; /* Fixed width for single month */
             max-width: 90vw;
+            transform-origin: top; /* For shake */
         }
         
         /* Mobile adjustment */
@@ -128,7 +148,7 @@
         .days-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 4px; /* Increased gap slightly */
+            gap: 4px;
         }
 
         .day-cell {
@@ -180,7 +200,7 @@
             padding-top: 10px;
             border-top: 1px solid #eee;
             display: flex;
-            justify-content: space-between; /* Changed to separate clear/confirm */
+            justify-content: space-between;
             align-items: center;
         }
 
@@ -194,6 +214,15 @@
         }
         .dp-btn-cancel { background: transparent; color: #777; font-weight: normal; padding: 8px 0; }
         .dp-btn-confirm { background: var(--primary-color); color: white; }
+
+        /* --- Datepicker Error Message (NEW) --- */
+        .datepicker-error {
+            color: #ff4757;
+            font-size: 13px;
+            font-weight: 600;
+            margin: 0 10px; /* Spacing */
+            text-align: left;
+        }
 
         /* --- Guest & Button Styles --- */
         .guest-input-group {
@@ -235,6 +264,50 @@
         .suggestion-item { padding: 10px; cursor: pointer; display: flex; justify-content: space-between; }
         .suggestion-item:hover { background: #f3f3f3; }
 
+        /* --- MODERN ALERT MODAL STYLES (Kept for Location Validation) --- */
+        .custom-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6); 
+            backdrop-filter: blur(4px); 
+            display: none; 
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .modal-content {
+            background: white;
+            width: 80%;
+            max-width: 320px;
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal-icon {
+            width: 60px; height: 60px; background: #ffe5e5; color: #ff4757;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 28px; margin: 0 auto 15px auto;
+        }
+
+        .modal-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; color: #333; }
+        .modal-msg { font-size: 15px; color: #666; margin-bottom: 20px; line-height: 1.4; }
+        .modal-btn { 
+            background: #222; color: white; border: none; padding: 12px; width: 100%; 
+            border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+        }
+        .modal-btn:active { transform: scale(0.98); }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -242,8 +315,8 @@
 <div class="container">
     <header class="search-header">
         <div class="top-bar">
-            <i class="fas fa-arrow-left" onclick="window.location.href='index.html'"></i>
-            <h1 id="pageTitle">Find Hotels</h1>
+            <i style="color: #000;" class="fas fa-arrow-left" onclick="window.location.href='index.html'"></i>
+            <h1 style="color: #000;" id="pageTitle">Find Hotels</h1>
             <div style="width: 24px;"></div>
         </div>
     </header>
@@ -256,7 +329,7 @@
             <div id="locationSuggestions" class="hidden"></div>
         </div>
 
-        <div class="search-form-group">
+        <div class="search-form-group" id="dateInputGroup">
             <label>Check-in & Check-out</label>
             <input type="text" id="dateRangeTrigger" placeholder="Select Dates" readonly>
             <i class="input-icon fas fa-calendar-alt"></i>
@@ -269,6 +342,7 @@
                 
                 <div class="datepicker-footer">
                     <button class="dp-btn dp-btn-cancel" id="dpClear">Clear</button>
+                    <span id="datepickerError" class="datepicker-error"></span> 
                     <button class="dp-btn dp-btn-confirm" id="dpConfirm">Done</button>
                 </div>
             </div>
@@ -306,7 +380,31 @@
     </main>
 </div>
 
+<div id="alertModal" class="custom-modal">
+    <div class="modal-content">
+        <div class="modal-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="modal-title">Missing Info</div>
+        <div class="modal-msg">Placeholder text</div>
+        <button class="modal-btn" onclick="closeAlert()">Okay, Got it</button>
+    </div>
+</div>
+
 <script>
+    // --- ALERT LOGIC (FOR LOCATION ONLY) ---
+    function showAlert(titleText, msgText) {
+        document.querySelector('.modal-title').innerText = titleText;
+        document.querySelector('.modal-msg').innerText = msgText;
+        document.getElementById("alertModal").style.display = "flex";
+        // Vibrate for haptic feedback
+        if (window.navigator.vibrate) window.navigator.vibrate(200); 
+    }
+
+    function closeAlert() {
+        document.getElementById("alertModal").style.display = "none";
+    }
+    
     // --- 1. Initialization & Dropdowns ---
     document.addEventListener('DOMContentLoaded', () => {
         const roomsSelect = document.getElementById('roomsSelect');
@@ -347,14 +445,15 @@
         });
     });
 
-    // --- 2. Date Picker Logic (Robust Version) ---
+    // --- 2. Date Picker Logic (Custom Validation Added) ---
     (function() {
         const trigger = document.getElementById('dateRangeTrigger');
         const picker = document.getElementById('custom-datepicker');
         const nativeCheckIn = document.getElementById('checkInDate');
         const nativeCheckOut = document.getElementById('checkOutDate');
         const container = document.getElementById('singleMonthContainer');
-        
+        const errorEl = document.getElementById('datepickerError'); // NEW
+
         let today = new Date();
         today.setHours(0,0,0,0);
         let currentMonth = new Date(today); 
@@ -373,6 +472,8 @@
         };
 
         function render() {
+            // ... (calendar rendering logic remains the same) ...
+            
             const year = currentMonth.getFullYear();
             const month = currentMonth.getMonth();
             const firstDay = new Date(year, month, 1).getDay();
@@ -420,6 +521,9 @@
             html += `</div>`;
             container.innerHTML = html;
             attachListeners();
+            // Clear error message when rendering a new month
+            errorEl.textContent = ''; 
+            picker.classList.remove('shake');
         }
 
         function attachListeners() {
@@ -467,14 +571,60 @@
                 nativeCheckOut.value = '';
             }
         }
+        
+        // --- NEW VALIDATION LOGIC FOR DATEPICKER CONFIRM ---
+        function validateAndConfirm() {
+            errorEl.textContent = '';
+            picker.classList.remove('shake');
 
+            let missing = [];
+            if (!selectedStart) missing.push("Check-in Date");
+            if (!selectedEnd) missing.push("Check-out Date");
+            
+            if (missing.length > 0) {
+                // Determine specific message
+                let msg = "";
+                if (missing.length === 1) {
+                    msg = `Please select a ${missing[0]}.`;
+                } else {
+                    msg = `Please select Check-in and Check-out Dates.`;
+                }
+
+                errorEl.textContent = msg;
+                picker.classList.add('shake'); // Shake the datepicker UI
+                if (window.navigator.vibrate) window.navigator.vibrate(100); 
+                return;
+            }
+            
+            // Validation: Check-out must be after Check-in (for 1 night minimum)
+            if (selectedStart.getTime() === selectedEnd.getTime()) {
+                 errorEl.textContent = "Check-out must be after Check-in.";
+                 picker.classList.add('shake');
+                 if (window.navigator.vibrate) window.navigator.vibrate(100);
+                 return;
+            }
+
+            // All valid, close picker
+            picker.style.display = 'none';
+        }
+        
         document.getElementById('dpClear').onclick = (e) => {
             e.stopPropagation();
             selectedStart = null; selectedEnd = null; isSelectingCheckout = false;
             updateHiddenInputs(); render();
+            errorEl.textContent = ''; 
+            picker.classList.remove('shake');
         };
-        document.getElementById('dpConfirm').onclick = (e) => { e.stopPropagation(); picker.style.display = 'none'; };
-        trigger.onclick = () => { picker.style.display = 'block'; render(); };
+        
+        document.getElementById('dpConfirm').onclick = (e) => { 
+            e.stopPropagation(); 
+            validateAndConfirm(); 
+        };
+        
+        trigger.onclick = () => { 
+            picker.style.display = 'block'; 
+            render(); 
+        };
         
         document.addEventListener('click', (e) => {
             if (!picker.contains(e.target) && e.target !== trigger) {
@@ -489,6 +639,7 @@
     })();
 
     // --- 3. Location Suggestions (INDIA PRIORITY) ---
+    // (This section remains unchanged)
     (function () {
         const input = document.getElementById("locationInput");
         const box = document.getElementById("locationSuggestions");
@@ -499,11 +650,12 @@
             if (q.length < 2) { box.classList.add('hidden'); return; }
 
             try {
+                // NOTE: This assumes 'names.json' exists in the same directory.
+                // In a real app, this would be an API call.
                 const res = await fetch(LOCATION_JSON);
                 if(!res.ok) throw new Error();
                 const data = await res.json();
                 
-                // 1. Flatten Data
                 let cities = [];
                 const countries = Array.isArray(data) ? data : [data];
                 
@@ -513,30 +665,24 @@
                             cities.push({
                                 name: city.name,
                                 sub: `${s.name}, ${c.name}`,
-                                cc: c.code || c.iso2 // Capture Country Code
+                                cc: c.code || c.iso2
                             });
                         });
                     });
                 });
 
-                // 2. Filter by input
                 let matches = cities.filter(c => c.name.toLowerCase().startsWith(q));
 
-                // 3. SORTING LOGIC: India First, then Alphabetical
                 matches.sort((a, b) => {
                     const isAIndia = (a.cc === 'IN');
                     const isBIndia = (b.cc === 'IN');
 
-                    // If A is India and B is not, A comes first (-1)
                     if (isAIndia && !isBIndia) return -1;
-                    // If B is India and A is not, B comes first (1)
                     if (!isAIndia && isBIndia) return 1;
                     
-                    // If both are India or neither are India, sort alphabetically
                     return a.name.localeCompare(b.name);
                 });
 
-                // 4. Slice and Render
                 matches = matches.slice(0, 10);
 
                 if(matches.length === 0) { box.classList.add('hidden'); return; }
@@ -558,7 +704,7 @@
                     });
                 });
 
-            } catch (e) { console.log("Suggestion error", e); }
+            } catch (e) { console.log("Suggestion error: Assuming names.json is missing or invalid.", e); }
         });
 
         document.addEventListener('click', (e) => {
@@ -566,27 +712,62 @@
         });
     })();
 
-    // --- 4. Search Action (Auto-Checkout Fix Included) ---
+    // --- 4. Search Action (VALIDATION SPLIT: Dates check removed, Location check remains) ---
+    // --- 4. Search Action (Mixed Validation: Modal for Major missing, Shake for Partial Dates) ---
     document.getElementById('searchHotelBtn').addEventListener('click', () => {
-        const loc = document.getElementById('locationInput').value;
+        const loc = document.getElementById('locationInput').value.trim();
+        const dateInputGroup = document.getElementById('dateInputGroup');
         let d1 = document.getElementById('checkInDate').value;
         let d2 = document.getElementById('checkOutDate').value;
         
-        if(!loc) { alert("Please enter a location."); return; }
-        
-        // Auto-set Checkout to +1 day if missing
-        if (d1 && !d2) {
-            const start = new Date(d1);
-            const nextDay = new Date(start);
-            nextDay.setDate(start.getDate() + 1);
-            const y = nextDay.getFullYear();
-            const m = String(nextDay.getMonth() + 1).padStart(2, '0');
-            const day = String(nextDay.getDate()).padStart(2, '0');
-            d2 = `${y}-${m}-${day}`;
+        // 1. Identify Missing Fields for Modal Alert (Location AND Both Dates)
+        let missing = [];
+        if (!loc) missing.push("Location");
+
+        // The key change: Only alert for dates if BOTH are missing.
+        if (!d1 && !d2) {
+            missing.push("Check-in and Check-out Dates");
         }
 
-        if(!d1) { alert("Please select a check-in date."); return; }
+        // 2. Show Modal Alert if Location or Both Dates are missing
+        if (missing.length > 0) {
+            let msg = "";
+            let title = "Missing Info";
+
+            if (missing.length === 1) {
+                msg = `Please provide ${missing[0]}.`;
+                title = "Missing Field";
+            } else {
+                const last = missing.pop();
+                msg = `Please provide ${missing.join(", ")} and ${last}.`;
+            }
+            
+            showAlert(title, msg);
+            return; // Stop execution
+        }
         
+        // 3. Handle Partial Dates (Check-in or Check-out is missing, but not both)
+        // If we reach here, Location is OK, but we might have a single date selected (e.g., d1 is there, d2 is not).
+        if (!d1 || !d2) {
+            // Shake the date input field to prompt the user to use the picker's internal validation
+            dateInputGroup.classList.add('shake');
+            if (window.navigator.vibrate) window.navigator.vibrate(200);
+
+            // Give visual feedback in the input box to emphasize the error
+            const trigger = document.getElementById('dateRangeTrigger');
+            trigger.placeholder = "Select Check-out Date!";
+            
+            setTimeout(() => {
+                dateInputGroup.classList.remove('shake');
+                // Revert placeholder after brief time
+                trigger.placeholder = "Select Dates";
+            }, 500);
+            
+            return; // Stop if dates are partially filled
+        }
+        
+        // 4. Search Execution (All fields are valid)
+
         const formatDateUrl = (iso) => { const p = iso.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; };
 
         const rooms = document.getElementById('roomsSelect').value;

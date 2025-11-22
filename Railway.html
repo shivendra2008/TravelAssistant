@@ -125,21 +125,86 @@
         font-weight:700;
         cursor:pointer;
     }
+
+    /* --- MODERN ALERT MODAL STYLES --- */
+    .custom-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6); 
+        backdrop-filter: blur(4px); 
+        display: none; 
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    .modal-content {
+        background: white;
+        width: 80%;
+        max-width: 320px;
+        padding: 25px;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .modal-icon {
+        width: 60px;
+        height: 60px;
+        background: #ffe5e5;
+        color: #ff4757;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        margin: 0 auto 15px auto;
+    }
+
+    .modal-title {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: #333;
+    }
+
+    .modal-msg {
+        font-size: 15px;
+        color: #666;
+        margin-bottom: 20px;
+        line-height: 1.4;
+    }
+
+    .modal-btn {
+        background: #222;
+        color: white;
+        border: none;
+        padding: 12px;
+        width: 100%;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .modal-btn:active {
+        transform: scale(0.98);
+    }
+
+    @keyframes popIn {
+        from { transform: scale(0.8); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
     /* FIX horizontal scrolling on mobile */
-body, html {
-    overflow-x: hidden !important;
-}
-
-.container {
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-}
-
-/* Dropdown width fix so it doesn't create horizontal scroll */
-.dropdown {
-    width: 100% !important;
-    left: 0 !important;
-}
+    body, html { overflow-x: hidden !important; }
+    .container { max-width: 100% !important; overflow-x: hidden !important; }
+    .dropdown { width: 100% !important; left: 0 !important; }
 
 </style>
 </head>
@@ -173,25 +238,32 @@ body, html {
 
     <div class="recent-box">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-    <h3 style="margin:0;">Recent Searches</h3>
+            <h3 style="margin:0;">Recent Searches</h3>
+            <button 
+                onclick="clearAllRecents()" 
+                style="background:none; border:none; color:#d00; font-weight:600; cursor:pointer; padding:0; font-size:14px;">
+                Clear All
+            </button>
+        </div>
 
-    <!-- Clear button with NO background -->
-    <button 
-        onclick="clearAllRecents()" 
-        style="background:none; border:none; color:#d00; font-weight:600; cursor:pointer; padding:0; font-size:14px;">
-        Clear All
-    </button>
-</div>
+        <div style="font-size:12px; color:#777; margin-top:3px; margin-bottom:10px;">
+            Swipe to delete
+        </div>
 
-<!-- Small instruction text -->
-<div style="font-size:12px; color:#777; margin-top:3px; margin-bottom:10px;">
-    Swipe to delete
-</div>
-
-<div id="recentList"></div>
-
+        <div id="recentList"></div>
     </div>
 
+</div>
+
+<div id="alertModal" class="custom-modal">
+    <div class="modal-content">
+        <div class="modal-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="modal-title">Missing Info</div>
+        <div class="modal-msg">Placeholder text</div>
+        <button class="modal-btn" onclick="closeAlert()">Okay, Got it</button>
+    </div>
 </div>
 
 <script>
@@ -272,7 +344,10 @@ function openLink(fromText, toText, date) {
         if (t) tc = t.stnCode;
     }
 
-    if (!fc || !tc) return alert("Invalid station");
+    if (!fc || !tc) {
+        showAlert("Invalid Station", "We couldn't identify one of the stations. Please select from the dropdown.");
+        return;
+    }
 
     const fd = date.replace(/-/g, "");
     window.open(`https://www.goibibo.com/trains/dsrp/${fc}/${tc}/${fd}/GN/?track=normal_srp_calendar`, "_blank");
@@ -293,10 +368,8 @@ function loadRecent() {
         trash.className = "fa-solid fa-trash trash-icon";
         div.appendChild(trash);
 
-        /* CLICK = OPEN */
         div.onclick = () => openLink(r.from, r.to, r.date);
 
-        /* LONG PRESS = FULL EDIT */
         let timer;
         div.addEventListener("mousedown", () => {
             timer = setTimeout(() => {
@@ -312,12 +385,10 @@ function loadRecent() {
         div.addEventListener("mouseup", () => clearTimeout(timer));
         div.addEventListener("mouseleave", () => clearTimeout(timer));
 
-        /* SWIPE LEFT = TRASH ANIMATION + DELETE */
         let startX = 0;
         div.addEventListener("touchstart", e => startX = e.touches[0].clientX);
         div.addEventListener("touchmove", e => {
             let diff = startX - e.touches[0].clientX;
-
             if (diff > 30) {
                 div.style.transform = "translateX(-60px)";
                 trash.style.right = "10px";
@@ -333,11 +404,22 @@ function loadRecent() {
                 }, 200);
             }
         });
-
         box.appendChild(div);
     });
 }
 loadRecent();
+
+/* ---------------- Alert Logic ---------------- */
+function showAlert(titleText, msgText) {
+    document.querySelector('.modal-title').innerText = titleText;
+    document.querySelector('.modal-msg').innerText = msgText;
+    document.getElementById("alertModal").style.display = "flex";
+    if (window.navigator.vibrate) window.navigator.vibrate(200);
+}
+
+function closeAlert() {
+    document.getElementById("alertModal").style.display = "none";
+}
 
 /* ---------------- Search Button ---------------- */
 document.getElementById("searchBtn").addEventListener("click", () => {
@@ -345,7 +427,28 @@ document.getElementById("searchBtn").addEventListener("click", () => {
     const t = document.getElementById("toInput").value.trim();
     const d = document.getElementById("dateInput").value;
 
-    if (!f || !t || !d) return alert("Please fill all fields.");
+    // 1. Identify Missing Fields
+    let missing = [];
+    if (!f) missing.push("Origin");
+    if (!t) missing.push("Destination");
+    if (!d) missing.push("Travel Date");
+
+    // 2. Formulate Grammatically Correct Sentence
+    if (missing.length > 0) {
+        let msg = "";
+        
+        if (missing.length === 1) {
+            msg = `Please provide ${missing[0]}.`;
+        } else {
+            // "Pop" removes the last element (e.g., "Travel Date") so we can put "and" before it
+            const last = missing.pop();
+            // "Join" puts commas between remaining items
+            msg = `Please provide ${missing.join(", ")} and ${last}.`;
+        }
+        
+        showAlert("Missing Info", msg);
+        return; 
+    }
 
     saveRecent(f, t, d);
     loadRecent();
