@@ -27,7 +27,6 @@
             margin: 0;
             color: var(--secondary-color);
             -webkit-font-smoothing: antialiased;
-            overflow: hidden; /* Prevent body scroll when iframe is active */
         }
 
         .container {
@@ -37,7 +36,6 @@
             display: flex;
             flex-direction: column;
             background: var(--background-color);
-            position: relative;
         }
 
         /* --- Header Styling --- */
@@ -80,29 +78,24 @@
         }
 
         /* --- Main Content Wrapper --- */
-        #cardView {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
         .content-wrapper {
             padding: 25px;
             flex: 1;
         }
 
-        /* --- Booking Option Cards (Same as before) --- */
+        /* --- Booking Option Cards --- */
         .options-grid {
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
-
+        
+        /* FIX 1: Styling anchor tag as a card */
         .booking-card {
             background: var(--card-bg);
             border-radius: var(--radius-lg);
             padding: 25px;
-            text-decoration: none;
+            text-decoration: none; /* Crucial for anchor tags */
             color: inherit;
             position: relative;
             overflow: hidden;
@@ -113,80 +106,90 @@
             border: 1px solid rgba(0,0,0,0.03);
             cursor: pointer;
         }
-        
-        .card-content { flex: 1; }
-        .card-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; display: block; color: #2d3436; }
-        .card-desc { font-size: 13px; color: #636e72; font-weight: 500; }
-        .card-arrow { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: #b2bec3; transition: transform 0.3s ease, color 0.3s ease; }
-        
-        /* Updated inline icon styling for better visibility */
-        .card-desc .inline-icon { 
-            margin-right: 4px; 
-            font-size: 13px; /* Slightly larger than the text, but smaller than the main card icon */
-            opacity: 0.8;
-            color: var(--primary-color);
-        }
 
-        .help-text { margin-top: 40px; text-align: center; font-size: 13px; color: #b2bec3; }
-
-        /* --- Iframe View Styles (NEW) --- */
-        #iframeView {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: white;
-            display: none; /* Initially hidden */
-            flex-direction: column;
-            z-index: 50; /* Above the card content, below the modal */
-        }
-
-        #iframeView.active {
-            display: flex;
-        }
-
-        #externalIframe {
-            border: none;
-            width: 100%;
-            flex-grow: 1;
+        .booking-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--primary-color);
         }
         
-        /* Header specific for the Iframe View */
-        .iframe-header {
-            background-color: #fff;
-            border-bottom: 1px solid #eee;
-            color: var(--secondary-color);
-            padding: 10px 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        /* Icon Container */
+        .icon-wrapper {
+            width: 60px;
+            height: 60px;
+            background: var(--background-color);
+            border-radius: 16px;
             display: flex;
             align-items: center;
-            z-index: 10;
+            justify-content: center;
+            margin-right: 20px;
+            font-size: 24px;
+            color: var(--secondary-color);
+            transition: background 0.3s ease;
         }
 
-        .iframe-header-title {
-            font-size: 16px;
-            font-weight: 600;
-            flex-grow: 1;
-            text-align: center;
-            margin: 0;
+        .booking-card:hover .icon-wrapper {
+            background: var(--primary-gradient);
+            color: white;
         }
 
-        .exit-btn {
-            background: #f1f2f6;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
+        /* Text Content */
+        .card-content {
+            flex: 1;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            display: block;
+            color: #2d3436;
+        }
+
+        .card-desc {
+            font-size: 13px;
             color: #636e72;
-            transition: background 0.2s;
+            font-weight: 500;
         }
-        .exit-btn:hover {
-            background: #dfe4ea;
+        
+        /* FIX 2: Refactored Icon Styles from inline HTML to CSS */
+        .card-desc .inline-icon {
+            opacity: 0.8;
+            color: var(--primary-color);
+            vertical-align: middle;
+            font-size: 11px; /* Uniform font size for alignment */
         }
 
-        /* --- Custom Modal Styles (FIXED) --- */
+        /* Add margin only to icons that are NOT the last one (i.e., the plane/train icon) */
+        .card-desc .inline-icon:not(:last-child) {
+            margin-right: 4px;
+        }
+        
+        /* Arrow Indicator */
+        .card-arrow {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #b2bec3;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+
+        .booking-card:hover .card-arrow {
+            color: var(--primary-color);
+            transform: translateX(5px);
+        }
+
+        /* --- Bottom Help Text --- */
+        .help-text {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 13px;
+            color: #b2bec3;
+        }
+
+        /* --- Custom Modal Styles --- */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -197,8 +200,7 @@
             z-index: 1000;
             opacity: 0;
             pointer-events: none;
-            /* Added visibility control for reliability */
-            visibility: hidden; 
+            visibility: hidden;
             transition: opacity 0.3s ease, visibility 0s 0.3s;
             backdrop-filter: blur(3px);
         }
@@ -271,151 +273,121 @@
         .btn-confirm {
             background: var(--primary-color);
             color: white;
-            box-shadow: 4px 10px rgba(247, 185, 73, 0.3);
+            box-shadow: 0 4px 10px rgba(247, 185, 73, 0.3);
         }
 
         .modal-btn:hover {
             opacity: 0.9;
         }
-
     </style>
 </head>
 <body>
 
     <div class="container">
+        <header class="header-nav">
+            <button class="back-btn" onclick="window.location.href='index.html'">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="page-title">My Bookings</h1>
+        </header>
 
-        <!-- 1. Card View (Default) -->
-        <div id="cardView">
-            <header class="header-nav">
-                <button class="back-btn" onclick="window.location.href='index.html'">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
-                <h1 class="page-title">My Bookings</h1>
-            </header>
-
-            <div class="content-wrapper">
-                <div class="options-grid">
-                    
-                    <!-- Option 1: EaseMyTrip -->
-                    <div class="booking-card" onclick="handleBookingClick(1)">
-                        <div class="icon-wrapper">
-                            <i class="fas fa-suitcase-rolling"></i>
-                        </div>
-                        <div class="card-content">
-                            <span class="card-title">Flight, Hotel</span>
-                            <span class="card-desc">
-                                <!-- UPDATED ICONS -->
-                                <i class="fa-solid fa-plane-departure inline-icon"></i>
-                                <i class="fa-solid fa-building inline-icon"></i>
-                                 &nbsp;via EaseMyTrip
-                            </span>
-                        </div>
-                        <div class="card-arrow">
-                            <i class="fas fa-chevron-right"></i>
-                        </div>
+        <div class="content-wrapper">
+            <div class="options-grid">
+                
+                <!-- FIX 1: Changed from div to <a> for better accessibility -->
+                <a href="#" class="booking-card" data-type="1" onclick="handleBookingClick(event, 1)">
+                    <div class="icon-wrapper">
+                        <i class="fas fa-suitcase-rolling"></i>
                     </div>
-
-                    <!-- Option 2: Goibibo -->
-                    <div class="booking-card" onclick="handleBookingClick(2)">
-                        <div class="icon-wrapper">
-                            <i class="fas fa-ticket-alt"></i>
-                        </div>
-                        <div class="card-content">
-                            <span class="card-title">Train, Bus</span>
-                            <span class="card-desc">
-                                <!-- UPDATED ICONS -->
-                                <i class="fa-solid fa-train inline-icon"></i>
-                                <i class="fa-solid fa-bus-simple inline-icon"></i>
-                                &nbsp;via Goibibo
-                            </span>
-                        </div>
-                        <div class="card-arrow">
-                            <i class="fas fa-chevron-right"></i>
-                        </div>
+                    <div class="card-content">
+                        <span class="card-title">Flight, Hotel</span>
+                        <span class="card-desc">
+                            <!-- FIX 2: Removed inline styles, now using CSS classes -->
+                            <i class="fas fa-plane inline-icon"></i>
+                            <i class="fas fa-hotel inline-icon"></i>
+                            &nbsp;via EaseMyTrip
+                        </span>
                     </div>
+                    <div class="card-arrow">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </a>
 
-                </div>
+                <!-- FIX 1: Changed from div to <a> for better accessibility -->
+                <a href="#" class="booking-card" data-type="2" onclick="handleBookingClick(event, 2)">
+                    <div class="icon-wrapper">
+                        <i class="fas fa-ticket-alt"></i>
+                    </div>
+                    <div class="card-content">
+                        <span class="card-title">Train, Bus</span>
+                        <span class="card-desc">
+                            <!-- FIX 2: Removed inline styles, now using CSS classes -->
+                            <i class="fas fa-train inline-icon"></i>
+                            <i class="fas fa-bus inline-icon"></i>
+                            &nbsp;via Goibibo
+                        </span>
+                    </div>
+                    <div class="card-arrow">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </a>
 
-                <div class="help-text">
-                    <p>Select a category to view or manage your active bookings.</p>
-                </div>
+            </div>
+
+            <div class="help-text">
+                <p>Select a category to view or manage your active bookings.</p>
             </div>
         </div>
-        
-        <!-- 2. Iframe View (Hidden by default) -->
-        <div id="iframeView">
-            <header class="iframe-header">
-                <h2 class="iframe-header-title">External Bookings (Goibibo)</h2>
-                <!-- Exit button always closes the iframe and returns to cards -->
-                <button class="exit-btn" onclick="closeIframe()">Exit</button>
-            </header>
-            <!-- Iframe to load the external content -->
-            <iframe id="externalIframe" src="about:blank"></iframe>
-        </div>
+    </div>
 
-
-        <!-- Custom Modal (Same as before) -->
-        <div class="modal-overlay" id="bookingModal">
-            <div class="modal-card">
-                <div class="modal-icon">
-                    <i class="fas fa-info-circle"></i>
-                </div>
-                <p class="modal-text" id="modalMessage">
-                    <!-- Dynamic Text -->
-                </p>
-                <div class="modal-actions">
-                    <button class="modal-btn btn-cancel" onclick="closeModal()">Go Back</button>
-                    <button class="modal-btn btn-confirm" id="confirmBtn">Proceed</button>
-                </div>
+    <!-- Custom Modal -->
+    <div class="modal-overlay" id="bookingModal">
+        <div class="modal-card">
+            <div class="modal-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <p class="modal-text" id="modalMessage">
+                <!-- Dynamic Text -->
+            </p>
+            <div class="modal-actions">
+                <button class="modal-btn btn-cancel" onclick="closeModal()">Go Back</button>
+                <button class="modal-btn btn-confirm" id="confirmBtn">Proceed</button>
             </div>
         </div>
-
     </div>
 
     <script>
         const modal = document.getElementById('bookingModal');
         const modalMessage = document.getElementById('modalMessage');
         const confirmBtn = document.getElementById('confirmBtn');
-        const cardView = document.getElementById('cardView');
-        const iframeView = document.getElementById('iframeView');
-        const externalIframe = document.getElementById('externalIframe');
 
         const url1 = "https://mybookings.easemytrip.com/MyBooking/";
         const url2 = "https://www.goibibo.com/mysupport/trips/";
 
-        function showIframe(url) {
-            externalIframe.src = url;
-            iframeView.classList.add('active');
-            cardView.style.display = 'none';
-        }
-
-        function closeIframe() {
-            // Stop background resource usage
-            externalIframe.src = 'about:blank'; 
-            iframeView.classList.remove('active');
-            cardView.style.display = 'flex';
-        }
-
-        function handleBookingClick(type) {
+        // Function to open the confirmation modal and handle navigation
+        function handleBookingClick(e, type) {
+            // Prevent the default anchor tag navigation
+            e.preventDefault(); 
+            
             // Check if vibration is supported and execute a short pattern (50ms)
             if (window.navigator && window.navigator.vibrate) {
                 window.navigator.vibrate(50);
             }
 
             if (type === 1) {
-                modalMessage.innerHTML = "<strong>Please note:</strong> This section only displays Hotel and Flight bookings. For Bus and Train bookings, please use the other option.";
+                modalMessage.innerHTML = "<strong>Please note:</strong> This section will take you to the EaseMyTrip login page to view your Hotel and Flight bookings.";
                 confirmBtn.onclick = () => {
                     closeModal();
-                    // For EaseMyTrip, navigate away as before
+                    // Navigate in the current window for EaseMyTrip
                     window.location.href = url1; 
                 }
             } else {
-                modalMessage.innerHTML = "<strong>Please note:</strong> This section only displays Bus and Train bookings. For Hotel and Flight bookings, please use the other option.";
+                modalMessage.innerHTML = "<strong>Please note:</strong> This section will take you to the Goibibo login page to view your Bus and Train bookings.";
                 
+                // Open link in new tab to bypass native app redirects, especially for Goibibo
                 confirmBtn.onclick = () => {
                     closeModal();
-                    // For Goibibo, open in the internal iframe view
-                    showIframe(url2); 
+                    window.open(url2, '_blank');
                 }
             }
             
@@ -432,16 +404,6 @@
                 closeModal();
             }
         });
-        
-        // Handle back button press when iframe is active (optional, for better app flow)
-        window.addEventListener('popstate', function (event) {
-            if (iframeView.classList.contains('active')) {
-                // If the user presses the native browser back button while the iframe is open, close the iframe
-                closeIframe();
-            }
-        });
-
     </script>
-
 </body>
 </html>
